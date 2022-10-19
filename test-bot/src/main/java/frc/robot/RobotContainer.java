@@ -9,8 +9,12 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 
+import rct.ControlTerminal;
+
 public class RobotContainer {
     public RobotContainer() {
+        rct.ControlTerminal.testthing();
+        
         System.out.println("I got this working");
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable table = inst.getTable("datatable");

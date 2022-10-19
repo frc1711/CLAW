@@ -1,8 +1,11 @@
-package frc.team1711.rct;
-
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.datalog.DataLog;
+
+import java.io.PrintStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class Main {
     
@@ -13,6 +16,7 @@ public class Main {
     public void run () {
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable table = inst.getTable("datatable");
+        
         NetworkTableEntry xEntry = table.getEntry("x");
         NetworkTableEntry yEntry = table.getEntry("y");
         inst.startClientTeam(1711);

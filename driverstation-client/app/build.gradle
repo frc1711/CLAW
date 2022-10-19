@@ -20,6 +20,12 @@ repositories {
     }
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+}
+
 dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
@@ -44,7 +50,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'frc.team1711.rct.Main'
+    mainClass = 'Main'
 }
 
 tasks.named('test') {
