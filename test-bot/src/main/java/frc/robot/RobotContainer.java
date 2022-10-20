@@ -4,25 +4,14 @@
 
 package frc.robot;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 
-import rct.ControlTerminal;
+import rct.low.TerminalConnector;
 
 public class RobotContainer {
     public RobotContainer() {
-        rct.ControlTerminal.testthing();
-        
-        System.out.println("I got this working");
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        NetworkTable table = inst.getTable("datatable");
-        NetworkTableEntry xEntry = table.getEntry("x");
-        NetworkTableEntry yEntry = table.getEntry("y");
-        
-        xEntry.setString("This string is being sent to entry 'x' from the robot!");
-        yEntry.setString("yEntry (this string) is being sent over NetworkTables from the robot");
+        TerminalConnector c = new TerminalConnector(false);
+        c.makeCall("test-call".getBytes());
     }
     
     public Command getAutonomousCommand () {
