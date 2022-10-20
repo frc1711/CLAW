@@ -1,12 +1,6 @@
 @echo off
 
-echo.
-
-echo Deleting old rct package from test-bot...
-rmdir "test-bot/src/main/java/rct" /s /q
-
-echo Copying new rct package to test-bot...
-robocopy "lib/rct" "test-bot/src/main/java/rct" /E > NUL
+call test-bot-update-lib.bat
 
 echo Deploying test-bot code to the roboRIO...
 cd test-bot
