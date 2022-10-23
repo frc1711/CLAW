@@ -6,12 +6,9 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 
-import rct.low.TerminalConnector;
-
 public class RobotContainer {
     public RobotContainer() {
-        TerminalConnector c = new TerminalConnector(false);
-        c.makeCall("test-call".getBytes());
+        
     }
     
     public Command getAutonomousCommand () {

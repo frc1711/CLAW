@@ -9,12 +9,17 @@ public class Main {
     public void run () throws Exception {
         TerminalConnector c = new TerminalConnector(true);
         try {
-            byte byteval = 0;
             while (true) {
-                Thread.sleep(2000);
-                System.out.println("making call... " + byteval);
-                c.makeCall(new byte[]{byteval});
-                byteval ++;
+                Thread.sleep(4000);
+                System.out.println("making call... ");
+                c.put(("new value is: "+Math.round(Math.random()*1000)).getBytes());
+                c.updateOutputBuffer();
+                
+                Thread.sleep(1000);
+                for (int i = 1; i <= 10; i ++) {
+                    c.put((i+") Several calls at once").getBytes());
+                }
+                c.updateOutputBuffer();
             }
         } catch (Exception e) {
             
