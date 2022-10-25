@@ -31,6 +31,24 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
         terminalConnector = new TerminalConnector(false);
+        
+        while (true) {
+            int millis = (int)Math.round(Math.random() * 18000);
+            terminalConnector.put(("To: Driverstation; From: roboRIO.\n  " + 
+                "This message will be followed by " + millis/1000 + " seconds of silence.").getBytes());
+            sleepAndUpdate(millis, terminalConnector);
+        }
+        
+    }
+    
+    private void sleepAndUpdate (int millis, TerminalConnector c) {
+        while (millis > 0) {
+            try {
+                Thread.sleep(20);
+                millis -= 20;
+                c.updateOutputBuffer();
+            } catch (Exception e) {}
+        }
     }
     
     @Override

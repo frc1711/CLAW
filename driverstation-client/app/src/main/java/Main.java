@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 import rct.low.TerminalConnector;
 
 public class Main {
@@ -7,23 +9,13 @@ public class Main {
     }
     
     public void run () throws Exception {
+        Scanner sc = new Scanner(System.in);
         TerminalConnector c = new TerminalConnector(true);
-        try {
-            while (true) {
-                Thread.sleep(4000);
-                System.out.println("making call... ");
-                c.put(("new value is: "+Math.round(Math.random()*1000)).getBytes());
-                c.updateOutputBuffer();
-                
-                Thread.sleep(1000);
-                for (int i = 1; i <= 10; i ++) {
-                    c.put((i+") Several calls at once").getBytes());
-                }
-                c.updateOutputBuffer();
-            }
-        } catch (Exception e) {
-            
+        while (true) {
+            String line = sc.nextLine();
+            c.put(line.getBytes());
         }
+        
     }
     
 }

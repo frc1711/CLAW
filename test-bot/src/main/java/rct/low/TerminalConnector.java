@@ -4,9 +4,10 @@
 
 package rct.low;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class TerminalConnector {
     private final List<Byte[]> outputBuffer = new ArrayList<Byte[]>();
     private long lastUpdateTime = 0;
     private int rawMessagesBufferId = 1;
+    private boolean isDriverStation;
     
     public TerminalConnector (boolean isDriverStation) {
         // Do not create a second TerminalConnector on the same client script
@@ -46,6 +48,7 @@ public class TerminalConnector {
         networkTableInstance = NetworkTableInstance.getDefault();
         
         // Prepares networktables for driver station
+        this.isDriverStation = isDriverStation;
         if (isDriverStation) {
             networkTableInstance.startClientTeam(1711);
             networkTableInstance.startDSClient();
@@ -77,9 +80,19 @@ public class TerminalConnector {
     }
     
     private void acceptInput (byte[] input, long time) {
-        System.out.println("This is serialized:");
-        System.out.println(" - Received input bytes with length: " + input.length);
-        System.out.println("       ct: "+time + ", pt: "+tableInputEntry.getLastChange());
+        
+        if (input.length == 0) return;
+        
+        DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(input));
+        try {
+            RawMessagesBuffer buffer = RawMessagesBuffer.readFromStream(dataIn);
+            for (int i = 0; i < buffer.messageCount; i ++)
+                System.out.println(new String(buffer.messagesData[i], StandardCharsets.UTF_8));
+            
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        
     }
 
     /**
@@ -101,17 +114,9 @@ public class TerminalConnector {
             // Get a serializable object representing the several messages stored
             // in the outputBuffer
             RawMessagesBuffer messages = new RawMessagesBuffer(rawMessagesBufferId, outputBuffer);
-            ByteArrayOutputStream bytesOutStream = new ByteArrayOutputStream();
-            try {
-                ObjectOutputStream stream = new ObjectOutputStream(bytesOutStream);
-                stream.writeObject(messages);
-            } catch (IOException e) {
-                // This should never happen as it is simply writing to an ByteArrayOutputStream
-                throw new RuntimeException("Serialization of RawMessagesBuffer failed: " + e.getMessage());
-            }
             
             // Set the networktables data to match the serialized RawMessagesBuffer
-            tableOutputEntry.forceSetRaw(bytesOutStream.toByteArray());
+            tableOutputEntry.forceSetRaw(messages.getSerializedForm());
             
             // Update the rawMessagesBufferId so that the next message will follow
             rawMessagesBufferId ++;
@@ -132,6 +137,7 @@ public class TerminalConnector {
             byteObjs[i] = value[i];
         
         outputBuffer.add(byteObjs);
+        updateOutputBuffer();
     }
     
 }
