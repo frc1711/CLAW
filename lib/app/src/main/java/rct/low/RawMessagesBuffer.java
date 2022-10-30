@@ -19,14 +19,18 @@ import java.util.List;
  */
 public class RawMessagesBuffer {
     
-    public static final int SERIAL_VERSION = 1;
+    /**
+     * A serial version which should update whenever the format of RawMessagesBuffer is updated
+     */
+    public static final int SERIAL_VERSION = 0xDA7A_0001;
+    
     public final int bufferId;
     public final int messageCount;
     public final int[] messageLengths;
     public final byte[][] messagesData;
     
     /**
-     * Creates a new RawMessagesBuffer with an id and a list of raw Byte[] messages.
+     * Creates a new RawMessagesBuffer with an integer id and a list of raw binary messages.
      */
     public RawMessagesBuffer (int id, List<Byte[]> byteArraysBuffer) {
         bufferId = id;
@@ -50,6 +54,10 @@ public class RawMessagesBuffer {
         }
     }
     
+    /**
+     * Attempts to read a messages buffer from a data input stream, throwing an IOException if
+     * unsuccessful.
+     */
     public static RawMessagesBuffer readFromStream (DataInputStream dataIn) throws IOException {
         try {
             // Read and match serial versions
@@ -92,6 +100,9 @@ public class RawMessagesBuffer {
         this.messagesData = messagesData;
     }
     
+    /**
+     * Converts the buffer into raw binary which can be read with {@link #readFromStream(DataInputStream)}
+     */
     public byte[] getSerializedForm () {
         ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
         DataOutputStream dataOut = new DataOutputStream(byteOutStream);

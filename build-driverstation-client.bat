@@ -28,7 +28,10 @@ cd ..
 echo app.jar created successfully...
 
 echo Creating start.bat...
-echo @echo off ^&^& java -jar app.jar > start.bat
+echo @echo off > start.bat
+echo java -jar app.jar >> start.bat 
+echo echo. >> start.bat
+echo pause >> start.bat
 
 echo.
 

@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import rct.low.DataMessage;
 import rct.low.TerminalConnector;
 
 /**
@@ -30,12 +31,16 @@ public class Robot extends TimedRobot {
         // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
-        terminalConnector = new TerminalConnector(false);
+        terminalConnector = new TerminalConnector((DataMessage message) -> {
+            System.out.println(message.dataString);
+        }, false);
         
         while (true) {
             int millis = (int)Math.round(Math.random() * 18000);
-            terminalConnector.put(("To: Driverstation; From: roboRIO.\n  " + 
-                "This message will be followed by " + millis/1000 + " seconds of silence.").getBytes());
+            String msgString =
+                "To: Driverstation; From: roboRIO.\n" +
+                "  This message will be followed by " + millis/1000 + " seconds of silence.";
+            terminalConnector.put(new DataMessage(DataMessage.MessageType.RESPONSE, 1, msgString));
             sleepAndUpdate(millis, terminalConnector);
         }
         
