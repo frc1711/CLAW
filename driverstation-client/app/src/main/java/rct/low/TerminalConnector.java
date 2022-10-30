@@ -192,20 +192,16 @@ public class TerminalConnector {
     /**
      * Display the error and kill the program after a few seconds
      */
-    private void handleCriticalException (Exception e) {
+    private void handleCriticalException (Exception exception) {
         if (isDriverStation) {
-            // Print the error
-            System.err.println("\n\nFATAL ERROR:");
-            System.err.println(e);
-            
-            // Attempt to wait for 5 seconds before killing the program
-            try { Thread.sleep(5000);
-            } catch (InterruptedException ex) { }
+            // Print the error to the terminal
+            System.err.println("\n\nFatal Exception:");
+            System.err.println(exception);
             
             // Kill the program
             System.exit(1);
         } else {
-            System.err.println(e);
+            System.err.println(exception);
         }
     }
     
