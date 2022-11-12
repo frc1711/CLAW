@@ -1,9 +1,9 @@
-import java.util.Scanner;
+import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
-import rct.commands.Command;
-import rct.commands.Command.ParseException;
-import rct.low.DataMessage;
-import rct.low.TerminalConnector;
+import rct.low.DriverStationSocket;
+import rct.low.InstructionMessage;
 
 public class Main {
     
@@ -12,26 +12,32 @@ public class Main {
     }
     
     public void run () {
-        Scanner sc = new Scanner(System.in);
-        
-        TerminalConnector c = new TerminalConnector((DataMessage message) -> {
-            System.out.println(message.dataString);
-        }, true);
-        
-        while (true) {
-            String line = sc.nextLine();
+        try {
+            DriverStationSocket s = new DriverStationSocket(1711, 5800);
             
-            try {
-                // Command is created in order to ensure the line being sent is a properly formatted command
-                Command command = new Command(line);
-                if (command.getCommand().toLowerCase().equals("exit")) System.exit(0);
-            } catch (ParseException e) {
-                System.err.println(e);
+            for (int i = 1; i <= 50; i ++) {
+                System.out.println("Sending message #"+i);
+                s.sendInstructionMessage(new InstructionMessage.StreamsList());
+                Thread.sleep(i*10);
             }
             
-            c.put(new DataMessage(DataMessage.MessageType.INSTRUCTION, 1, line));
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
         }
-        
+        // } catch (UnknownHostException e) {
+        //     e.printStackTrace();
+        //     System.exit(1);
+        // } catch (SocketException e) {
+        //     System.out.println("Socket closed unexpectedly: " + e);
+        //     System.exit(1);
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        //     System.exit(1);
+        // } catch (InterruptedException e) {
+        //     e.printStackTrace();
+        //     System.exit(1);
+        // }
     }
     
 }

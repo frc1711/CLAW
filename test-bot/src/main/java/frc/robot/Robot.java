@@ -4,11 +4,14 @@
 
 package frc.robot;
 
+import java.io.IOError;
+import java.io.IOException;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import rct.low.DataMessage;
-import rct.low.TerminalConnector;
+import rct.low.InstructionMessage;
+import rct.low.RobotSocketHandler;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -19,7 +22,6 @@ import rct.low.TerminalConnector;
 public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
-    private TerminalConnector terminalConnector;
     private RobotContainer m_robotContainer;
 
     /**
@@ -31,34 +33,20 @@ public class Robot extends TimedRobot {
         // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
-        terminalConnector = new TerminalConnector((DataMessage message) -> {
-            System.out.println(message.dataString);
-        }, false);
         
-        while (true) {
-            int millis = (int)Math.round(Math.random() * 18000);
-            String msgString =
-                "To: Driverstation; From: roboRIO.\n" +
-                "  This message will be followed by " + millis/1000 + " seconds of silence.";
-            terminalConnector.put(new DataMessage(DataMessage.MessageType.RESPONSE, 1, msgString));
-            sleepAndUpdate(millis, terminalConnector);
-        }
-        
-    }
-    
-    private void sleepAndUpdate (int millis, TerminalConnector c) {
-        while (millis > 0) {
+        new Thread(() -> {
             try {
-                Thread.sleep(20);
-                millis -= 20;
-                c.updateOutputBuffer();
-            } catch (Exception e) {}
-        }
+                new RobotSocketHandler(5800, (InstructionMessage m) -> {
+                    System.out.println("Message received: " + m);
+                }).awaitConnections();
+            } catch (IOException e) {
+                System.out.println(e);
+            }
+        }).start();
     }
     
     @Override
     public void robotPeriodic() {
-        terminalConnector.updateOutputBuffer();
         CommandScheduler.getInstance().run();
     }
 
