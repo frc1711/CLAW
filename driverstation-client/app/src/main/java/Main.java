@@ -1,9 +1,9 @@
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.util.function.Consumer;
 
-import rct.low.DriverStationSocket;
+import rct.low.DriverStationSocketHandler;
 import rct.low.InstructionMessage;
+import rct.low.ResponseMessage;
 
 public class Main {
     
@@ -12,8 +12,15 @@ public class Main {
     }
     
     public void run () {
+        Consumer<IOException> excHandler = (IOException e) -> {
+            e.printStackTrace();
+            System.exit(1);
+        };
+        
         try {
-            DriverStationSocket s = new DriverStationSocket(1711, 5800);
+            DriverStationSocketHandler s = new DriverStationSocketHandler(1711, 5800, (ResponseMessage m) -> {
+                System.out.println("Received a response message: " + m);
+            }, excHandler);
             
             for (int i = 1; i <= 50; i ++) {
                 System.out.println("Sending message #"+i);

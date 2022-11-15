@@ -1,11 +1,8 @@
 package rct.low;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 
-public abstract class ResponseMessage {
+public abstract class ResponseMessage extends Message {
     
     public static final long serialVersionUID = 1L;
     
@@ -49,18 +46,6 @@ public abstract class ResponseMessage {
     public static enum Status {
         SUCCESS,
         FAILURE,
-    }
-    
-    public byte[] getData () {
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream out = new ObjectOutputStream(bytesOut);
-            out.writeObject(this);
-        } catch (IOException e) {
-            throw new RuntimeException("Exception reading InstructionMessage byte[] data:\n" + e);
-        }
-        
-        return bytesOut.toByteArray();
     }
     
 }

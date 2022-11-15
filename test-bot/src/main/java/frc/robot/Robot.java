@@ -4,13 +4,14 @@
 
 package frc.robot;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import rct.low.InstructionMessage;
+import rct.low.ResponseMessage;
 import rct.low.RobotSocketHandler;
 
 /**
@@ -23,6 +24,7 @@ public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
+    private RobotSocketHandler robotSocketHandler;
 
     /**
      * This function is run when the robot is first started up and should be used for any
@@ -34,15 +36,32 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
         
-        new Thread(() -> {
-            try {
-                new RobotSocketHandler(5800, (InstructionMessage m) -> {
-                    System.out.println("Message received: " + m);
-                }).awaitConnections();
-            } catch (IOException e) {
-                System.out.println(e);
-            }
-        }).start();
+        Consumer<IOException> exceptionHandler = (IOException e) -> {
+            System.out.println(e);
+        };
+        
+        try {
+            robotSocketHandler = new RobotSocketHandler(5800, (InstructionMessage m) -> {
+                System.out.println("Message received: " + m);
+                
+                if (Math.random() < 0.1) {
+                    System.out.println("Sending response...");
+                    try {
+                        this.sendResponseMessage(new ResponseMessage.StreamData("[stream data here]"));
+                    } catch (IOException e) {
+                        exceptionHandler.accept(e);
+                    }
+                }
+            }, exceptionHandler);
+            
+            robotSocketHandler.start();
+        } catch (IOException e) {
+            exceptionHandler.accept(e);
+        }
+    }
+    
+    private void sendResponseMessage (ResponseMessage message) throws IOException {
+        robotSocketHandler.sendResponseMessage(message);
     }
     
     @Override
