@@ -9,7 +9,13 @@ import java.io.Serializable;
 
 public abstract class Message implements Serializable {
     
-    public static final long serialVersionUID = 1L;
+    public static final long serialVersionUID = 2L;
+    
+    public final int id;
+    
+    public Message (int id) {
+        this.id = id;
+    }
     
     public byte[] getData () {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
