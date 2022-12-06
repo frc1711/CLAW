@@ -47,7 +47,7 @@ public class Robot extends TimedRobot {
                 if (Math.random() < 0.1) {
                     System.out.println("Sending response...");
                     try {
-                        this.sendResponseMessage(new ResponseMessage.StreamData("[stream data here]"));
+                        this.sendResponseMessage(new rct.low.ResponseMessage.StreamData("[stream data here]"));
                     } catch (IOException e) {
                         exceptionHandler.accept(e);
                     }
