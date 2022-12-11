@@ -1,4 +1,4 @@
-package rct.low;
+package rct.network.low;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -9,13 +9,7 @@ import java.io.Serializable;
 
 public abstract class Message implements Serializable {
     
-    public static final long serialVersionUID = 2L;
-    
-    public final int id;
-    
-    public Message (int id) {
-        this.id = id;
-    }
+    public static final long serialVersionUID = 4L;
     
     public byte[] getData () {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();

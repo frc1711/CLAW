@@ -1,4 +1,4 @@
-package rct.low;
+package rct.network.low;
 
 import java.io.IOException;
 import java.io.InputStream;
