@@ -28,30 +28,20 @@ public class CommandInterpreter {
      * Processes a line into a {@link Command} and attempts to call one of this interpreter's command consumers
      * on the command. See {@link Command.ParseException} for command line formatting.
      * @param line                      The command line string
+     * @return                          Whether or not the command was recognized by this interpreter. Use
+     * {@link #addCommandConsumer(String, Consumer)} to add more recognized commands.
      * @throws Command.ParseException   An exception thrown if the command is malformed
-     * @throws UnknownCommandException  An exception thrown if this interpreter is not configured to accept
-     * the command given its name. Use {@link #addCommandConsumer(String, Consumer)} to add another recognized
-     * command.
      */
-    public void processLine (String line) throws Command.ParseException, UnknownCommandException {
+    public boolean processLine (String line) throws Command.ParseException {
         Command commandObj = new Command(line);
         String commandName = commandObj.getCommand().toUpperCase();
         
         // Send the command to its consumer if the command name exists in the commandConsumers hashmap,
         // otherwise throws an exception
-        if (commandConsumers.containsKey(commandName))
+        if (commandConsumers.containsKey(commandName)) {
             commandConsumers.get(commandName).accept(commandObj);
-        else
-            throw new UnknownCommandException(commandName);
-    }
-    
-    /**
-     * An exception that can occur when a parsed command name is not recognized by the interpreter
-     */
-    public static class UnknownCommandException extends Exception {
-        public UnknownCommandException (String commandName) {
-            super("Command '"+commandName+"' is not recognized by the command interpreter");
-        }
+            return true;
+        } else return false;
     }
     
 }
