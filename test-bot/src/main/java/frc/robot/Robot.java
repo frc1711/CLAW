@@ -5,14 +5,15 @@
 package frc.robot;
 
 import java.io.IOException;
-import java.util.function.Consumer;
+import java.util.ArrayList;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import rct.low.InstructionMessage;
-import rct.low.ResponseMessage;
-import rct.low.RobotSocketHandler;
+import rct.network.low.InstructionMessage;
+import rct.network.low.RobotSocketHandler;
+import rct.network.messages.CommandInputMessage;
+import rct.network.messages.CommandOutputMessage;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -24,7 +25,6 @@ public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
-    private RobotSocketHandler robotSocketHandler;
 
     /**
      * This function is run when the robot is first started up and should be used for any
@@ -36,32 +36,47 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
         
-        Consumer<IOException> exceptionHandler = (IOException e) -> {
-            System.out.println(e);
-        };
+        RobotSocketHandler robotSocketHandler;
         
         try {
+            ArrayList<RobotSocketHandler> handlerList = new ArrayList<RobotSocketHandler>();
+            
             robotSocketHandler = new RobotSocketHandler(5800, (InstructionMessage m) -> {
-                System.out.println("Message received: " + m);
-                
-                if (Math.random() < 0.1) {
-                    System.out.println("Sending response...");
-                    try {
-                        this.sendResponseMessage(new rct.low.ResponseMessage.StreamData("[stream data here]"));
-                    } catch (IOException e) {
-                        exceptionHandler.accept(e);
+                try {
+                    if (m.getClass() == CommandInputMessage.class) {
+                        CommandInputMessage inMsg = (CommandInputMessage)m;
+                        rct.commands.Command command = new rct.commands.Command(inMsg.command);
+                        
+                        boolean isError = false;
+                        String output = "";
+                        boolean nores = false;
+                        if (!command.getCommand().equals("remote")) {
+                            output = "This message is sent from the roboRIO. Try using the 'remote' command.";
+                        } else if (command.argsLen() == 0) {
+                            output = "This is sent from remote. Use 'remote error' to try receiving an error output.";
+                        } else if (command.getArg(0).equals("error")) {
+                            isError = true;
+                            output = "Error: This is a test error sent from remote. Try 'remote nores' to\nnot receive any response.";
+                        } else if (command.getArg(0).equals("nores")) {
+                            nores = true;
+                        } else {
+                            output = "Echoing:\n" + inMsg.command;
+                        }
+                        
+                        if (!nores) {
+                            CommandOutputMessage outMsg = new CommandOutputMessage(isError, inMsg.id, output);
+                            handlerList.get(0).sendResponseMessage(outMsg);
+                        }
                     }
-                }
-            }, exceptionHandler);
+                } catch (Exception e) { }
+            }, (IOException e) -> { System.out.println(e); });
+            
+            handlerList.add(robotSocketHandler);
             
             robotSocketHandler.start();
         } catch (IOException e) {
-            exceptionHandler.accept(e);
+            System.out.println(e);
         }
-    }
-    
-    private void sendResponseMessage (ResponseMessage message) throws IOException {
-        robotSocketHandler.sendResponseMessage(message);
     }
     
     @Override

@@ -46,6 +46,8 @@ dependencies {
     implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:linuxx86-64"
     implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:linuxraspbian"
     implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:osxx86-64"
+    
+    implementation "org.fusesource.jansi:jansi:2.4.0"
 }
 
 application {

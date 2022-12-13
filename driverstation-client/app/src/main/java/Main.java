@@ -1,9 +1,7 @@
-import java.io.IOException;
-import java.util.function.Consumer;
+import java.util.Scanner;
 
-import rct.low.DriverStationSocketHandler;
-import rct.low.InstructionMessage;
-import rct.low.ResponseMessage;
+import rct.local.LocalSystem;
+import rct.local.StreamDataStorage;
 
 public class Main {
     
@@ -12,39 +10,25 @@ public class Main {
     }
     
     public void run () {
-        Consumer<IOException> excHandler = (IOException e) -> {
-            e.printStackTrace();
-            System.exit(1);
-        };
+        
+        ColorConsoleManager mgr = new ColorConsoleManager();
+        Scanner scanner = new Scanner(System.in);
         
         try {
-            DriverStationSocketHandler s = new DriverStationSocketHandler(1711, 5800, (ResponseMessage m) -> {
-                System.out.println("Received a response message: " + m);
-            }, excHandler);
-            
-            for (int i = 1; i <= 50; i ++) {
-                System.out.println("Sending message #"+i);
-                s.sendInstructionMessage(new InstructionMessage.StreamsList());
-                Thread.sleep(i*10);
+            LocalSystem system = new LocalSystem(1711, 5800, 5, new StreamDataStorage(), mgr);
+            while (true) {
+                System.out.print("\n> ");
+                System.out.flush();
+                system.processCommand(scanner.nextLine());
+                System.out.flush();
             }
-            
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
-        // } catch (UnknownHostException e) {
-        //     e.printStackTrace();
-        //     System.exit(1);
-        // } catch (SocketException e) {
-        //     System.out.println("Socket closed unexpectedly: " + e);
-        //     System.exit(1);
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        //     System.exit(1);
-        // } catch (InterruptedException e) {
-        //     e.printStackTrace();
-        //     System.exit(1);
-        // }
+        
+        scanner.close();
+        
     }
     
 }

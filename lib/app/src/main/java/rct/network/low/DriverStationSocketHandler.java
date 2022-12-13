@@ -15,10 +15,14 @@ public class DriverStationSocketHandler {
             int port,
             Consumer<ResponseMessage> responseReader,
             Consumer<IOException> excHandler) throws IOException {
-        Socket socket = new Socket("roboRIO-"+teamNum+"-frc.local", port);
+        Socket socket = new Socket(getRoborioHost(teamNum), port);
         socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
         this.responseReader = responseReader;
         this.excHandler = excHandler;
+    }
+    
+    public static String getRoborioHost (int teamNum) {
+        return "roboRIO-"+teamNum+"-frc.local";
     }
     
     private void receiveMessage (Message message) {
