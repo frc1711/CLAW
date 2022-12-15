@@ -15,8 +15,15 @@ public class DriverStationSocketHandler {
             int port,
             Consumer<ResponseMessage> responseReader,
             Consumer<IOException> excHandler) throws IOException {
-        Socket socket = new Socket(getRoborioHost(teamNum), port);
-        socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
+        
+        Socket socket = null;
+        try {
+            socket = new Socket(getRoborioHost(teamNum), port);
+            socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
+        } catch (IOException e) {
+            if (socket != null) socket.close();
+            throw e;
+        }
         this.responseReader = responseReader;
         this.excHandler = excHandler;
     }

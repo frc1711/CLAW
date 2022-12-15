@@ -16,4 +16,11 @@ public abstract class ConsoleManager {
     public void printlnSys (String msg) {
         printSys(msg + "\n");
     }
+    
+    public void flush () {
+        System.out.flush();
+    }
+    
+    public abstract void clear ();
+    
 }

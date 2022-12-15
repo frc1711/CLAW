@@ -52,6 +52,9 @@ public class SocketHandler {
                 }
                 
             } catch (IOException e) {
+                // Do nothing if the socket has been closed
+                if (socket.isClosed()) return;
+                
                 // If an IOException occurs, pass it to the message receiver exception handler
                 excHandler.accept(e);
             }

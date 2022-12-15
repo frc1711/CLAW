@@ -34,8 +34,6 @@ echo java -jar app.jar >> start.bat
 echo @echo off > start.bat
 echo java -jar app.jar >> start.bat
 echo if %%errorlevel%% equ 0 exit >> start.bat
-echo echo. >> start.bat
-echo echo Terminal exited with error code >> start.bat
 echo timeout -1 /nobreak ^> nul >> start.bat
 
 echo.

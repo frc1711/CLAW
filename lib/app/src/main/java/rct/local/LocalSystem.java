@@ -1,12 +1,15 @@
 package rct.local;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import rct.commands.Command;
 import rct.network.low.DriverStationSocketHandler;
 import rct.network.low.ResponseMessage;
 import rct.network.messages.CommandInputMessage;
 import rct.network.messages.CommandOutputMessage;
+import rct.network.messages.ConnectionCheckMessage;
+import rct.network.messages.ConnectionResponseMessage;
 import rct.network.messages.StreamDataMessage;
 
 public class LocalSystem {
@@ -30,38 +33,77 @@ public class LocalSystem {
     
     // Socket handling
     private final DriverStationSocketHandler socket;
+    private final Consumer<IOException> handleSocketException;
+    
+    // Server connection testing
+    private ConnectionResponseMessage connectionResponseMessage;
+    private final Object connectionResponseWaiter = new Object();
+    private static final long CONNECTION_RESPONSE_TIMEOUT = 5000;
     
     public LocalSystem (
             int teamNum,
             int remotePort,
             double responseTimeout,
             StreamDataStorage streamDataStorage,
-            ConsoleManager console)
+            ConsoleManager console,
+            Consumer<IOException> handleSocketException)
             throws IOException {
         
-        // Establishing socket connection
-        this.console = console;
-        console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
-        try {
-            socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, this::handleSocketException);
-        } catch (IOException e) {
-            console.printlnErr("Failed to connect to roboRIO.\n\n");
-            throw e;
-        }
-        console.printlnSys("Successfully connected to roboRIO.");
-        
-        // Stream data storage
         this.streamDataStorage = streamDataStorage;
-        
-        // Command interpreter
         interpreter = new LocalCommandInterpreter(console, streamDataStorage);
         this.responseTimeout = responseTimeout;
+        this.console = console;
+        this.handleSocketException = handleSocketException;
+        
+        // Establishing socket connection
+        console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
+        try {
+            socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketException);
+        } catch (IOException e) {
+            console.printlnErr("Failed to connect to roboRIO.");
+            throw e;
+        }
+        
+        console.printlnSys("Socket connection successful. Checking for running RCT server...");
+        try {
+            checkServerConnection();
+        } catch (NoRunningServerException e) {
+            console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
+            socket.close();
+            throw e;
+        }
+        
+        console.printlnSys("Successfully connected to roboRIO.");
     }
     
     // SOCKET
     
+    private void checkServerConnection () throws NoRunningServerException {        
+        connectionResponseMessage = null;
+        
+        try {
+            socket.sendInstructionMessage(new ConnectionCheckMessage());
+        } catch (IOException e) {
+            handleSocketException.accept(e);
+            throw new NoRunningServerException();
+        }
+        
+        try {
+            synchronized (connectionResponseWaiter) {
+                connectionResponseWaiter.wait(CONNECTION_RESPONSE_TIMEOUT);
+            }
+            
+            if (connectionResponseMessage == null) throw new NoRunningServerException();
+        } catch (InterruptedException e) {
+            throw new NoRunningServerException();
+        }
+    }
+    
     private void receiveMessage (ResponseMessage msg) {
         Class<?> msgClass = msg.getClass();
+        
+        if (msgClass == ConnectionResponseMessage.class)
+            receiveConnectionResponseMessage((ConnectionResponseMessage)msg);
         
         if (msgClass == CommandOutputMessage.class)
             receiveCommandOutputMessage((CommandOutputMessage)msg);
@@ -70,12 +112,15 @@ public class LocalSystem {
             receiveStreamDataMessage((StreamDataMessage)msg);
     }
     
-    private void receiveStreamDataMessage (StreamDataMessage msg) {
-        streamDataStorage.acceptDataMessage(msg);
+    private void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
+        connectionResponseMessage = msg;
+        synchronized (connectionResponseWaiter) {
+            connectionResponseWaiter.notifyAll();
+        }
     }
     
-    private void handleSocketException (IOException e) {
-        console.println(e.toString());
+    private void receiveStreamDataMessage (StreamDataMessage msg) {
+        streamDataStorage.acceptDataMessage(msg);
     }
     
     /**
@@ -157,9 +202,10 @@ public class LocalSystem {
      * @return {@code false} if the command could not be processed because the local system
      * is already waiting on a remote command process, {@code true} otherwise.
      * @throws Command.ParseException If the provided command string if malformed
-     * @throws IOException If the command failed to send to remote or no response was received
+     * @throws NoResponseException If no response was received from a command sent to remote
+     * @throws IOException If the command failed to send to remote
      */
-    public boolean processCommand (String line) throws Command.ParseException, IOException {
+    public boolean processCommand (String line) throws Command.ParseException, NoResponseException, IOException {
         if (awaitingRemoteCommandProcess()) return false;
         
         // Attempt to process the command locally
@@ -182,6 +228,16 @@ public class LocalSystem {
     public static class NoResponseException extends IOException {
         public NoResponseException () {
             super("No response from the roboRIO was received for the last executed command.");
+        }
+    }
+    
+    public static class NoRunningServerException extends IOException {
+        public NoRunningServerException () {
+            super(
+                "No instance of the Robot Control Terminal server is running, " +
+                "or it has not responded within the " + CONNECTION_RESPONSE_TIMEOUT +
+                "ms timeout"
+            );
         }
     }
     

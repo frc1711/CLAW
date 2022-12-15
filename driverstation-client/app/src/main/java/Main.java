@@ -1,7 +1,4 @@
-import java.util.Scanner;
-
-import rct.local.LocalSystem;
-import rct.local.StreamDataStorage;
+import rct.local.RobotControlTerminal;
 
 public class Main {
     
@@ -12,22 +9,9 @@ public class Main {
     public void run () {
         
         ColorConsoleManager mgr = new ColorConsoleManager();
-        Scanner scanner = new Scanner(System.in);
+        RobotControlTerminal terminal = new RobotControlTerminal(mgr);
         
-        try {
-            LocalSystem system = new LocalSystem(1711, 5800, 5, new StreamDataStorage(), mgr);
-            while (true) {
-                System.out.print("\n> ");
-                System.out.flush();
-                system.processCommand(scanner.nextLine());
-                System.out.flush();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        
-        scanner.close();
+        terminal.start();
         
     }
     

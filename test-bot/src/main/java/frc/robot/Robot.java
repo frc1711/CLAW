@@ -14,6 +14,8 @@ import rct.network.low.InstructionMessage;
 import rct.network.low.RobotSocketHandler;
 import rct.network.messages.CommandInputMessage;
 import rct.network.messages.CommandOutputMessage;
+import rct.network.messages.ConnectionCheckMessage;
+import rct.network.messages.ConnectionResponseMessage;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -67,6 +69,8 @@ public class Robot extends TimedRobot {
                             CommandOutputMessage outMsg = new CommandOutputMessage(isError, inMsg.id, output);
                             handlerList.get(0).sendResponseMessage(outMsg);
                         }
+                    } else if (m.getClass() == ConnectionCheckMessage.class) {
+                        handlerList.get(0).sendResponseMessage(new ConnectionResponseMessage());
                     }
                 } catch (Exception e) { }
             }, (IOException e) -> { System.out.println(e); });
