@@ -9,8 +9,15 @@ import rct.local.LocalSystem.NoResponseException;
 
 public class RobotControlTerminal {
     
+    private static final double CONNECTION_WATCHER_REFRESH_TIME = 3;
+    private static final int
+        TEAM_NUMBER = 1711,
+        REMOTE_PORT = 5800;
+    
     private final ConsoleManager console;
     private final Scanner scanner;
+    private LocalSystem system;
+    private boolean requireNewConnection = false;
     
     public RobotControlTerminal (ConsoleManager console) {
         this.console = console;
@@ -18,35 +25,55 @@ public class RobotControlTerminal {
     }
     
     public void start () {
-        LocalSystem system = getLocalSystem();
+        getLocalSystem();
+        
         console.print("\n");
         
         if (system == null) System.exit(1);
         
+        startConnectionWatcherThread();
+        
         while (true) {
-            console.printSys("\n> ");
+            console.printSys("> ");
             console.flush();
             
             try {
-                processCommand(system, scanner.nextLine());
+                processCommand(scanner.nextLine());
             } catch (NoSuchElementException e) {
                 break;
             }
+            
+            console.print("\n");
         }
     }
     
-    private void handleSocketException (IOException e) {
-        console.printlnErr("\n\nA fatal socket exception occurred (connection to the robot was broken).\n");
-        e.printStackTrace();
-        System.exit(1);
+    private void startConnectionWatcherThread () {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep((long)(CONNECTION_WATCHER_REFRESH_TIME*1000));
+                } catch (InterruptedException e) { }
+                
+                try {
+                    if (requireNewConnection) system.establishNewConnection(TEAM_NUMBER, REMOTE_PORT);
+                    requireNewConnection = false;
+                } catch (IOException e) { }
+            }
+        });
+        
+        thread.start();
+    }
+    
+    private void socketReconnect () {
+        requireNewConnection = true;
     }
     
     private LocalSystem getLocalSystem () {
-        LocalSystem system = null;
+        system = null;
         
         while (system == null) {
             try {
-                system = new LocalSystem(1711, 5800, 5, new StreamDataStorage(), console, this::handleSocketException);
+                system = new LocalSystem(TEAM_NUMBER, REMOTE_PORT, 5, new StreamDataStorage(), console, e -> socketReconnect());
             } catch (IOException e) {
                 if (!getYesOrNo("\nTry again?")) return null;
                 console.clear();
@@ -68,15 +95,17 @@ public class RobotControlTerminal {
         }
     }
     
-    private void processCommand (LocalSystem system, String line) {
+    private void processCommand (String line) {
         try {
             system.processCommand(line);
         } catch (ParseException e) {
             console.printlnErr("Malformatted command: " + e.getMessage());
         } catch (NoResponseException e) {
+            // TODO: Local command like "error [error type]" can further explain error messages like this
             console.printlnErr("Timeout reached: No response was received for the last command sent to remote.");
         } catch (IOException e) {
             console.printlnErr("The command failed to send to remote.");
+            socketReconnect();
         }
     }
     

@@ -32,8 +32,8 @@ public class LocalSystem {
     private final StreamDataStorage streamDataStorage;
     
     // Socket handling
-    private final DriverStationSocketHandler socket;
-    private final Consumer<IOException> handleSocketException;
+    private DriverStationSocketHandler socket;
+    private final Consumer<IOException> handleSocketReceiverException;
     
     // Server connection testing
     private ConnectionResponseMessage connectionResponseMessage;
@@ -46,31 +46,29 @@ public class LocalSystem {
             double responseTimeout,
             StreamDataStorage streamDataStorage,
             ConsoleManager console,
-            Consumer<IOException> handleSocketException)
-            throws IOException {
+            Consumer<IOException> handleSocketReceiverException)
+            throws NoRunningServerException, IOException {
         
         this.streamDataStorage = streamDataStorage;
         interpreter = new LocalCommandInterpreter(console, streamDataStorage);
         this.responseTimeout = responseTimeout;
         this.console = console;
-        this.handleSocketException = handleSocketException;
+        this.handleSocketReceiverException = handleSocketReceiverException;
         
         // Establishing socket connection
         console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
         try {
-            socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketException);
+            establishNewConnection(teamNum, remotePort);
         } catch (IOException e) {
             console.printlnErr("Failed to connect to roboRIO.");
             throw e;
         }
         
         console.printlnSys("Socket connection successful. Checking for running RCT server...");
-        try {
-            checkServerConnection();
-        } catch (NoRunningServerException e) {
+        if (!checkServerConnection()) {
             console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
             socket.close();
-            throw e;
+            throw new NoRunningServerException();
         }
         
         console.printlnSys("Successfully connected to roboRIO.");
@@ -78,14 +76,31 @@ public class LocalSystem {
     
     // SOCKET
     
-    private void checkServerConnection () throws NoRunningServerException {        
+    public void establishNewConnection (int teamNum, int remotePort) throws IOException {
+        // Close the current socket (if one exists)
+        try {
+            if (socket != null) socket.close();
+        } catch (IOException e) { }
+        
+        // Create a new socket
+        socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketReceiverException);
+    }
+    
+    /**
+     * Checks whether or not the connection to the server is good. These are the requirements for a good connection:
+     * <ol>
+     * <li>The socket is open and able to trasmit data back and forth.</li>
+     * <li>The server is responding to {@link ConnectionCheckMessage}s with {@link ConnectionResponseMessage}s.</li>
+     * </ol>
+     * @return {@code true} if the connection is good.
+     */
+    public boolean checkServerConnection () {
         connectionResponseMessage = null;
         
         try {
             socket.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
-            handleSocketException.accept(e);
-            throw new NoRunningServerException();
+            return false;
         }
         
         try {
@@ -93,10 +108,12 @@ public class LocalSystem {
                 connectionResponseWaiter.wait(CONNECTION_RESPONSE_TIMEOUT);
             }
             
-            if (connectionResponseMessage == null) throw new NoRunningServerException();
+            if (connectionResponseMessage == null) return false;
         } catch (InterruptedException e) {
-            throw new NoRunningServerException();
+            return false;
         }
+        
+        return true;
     }
     
     private void receiveMessage (ResponseMessage msg) {
@@ -156,10 +173,16 @@ public class LocalSystem {
      * a response was not received within the timeout period
      */
     private void sendCommandToRemote (String command) throws IOException {
-        // Sending the message
-        msgAwaitingResponse = new CommandInputMessage(currentRemoteCommandId, command);
+        try {
+            // Attempt to send the message
+            msgAwaitingResponse = new CommandInputMessage(currentRemoteCommandId, command);
+            socket.sendInstructionMessage(msgAwaitingResponse);
+        } catch (IOException e) {
+            // If the command failed to send, set msgAwaitingResponse to null to indicate we are no longer awaiting a response
+            msgAwaitingResponse = null;
+            throw e;
+        }
         
-        socket.sendInstructionMessage(msgAwaitingResponse);
         currentRemoteCommandId ++;
         
         // Wait until the timout or until this thread is interrupted, meaning a response has been received
@@ -170,8 +193,10 @@ public class LocalSystem {
             } catch (InterruptedException e) { }
         }
         
-        // Throw an exception if the timeout was reached without a message received
+        // Set msgAwaitingResponse to null to indicate we are no longer awaiting a response
         msgAwaitingResponse = null;
+        
+        // If no response was received, throw an exception
         if (!responseReceived) throw new NoResponseException();
     }
     
@@ -206,8 +231,6 @@ public class LocalSystem {
      * @throws IOException If the command failed to send to remote
      */
     public boolean processCommand (String line) throws Command.ParseException, NoResponseException, IOException {
-        if (awaitingRemoteCommandProcess()) return false;
-        
         // Attempt to process the command locally
         if (interpreter.processLine(line)) return true;
         
