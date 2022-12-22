@@ -1,6 +1,8 @@
 package rct.local;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import rct.commands.Command;
 import rct.commands.CommandInterpreter;
@@ -12,6 +14,8 @@ public class LocalCommandInterpreter extends CommandInterpreter {
     private final ConsoleManager console;
     private final StreamDataStorage streamDataStorage;
     private final LocalSystem system;
+    
+    private final List<HelpSection> helpSections = new ArrayList<HelpSection>();
     
     /**
      * Because commands are sent to remote when the local command interpreter indicates that it does not recognize a command,
@@ -28,24 +32,41 @@ public class LocalCommandInterpreter extends CommandInterpreter {
     }
     
     private void addCommands () {
-        // TODO: Add usage to addCommandConsumer for commands along with their help sections
-        addCommandConsumer("clear", this::clearCommand);
-        addCommandConsumer("exit", this::exitCommand);
-        addCommandConsumer("help", this::helpCommand);
-        addCommandConsumer("status", this::statusCommand);
-        addCommandConsumer("ssh", this::sshCommand);
+        addDocumentedCommand("clear", "clear",
+            "Clears the console.",
+            this::clearCommand);
+        
+        addDocumentedCommand("exit", "exit",
+            "Exits the robot control terminal immediately.",
+            this::exitCommand);
+        
+        addDocumentedCommand("help", "help [location]",
+            "Displays a help message for the given location, either local (driverstation) or remote (roboRIO).",
+            this::helpCommand);
+        
+        addDocumentedCommand("netstat", "netstat",
+            "Displays the current status of the connection to remote, automatically updating over time. Press enter to stop.",
+            this::statusCommand);
+        
+        addDocumentedCommand("ssh", "ssh [user]",
+            "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
+            this::sshCommand);
     }
     
-    private void clearCommand (Command cmd) {
+    private void clearCommand (String commandUsage, Command cmd) {
         console.clear();
     }
     
-    private void exitCommand (Command cmd) {
+    private void exitCommand (String commandUsage, Command cmd) {
         System.exit(0);
     }
     
-    private void helpCommand (Command cmd) throws BadArgumentsException {
-        String commandUsage = "help [local | remote]";
+    private void helpCommand (String commandUsage, Command cmd) throws BadArgumentsException {
+        if (cmd.argsLen() == 0) {
+            console.println("Use 'help local' for a list of local commands, and 'help remote' for a list of remote commands.");
+            return;
+        }
+        
         CommandInterpreter.checkNumArgs(commandUsage, 1, cmd.argsLen());
         CommandInterpreter.expectedOneOf(commandUsage, "location", cmd.getArg(0), "local", "remote");
         
@@ -55,12 +76,16 @@ public class LocalCommandInterpreter extends CommandInterpreter {
             return;
         }
         
-        console.println("--Local command interpreter help--");
-        console.println("[help goes here]");
-        // TODO: Local command interpreter help automatically scales with addCommandConsumer
+        console.printlnSys("\n==== Local Command Interpreter Help ====");
+        console.println("All the following commands run on the local command interpreter, meaning they");
+        console.println("are executed on the driverstation and not the roboRIO (with few exceptions).\n");
+        for (HelpSection helpSection : helpSections) {
+            console.printlnSys(helpSection.usage);
+            console.println("  "+helpSection.helpText+"\n");
+        }
     }
     
-    private void statusCommand (Command cmd) {
+    private void statusCommand (String commandUsage, Command cmd) {
         console.println("");
         
         // Keep repeating until the user hits enter
@@ -94,21 +119,22 @@ public class LocalCommandInterpreter extends CommandInterpreter {
             if (!isOutputError) console.println(output);
             else console.printlnErr(output);
             
+            console.print("Press enter to stop.");
+            console.flush();
+            
             // Try to wait some amount of time before retrying
             try { Thread.sleep(200); }
             catch (InterruptedException e) { }
         }
         
         // Clear any user input already waiting to be processed
+        console.println("");
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (Command cmd) throws BadArgumentsException {
-        // Arguments exceptions
-        String commandUsage = "ssh [user]";
+    private void sshCommand (String commandUsage, Command cmd) throws BadArgumentsException {
         CommandInterpreter.checkNumArgs(commandUsage, 1, cmd.argsLen());
-        
-        String user = cmd.getArg(0).toLowerCase();
+        String user = cmd.getArg(0);
         CommandInterpreter.expectedOneOf(commandUsage, "user", user, "lvuser", "admin");
         
         // Get host for ssh and generate command
@@ -135,6 +161,23 @@ public class LocalCommandInterpreter extends CommandInterpreter {
         sendCommandToRemote = false;
         boolean result = super.processLine(line);
         return result && !sendCommandToRemote;
+    }
+    
+    private void addDocumentedCommand (String command, String usage, String helpText, ExtendedCommandProcessor processor) {
+        addCommandConsumer(command, cmd -> processor.accept(usage, cmd));
+        helpSections.add(new HelpSection(usage, helpText));
+    }
+    
+    private static interface ExtendedCommandProcessor {
+        public void accept (final String commandUsage, Command cmd) throws BadArgumentsException;
+    }
+    
+    private static class HelpSection {
+        private final String usage, helpText;
+        public HelpSection (String usage, String helpText) {
+            this.usage = usage;
+            this.helpText = helpText;
+        }
     }
     
 }
