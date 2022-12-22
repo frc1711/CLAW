@@ -6,10 +6,11 @@ import java.util.List;
 
 import rct.commands.Command;
 import rct.commands.CommandInterpreter;
+import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.local.LocalSystem.ConnectionStatus;
 import rct.network.low.DriverStationSocketHandler;
 
-public class LocalCommandInterpreter extends CommandInterpreter {
+public class LocalCommandInterpreter {
     
     private final ConsoleManager console;
     private final StreamDataStorage streamDataStorage;
@@ -23,6 +24,7 @@ public class LocalCommandInterpreter extends CommandInterpreter {
      * that it should indicate it does not recognize the command and thus must send the command to remote.
      */
     private boolean sendCommandToRemote = false;
+    private final CommandInterpreter commandInterpreter = new CommandInterpreter();
     
     public LocalCommandInterpreter (ConsoleManager console, LocalSystem system, StreamDataStorage streamDataStorage) {
         this.console = console;
@@ -62,12 +64,13 @@ public class LocalCommandInterpreter extends CommandInterpreter {
     }
     
     private void helpCommand (String commandUsage, Command cmd) throws BadArgumentsException {
+        CommandInterpreter.checkNumArgs(commandUsage, 0, 1, cmd.argsLen());
+        
         if (cmd.argsLen() == 0) {
             console.println("Use 'help local' for a list of local commands, and 'help remote' for a list of remote commands.");
             return;
         }
         
-        CommandInterpreter.checkNumArgs(commandUsage, 1, cmd.argsLen());
         CommandInterpreter.expectedOneOf(commandUsage, "location", cmd.getArg(0), "local", "remote");
         
         // Send the command to remote if the location argument is "remote"
@@ -156,15 +159,14 @@ public class LocalCommandInterpreter extends CommandInterpreter {
         }
     }
     
-    @Override
     public boolean processLine (String line) throws Command.ParseException, BadArgumentsException {
         sendCommandToRemote = false;
-        boolean result = super.processLine(line);
+        boolean result = commandInterpreter.processLine(line);
         return result && !sendCommandToRemote;
     }
     
     private void addDocumentedCommand (String command, String usage, String helpText, ExtendedCommandProcessor processor) {
-        addCommandConsumer(command, cmd -> processor.accept(usage, cmd));
+        commandInterpreter.addCommandConsumer(command, cmd -> processor.accept(usage, cmd));
         helpSections.add(new HelpSection(usage, helpText));
     }
     
