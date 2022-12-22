@@ -40,4 +40,24 @@ public class ColorConsoleManager extends ConsoleManager {
         }
     }
     
+    @Override
+    public void moveUp (int lines) {
+        out.print(Ansi.ansi().cursorUpLine(lines));
+    }
+    
+    @Override
+    public void clearLine () {
+        out.print(Ansi.ansi().eraseLine());
+    }
+    
+    @Override
+    public void saveCursorPos () {
+        out.print(Ansi.ansi().saveCursorPosition());
+    }
+    
+    @Override
+    public void restoreCursorPos () {
+        out.print(Ansi.ansi().restoreCursorPosition());
+    }
+    
 }

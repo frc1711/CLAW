@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 import rct.commands.Command;
+import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.network.low.DriverStationSocketHandler;
 import rct.network.low.ResponseMessage;
 import rct.network.messages.CommandInputMessage;
@@ -34,6 +35,7 @@ public class LocalSystem {
     // Socket handling
     private DriverStationSocketHandler socket;
     private final Consumer<IOException> handleSocketReceiverException;
+    private final int teamNum;
     
     // Server connection testing
     private ConnectionResponseMessage connectionResponseMessage;
@@ -49,8 +51,9 @@ public class LocalSystem {
             Consumer<IOException> handleSocketReceiverException)
             throws NoRunningServerException, IOException {
         
+        this.teamNum = teamNum;
         this.streamDataStorage = streamDataStorage;
-        interpreter = new LocalCommandInterpreter(console, streamDataStorage);
+        interpreter = new LocalCommandInterpreter(console, this, streamDataStorage);
         this.responseTimeout = responseTimeout;
         this.console = console;
         this.handleSocketReceiverException = handleSocketReceiverException;
@@ -58,14 +61,14 @@ public class LocalSystem {
         // Establishing socket connection
         console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
         try {
-            establishNewConnection(teamNum, remotePort);
+            establishNewConnection(remotePort);
         } catch (IOException e) {
             console.printlnErr("Failed to connect to roboRIO.");
             throw e;
         }
         
         console.printlnSys("Socket connection successful. Checking for running RCT server...");
-        if (!checkServerConnection()) {
+        if (checkServerConnection() != ConnectionStatus.OK) {
             console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
             socket.close();
             throw new NoRunningServerException();
@@ -76,7 +79,7 @@ public class LocalSystem {
     
     // SOCKET
     
-    public void establishNewConnection (int teamNum, int remotePort) throws IOException {
+    public void establishNewConnection (int remotePort) throws IOException {
         // Close the current socket (if one exists)
         try {
             if (socket != null) socket.close();
@@ -86,34 +89,38 @@ public class LocalSystem {
         socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketReceiverException);
     }
     
+    public int getTeamNum () {
+        return teamNum;
+    }
+    
     /**
-     * Checks whether or not the connection to the server is good. These are the requirements for a good connection:
-     * <ol>
-     * <li>The socket is open and able to trasmit data back and forth.</li>
-     * <li>The server is responding to {@link ConnectionCheckMessage}s with {@link ConnectionResponseMessage}s.</li>
-     * </ol>
-     * @return {@code true} if the connection is good.
+     * Checks the connection status.
+     * @return The {@link ConnectionStatus} describing the current connection to the server.
      */
-    public boolean checkServerConnection () {
+    public ConnectionStatus checkServerConnection () {
         connectionResponseMessage = null;
         
         try {
             socket.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
-            return false;
+            return ConnectionStatus.NO_CONNECTION;
         }
         
         try {
             synchronized (connectionResponseWaiter) {
                 connectionResponseWaiter.wait(CONNECTION_RESPONSE_TIMEOUT);
             }
-            
-            if (connectionResponseMessage == null) return false;
-        } catch (InterruptedException e) {
-            return false;
-        }
+        } catch (InterruptedException e) { }
         
-        return true;
+        if (connectionResponseMessage == null) return ConnectionStatus.NO_SERVER;
+        
+        return ConnectionStatus.OK;
+    }
+    
+    public enum ConnectionStatus {
+        NO_CONNECTION,
+        NO_SERVER,
+        OK,
     }
     
     private void receiveMessage (ResponseMessage msg) {
@@ -230,7 +237,7 @@ public class LocalSystem {
      * @throws NoResponseException If no response was received from a command sent to remote
      * @throws IOException If the command failed to send to remote
      */
-    public boolean processCommand (String line) throws Command.ParseException, NoResponseException, IOException {
+    public boolean processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
         // Attempt to process the command locally
         if (interpreter.processLine(line)) return true;
         
