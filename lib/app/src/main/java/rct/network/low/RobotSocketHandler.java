@@ -33,11 +33,17 @@ public class RobotSocketHandler {
     }
     
     /**
-     * Waits for a new connection to the server (blocking). Once the new socket is opened, messages can be sent and received
+     * Gets a new connection to the server (waiting is blocking). Once the new socket is opened, messages can be sent and received
      * through this {@link RobotSocketHandler}.
      * @throws IOException If there is an i/o exception while waiting for and starting a new socket.
      */
-    public void start () throws IOException {
+    public void getNewConnection () throws IOException {
+        // Try to close the client socket handler if possible
+        try {
+            closeClientSocketHandler();
+        } catch (IOException e) { }
+        
+        // Establish a new client socket handler
         clientSocketHandler = new SocketHandler(serverSocket.accept(), this::receiveMessage, this::handleReceiverIOException);
     }
     
@@ -59,8 +65,7 @@ public class RobotSocketHandler {
     private void handleReceiverIOException (IOException ioException) {
         // Try to close the client socket, but do nothing if there is a problem in attempting to close it
         try {
-            if (!clientSocketHandler.isClosed())
-                clientSocketHandler.close();
+            closeClientSocketHandler();
         } catch (Exception e) { }
         
         // Handle the IO exception
@@ -69,7 +74,7 @@ public class RobotSocketHandler {
         // Try to get a new client socket if the server socket is still open
         try {
             if (!serverSocket.isClosed())
-                start();
+                getNewConnection();
         } catch (IOException e) {
             excHandler.accept(e);
         }
@@ -81,6 +86,8 @@ public class RobotSocketHandler {
      * @throws IOException      If the socket threw an i/o exception while attempting to send the message.
      */
     public void sendResponseMessage (ResponseMessage responseMessage) throws IOException {
+        if (clientSocketHandler == null)
+            throw new IOException("No socket to send the response message through");
         clientSocketHandler.sendMessage(responseMessage);
     }
     
@@ -90,6 +97,13 @@ public class RobotSocketHandler {
      */
     public void close () throws IOException {
         serverSocket.close();
+        closeClientSocketHandler();
+    }
+    
+    private void closeClientSocketHandler () throws IOException {
+        if (clientSocketHandler == null)
+            throw new IOException("No socket to close");
+        
         if (!clientSocketHandler.isClosed())
             clientSocketHandler.close();
     }
