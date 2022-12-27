@@ -13,6 +13,11 @@ import rct.network.messages.ConnectionCheckMessage;
 import rct.network.messages.ConnectionResponseMessage;
 import rct.network.messages.StreamDataMessage;
 
+/**
+ * A interface between the robot control terminal and the socket connection to the robot.
+ * Some functionality includes sending messages to and receiving from the robot,
+ * testing the status of the connection, and establishing new connections.
+ */
 public class LocalSystem {
     
     // Console manager
@@ -27,7 +32,7 @@ public class LocalSystem {
     private final Object responseWaiter = new Object();
     private boolean responseReceived;
     private CommandOutputMessage msgReceived;
-    private final double responseTimeout;
+    private final long responseTimeoutMillis;
     
     // Stream data
     private final StreamDataStorage streamDataStorage;
@@ -40,8 +45,18 @@ public class LocalSystem {
     // Server connection testing
     private ConnectionResponseMessage connectionResponseMessage;
     private final Object connectionResponseWaiter = new Object();
-    private static final long CONNECTION_RESPONSE_TIMEOUT = 5000;
     
+    /**
+     * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
+     * @param teamNum                       The team number to use for the roboRIO
+     * @param remotePort                    The remote port to connect to (if you don't know what to try, 5800 is a good default).
+     * @param responseTimeout               The amount 
+     * @param streamDataStorage
+     * @param console
+     * @param handleSocketReceiverException
+     * @throws NoRunningServerException
+     * @throws IOException
+     */
     public LocalSystem (
             int teamNum,
             int remotePort,
@@ -51,10 +66,11 @@ public class LocalSystem {
             Consumer<IOException> handleSocketReceiverException)
             throws NoRunningServerException, IOException {
         
+        // Instantiating final fields
         this.teamNum = teamNum;
         this.streamDataStorage = streamDataStorage;
         interpreter = new LocalCommandInterpreter(console, this, streamDataStorage);
-        this.responseTimeout = responseTimeout;
+        responseTimeoutMillis = (long)(1000*responseTimeout);
         this.console = console;
         this.handleSocketReceiverException = handleSocketReceiverException;
         
@@ -67,6 +83,7 @@ public class LocalSystem {
             throw e;
         }
         
+        // Checking for a running server
         console.printlnSys("Socket connection successful. Checking for running RCT server...");
         if (checkServerConnection() != ConnectionStatus.OK) {
             console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
@@ -77,8 +94,12 @@ public class LocalSystem {
         console.printlnSys("Successfully connected to roboRIO.");
     }
     
-    // SOCKET
-    
+    /**
+     * Try to recreate the {@link DriverStationSocketHandler}, connecting to {@link DriverStationSocketHandler#getRoborioHost(int)}
+     * at the given remote port.
+     * @param remotePort    The remote port to connect to.
+     * @throws IOException  If an i/o error occurred while trying to open the socket.
+     */
     public void establishNewConnection (int remotePort) throws IOException {
         // Close the current socket (if one exists)
         try {
@@ -89,6 +110,9 @@ public class LocalSystem {
         socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketReceiverException);
     }
     
+    /**
+     * Gets the team number passed in through the constructor.
+     */
     public int getTeamNum () {
         return teamNum;
     }
@@ -100,29 +124,49 @@ public class LocalSystem {
     public ConnectionStatus checkServerConnection () {
         connectionResponseMessage = null;
         
+        // Attempt to send a connection check message to remote
         try {
             socket.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
             return ConnectionStatus.NO_CONNECTION;
         }
         
+        // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
         try {
             synchronized (connectionResponseWaiter) {
-                connectionResponseWaiter.wait(CONNECTION_RESPONSE_TIMEOUT);
+                connectionResponseWaiter.wait(responseTimeoutMillis);
             }
         } catch (InterruptedException e) { }
         
+        // Return a connection status based on whether a connection response message was received
         if (connectionResponseMessage == null) return ConnectionStatus.NO_SERVER;
-        
         return ConnectionStatus.OK;
     }
     
+    /**
+     * Represents a connection status with remote.
+     */
     public enum ConnectionStatus {
+        /**
+         * The socket connection failed.
+         */
         NO_CONNECTION,
+        
+        /**
+         * There is a socket connection to remote, but the RCT server is not responding or there is no server running.
+         */
         NO_SERVER,
+        
+        /**
+         * The connection is OK.
+         */
         OK,
     }
     
+    /**
+     * Receives a generalized {@link ResponseMessage}, and delegates responsibility
+     * based on the message's subclass. This method will run on a receiver thread.
+     */
     private void receiveMessage (ResponseMessage msg) {
         Class<?> msgClass = msg.getClass();
         
@@ -136,6 +180,12 @@ public class LocalSystem {
             receiveStreamDataMessage((StreamDataMessage)msg);
     }
     
+    /**
+     * Receives a connection response message, setting connectionResponseMessage
+     * and notifying connectionResponseWaiter so that the response can be processed.
+     * This method will run on a receiver thread, and is delegated a message from
+     * {@link LocalSystem#receiveMessage(ResponseMessage)}.
+     */
     private void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
         connectionResponseMessage = msg;
         synchronized (connectionResponseWaiter) {
@@ -143,13 +193,18 @@ public class LocalSystem {
         }
     }
     
+    /**
+     * Receives a stream data message and sends it to the stream data storage to be
+     * processed. This method will run on a receiver thread, and is delegated a message from
+     * {@link LocalSystem#receiveMessage(ResponseMessage)}.
+     */
     private void receiveStreamDataMessage (StreamDataMessage msg) {
         streamDataStorage.acceptDataMessage(msg);
     }
     
     /**
-     * Closes the socket.
-     * @throws IOException See {@link java.net.Socket#close()}
+     * Closes the socket. See {@link DriverStationSocketHandler#close()}.
+     * @throws IOException If the socket threw an i/o exception while closing.
      */
     public void close () throws IOException {
         socket.close();
@@ -157,6 +212,12 @@ public class LocalSystem {
     
     // COMMAND INTERPRETATION
     
+    /**
+     * Receives a command output message, setting msgReceived and notifying
+     * responseWaiter so that the response can be processed.
+     * This method will run on a receiver thread, and is delegated a message from
+     * {@link LocalSystem#receiveMessage(ResponseMessage)}.
+     */
     private void receiveCommandOutputMessage (CommandOutputMessage msg) {
         // Do nothing if there is no message awaiting a response or if the output is
         // for the wrong message
@@ -196,7 +257,7 @@ public class LocalSystem {
         responseReceived = false;
         synchronized (responseWaiter) {
             try {
-                responseWaiter.wait((long)(responseTimeout * 1000));
+                responseWaiter.wait(responseTimeoutMillis);
             } catch (InterruptedException e) { }
         }
         
@@ -222,24 +283,17 @@ public class LocalSystem {
      * <li>A local command interpreter will attempt to process the command. If it succeeds, then
      * the command has been successfully processed and the method returns here.</li>
      * <li>If the command is not recognized by the local interpreter, it is sent to remote
-     * to be processed. A flag is set to indicate that the local system is awaiting a
-     * remote command process. See {@link #awaitingRemoteCommandProcess()}. This waiting for
-     * a response is blocking.</li>
-     * <li>The local system will be expecting a command output from remote.
-     * When this happens, {@code awaitingRemoteCommandProcess} will be reset and a
-     * new command can be inputted into the local system. The output from the command
-     * will also be sent through this local system's {@link ConsoleManager}.</li>
+     * to be processed. This waiting for a response is blocking. If no response is received
+     * within the timeout, a {@link NoResponseException} will be thrown.</li>
      * </ol>
-     * @param line The input string to be processed into a command.
-     * @return {@code false} if the command could not be processed because the local system
-     * is already waiting on a remote command process, {@code true} otherwise.
-     * @throws Command.ParseException If the provided command string if malformed
-     * @throws NoResponseException If no response was received from a command sent to remote
-     * @throws IOException If the command failed to send to remote
+     * @param line                      The input string to be processed into a command.
+     * @throws Command.ParseException   If the provided command string if malformed
+     * @throws NoResponseException      If no response was received from a command sent to remote
+     * @throws IOException              If the command failed to send to remote
      */
-    public boolean processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
+    public void processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
         // Attempt to process the command locally
-        if (interpreter.processLine(line)) return true;
+        if (interpreter.processLine(line)) return;
         
         // If the command was not successfully processed locally, send it
         // to remote to attempt to process it
@@ -251,21 +305,25 @@ public class LocalSystem {
         } else {
             console.printlnErr(msgReceived.commandOutput);
         }
-        
-        return true;
     }
     
+    /**
+     * An exception thrown if no response was received from remote after a command input message was sent.
+     */
     public static class NoResponseException extends IOException {
         public NoResponseException () {
             super("No response from the roboRIO was received for the last executed command.");
         }
     }
     
-    public static class NoRunningServerException extends IOException {
+    /**
+     * An exception thrown if no response was received from remote after a connection check message was sent.
+     */
+    public class NoRunningServerException extends IOException {
         public NoRunningServerException () {
             super(
                 "No instance of the Robot Control Terminal server is running, " +
-                "or it has not responded within the " + CONNECTION_RESPONSE_TIMEOUT +
+                "or it has not responded within the " + responseTimeoutMillis +
                 "ms timeout"
             );
         }

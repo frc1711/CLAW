@@ -6,30 +6,51 @@ import rct.commands.Command.ParseException;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.local.LocalSystem.NoResponseException;
 
+/**
+ * Represents the main robot control terminal program which starts the driverstation side of the server
+ * and controls input into the {@link LocalSystem} to be processed as commands.
+ */
 public class RobotControlTerminal {
     
-    private static final double CONNECTION_WATCHER_REFRESH_TIME = 3;
+    /**
+     * The time interval between re-checking the connection status. Used by the connection watcher thread. 
+     */
+    private static final long CONNECTION_WATCHER_REFRESH_TIME_MILLIS = 3000;
+    
     private static final int
         TEAM_NUMBER = 1711,
         REMOTE_PORT = 5800;
     
     private final ConsoleManager console;
-    private LocalSystem system;
     private boolean requireNewConnection = false;
     
+    /**
+     * Creates a new robot control terminal.
+     */
     public RobotControlTerminal (ConsoleManager console) {
         this.console = console;
     }
     
+    /**
+     * Starts the robot control terminal.
+     */
     public void start () {
         
         // LocalSystem setup
-        getLocalSystem();
-        console.print("\n");
-        if (system == null) System.exit(1);
+        LocalSystem system;
+        try {
+            system = getLocalSystem();
+        } catch (IOException e) {
+            console.println("");
+            System.exit(1);
+            return;
+        }
         
         // Start a thread watching the connection to the robot, restoring it when necessary
-        startConnectionWatcherThread();
+        startConnectionWatcherThread(system);
+        
+        // Start the main command-line loop, and run it indefinitely
+        console.println("");
         
         while (true) {
             // Clear any waiting input lines
@@ -45,7 +66,7 @@ public class RobotControlTerminal {
                 continue;
             }
             
-            processCommand(inputLine);
+            processCommand(system, inputLine);
             
             // Add an extra print statement before processing the next command
             console.print("\n");
@@ -54,16 +75,16 @@ public class RobotControlTerminal {
     }
     
     /**
-     * Watch the connection to the robot indefinitely in a separate thread, restoring it when necessary
+     * Watch the connection to the robot indefinitely in a separate thread, restoring it when necessary.
      */
-    private void startConnectionWatcherThread () {
+    private void startConnectionWatcherThread (LocalSystem system) {
         // Watch the connection to the robot indefinitely in a separate thread,
         // restoring it when necessary
         Thread thread = new Thread(() -> {
             while (true) {
                 // Wait for a time before trying again
                 try {
-                    Thread.sleep((long)(CONNECTION_WATCHER_REFRESH_TIME*1000));
+                    Thread.sleep(CONNECTION_WATCHER_REFRESH_TIME_MILLIS);
                 } catch (InterruptedException e) { }
                 
                 try {
@@ -88,17 +109,20 @@ public class RobotControlTerminal {
     }
     
     /**
-     * Get a new local system (for the first time) using basic interactive UI if problems occur. It sets {@code this.system}
-     * to the retrieved {@link LocalSystem}. {@code this.system} can also be set to {@code null} if this method fails.
+     * Get a new local system (for the first time) using basic UI if problems occur.
+     * @return A new {@link LocalSystem} that has an open connection to remote.
+     * @throws IOException If there were problems while connection, and the user indicated
+     * that the app should not attempt to reconnect.
      */
-    private LocalSystem getLocalSystem () {
-        system = null;
+    private LocalSystem getLocalSystem () throws IOException {
+        LocalSystem system = null;
         
         while (system == null) {
             try {
                 system = new LocalSystem(TEAM_NUMBER, REMOTE_PORT, 5, new StreamDataStorage(), console, e -> socketReconnect());
             } catch (IOException e) {
-                if (!getYesOrNo("\nTry again?")) return null;
+                if (!getYesOrNo("\nTry again?"))
+                    throw e;
                 console.clear();
             }
         }
@@ -122,7 +146,7 @@ public class RobotControlTerminal {
         }
     }
     
-    private void processCommand (String line) {
+    private void processCommand (LocalSystem system, String line) {
         try {
             system.processCommand(line);
         } catch (ParseException e) {

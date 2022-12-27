@@ -5,6 +5,9 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.function.Consumer;
 
+/**
+ * A simple wrapper around {@code Socket} specialized for sending and receiving serializable {@link Message} objects.
+ */
 public class SocketHandler {
     
     private final Socket socket;
@@ -14,9 +17,9 @@ public class SocketHandler {
     /**
      * Create a new {@link SocketHandler} which allows for both sending and receiving {@link Message} objects.
      * Message reception is handled in a separate thread.
-     * @param socket            The {@link Socket} to send and receive data from
-     * @param messageReceiver   A {@code Consumer<Message>} which accepts messages received from the socket
-     * @param excHandler  A {@code Consumer<IOException>} which handles {@code IOException}s which occur
+     * @param socket            The {@link Socket} to send and receive data from.
+     * @param messageReceiver   A {@code Consumer<Message>} which accepts messages received from the socket.
+     * @param excHandler        A {@code Consumer<IOException>} which handles i/o exceptions which occur
      * in the message reception thread.
      * @throws IOException
      */
@@ -31,9 +34,9 @@ public class SocketHandler {
     }
     
     /**
-     * Sends a message through the socket
-     * @param sendMessage
-     * @throws IOException
+     * Sends a message through the socket.
+     * @param sendMessage   The {@link Message} to send.
+     * @throws IOException  If the socket failed to send the {@code Message}.
      */
     public void sendMessage (Message sendMessage) throws IOException {
         this.socket.getOutputStream().write(sendMessage.getData());
@@ -64,15 +67,16 @@ public class SocketHandler {
     }
     
     /**
-     * Closes the socket
-     * @throws IOException
+     * Closes the socket. See {@code java.net.Socket.close()}.
+     * @throws IOException If the socket threw an i/o exception while closing.
      */
     public void close () throws IOException {
         socket.close();
     }
     
     /**
-     * Returns whether or not the socket is closed
+     * Gets whether or not the socket is closed.
+     * @return {@code true} if the socket is closed, {@code false} otherwise.
      */
     public boolean isClosed () {
         return socket.isClosed();

@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A command obtained through user input which can processed by a {@link CommandInterpreter}.
+ */
 public class Command {
     
     private final String command;
