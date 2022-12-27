@@ -15,7 +15,7 @@ import rct.network.messages.StreamDataMessage;
 
 /**
  * A interface between the robot control terminal and the socket connection to the robot.
- * Some functionality includes sending messages to and receiving from the robot,
+ * Some functionality includes processing commands and controlling the messages sent to remote,
  * testing the status of the connection, and establishing new connections.
  */
 public class LocalSystem {
