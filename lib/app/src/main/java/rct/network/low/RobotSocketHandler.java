@@ -70,14 +70,6 @@ public class RobotSocketHandler {
         
         // Handle the IO exception
         excHandler.accept(ioException);
-        
-        // Try to get a new client socket if the server socket is still open
-        try {
-            if (!serverSocket.isClosed())
-                getNewConnection();
-        } catch (IOException e) {
-            excHandler.accept(e);
-        }
     }
     
     /**

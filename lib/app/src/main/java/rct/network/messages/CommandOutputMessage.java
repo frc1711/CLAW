@@ -15,6 +15,8 @@ public class CommandOutputMessage extends ResponseMessage {
     public final int inputCmdMsgId;
     public final String commandOutput;
     
+    // TODO: Extend this output message class so that many output messages can be sent for a single command, and so that ConsoleManager can be supported from remote
+    
     /**
      * Constructs a new {@link CommandOutputMessage}.
      * @param isError       Whether or not the {@code commandOutput} should be treated as an error message instead of normal output.

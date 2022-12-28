@@ -177,7 +177,7 @@ public class LocalSystem {
         if (msgClass == CommandOutputMessage.class)
             receiveCommandOutputMessage((CommandOutputMessage)msg);
         
-        else if (msgClass == StreamDataMessage.class)
+        if (msgClass == StreamDataMessage.class)
             receiveStreamDataMessage((StreamDataMessage)msg);
     }
     

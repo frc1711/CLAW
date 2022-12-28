@@ -5,17 +5,11 @@
 package frc.robot;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import rct.network.low.InstructionMessage;
-import rct.network.low.RobotSocketHandler;
-import rct.network.messages.CommandInputMessage;
-import rct.network.messages.CommandOutputMessage;
-import rct.network.messages.ConnectionCheckMessage;
-import rct.network.messages.ConnectionResponseMessage;
+import rct.remote.RCTServer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,6 +21,7 @@ public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
+    private RCTServer server;
 
     /**
      * This function is run when the robot is first started up and should be used for any
@@ -38,46 +33,11 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
         
-        RobotSocketHandler robotSocketHandler;
-        
         try {
-            ArrayList<RobotSocketHandler> handlerList = new ArrayList<RobotSocketHandler>();
-            
-            robotSocketHandler = new RobotSocketHandler(5800, (InstructionMessage m) -> {
-                try {
-                    if (m.getClass() == CommandInputMessage.class) {
-                        CommandInputMessage inMsg = (CommandInputMessage)m;
-                        rct.commands.Command command = new rct.commands.Command(inMsg.command);
-                        
-                        boolean isError = false;
-                        String output = "";
-                        boolean nores = false;
-                        if (!command.getCommand().equals("remote")) {
-                            output = "This message is sent from the roboRIO. Try using the 'remote' command.";
-                        } else if (command.argsLen() == 0) {
-                            output = "This is sent from remote. Use 'remote error' to try receiving an error output.";
-                        } else if (command.getArg(0).equals("error")) {
-                            isError = true;
-                            output = "Error: This is a test error sent from remote. Try 'remote nores' to\nnot receive any response.";
-                        } else if (command.getArg(0).equals("nores")) {
-                            nores = true;
-                        } else {
-                            output = "Echoing:\n" + inMsg.command;
-                        }
-                        
-                        if (!nores) {
-                            CommandOutputMessage outMsg = new CommandOutputMessage(isError, inMsg.id, output);
-                            handlerList.get(0).sendResponseMessage(outMsg);
-                        }
-                    } else if (m.getClass() == ConnectionCheckMessage.class) {
-                        handlerList.get(0).sendResponseMessage(new ConnectionResponseMessage());
-                    }
-                } catch (Exception e) { }
-            }, (IOException e) -> { System.out.println(e); });
-            
-            handlerList.add(robotSocketHandler);
-            
-            robotSocketHandler.start();
+            System.out.println("\n\nStarting server...");
+            server = new RCTServer(5800);
+            server.start();
+            System.out.println("Started successfully.\n\n");
         } catch (IOException e) {
             System.out.println(e);
         }
