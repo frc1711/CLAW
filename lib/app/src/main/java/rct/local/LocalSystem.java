@@ -7,6 +7,8 @@ import rct.commands.Command;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.network.low.DriverStationSocketHandler;
 import rct.network.low.ResponseMessage;
+import rct.network.low.Waiter;
+import rct.network.low.Waiter.NoValueReceivedException;
 import rct.network.messages.CommandInputMessage;
 import rct.network.messages.CommandOutputMessage;
 import rct.network.messages.ConnectionCheckMessage;
@@ -29,10 +31,7 @@ public class LocalSystem {
     private CommandInputMessage msgAwaitingResponse = null;
     private int currentRemoteCommandId = 1;
     
-    private final Object responseWaiter = new Object();
-    private boolean responseReceived;
-    private CommandOutputMessage msgReceived;
-    private final long responseTimeoutMillis;
+    private final Waiter<CommandOutputMessage> commandOutputWaiter = new Waiter<CommandOutputMessage>();
     
     // Stream data
     private final StreamDataStorage streamDataStorage;
@@ -41,10 +40,10 @@ public class LocalSystem {
     private DriverStationSocketHandler socket;
     private final Consumer<IOException> handleSocketReceiverException;
     private final int teamNum;
+    private final long responseTimeoutMillis;
     
     // Server connection testing
-    private ConnectionResponseMessage connectionResponseMessage;
-    private final Object connectionResponseWaiter = new Object();
+    private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
     
     /**
      * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
@@ -122,8 +121,6 @@ public class LocalSystem {
      * @return The {@link ConnectionStatus} describing the current connection to the server.
      */
     public ConnectionStatus checkServerConnection () {
-        connectionResponseMessage = null;
-        
         // Attempt to send a connection check message to remote
         try {
             socket.sendInstructionMessage(new ConnectionCheckMessage());
@@ -133,14 +130,18 @@ public class LocalSystem {
         
         // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
         try {
-            synchronized (connectionResponseWaiter) {
-                connectionResponseWaiter.wait(responseTimeoutMillis);
-            }
-        } catch (InterruptedException e) { }
-        
-        // Return a connection status based on whether a connection response message was received
-        if (connectionResponseMessage == null) return ConnectionStatus.NO_SERVER;
-        return ConnectionStatus.OK;
+            
+            connectionResponseWaiter.waitForValue(responseTimeoutMillis);
+            
+            // Return an OK connection status because a connection response message was received
+            return ConnectionStatus.OK;
+            
+        } catch (NoValueReceivedException e) {
+            
+            // Return a NO_SERVER connection status because no connection response message was received
+            return ConnectionStatus.NO_SERVER;
+            
+        }
     }
     
     /**
@@ -181,16 +182,13 @@ public class LocalSystem {
     }
     
     /**
-     * Receives a connection response message, setting connectionResponseMessage
-     * and notifying connectionResponseWaiter so that the response can be processed.
+     * Receives a connection response message, notifying the connectionResponseWaiter
+     * so that the response can be processed.
      * This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
     private void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
-        connectionResponseMessage = msg;
-        synchronized (connectionResponseWaiter) {
-            connectionResponseWaiter.notifyAll();
-        }
+        connectionResponseWaiter.receive(msg);
     }
     
     /**
@@ -213,68 +211,56 @@ public class LocalSystem {
     // COMMAND INTERPRETATION
     
     /**
-     * Receives a command output message, setting msgReceived and notifying
-     * responseWaiter so that the response can be processed.
+     * Receives a command output message, notifying commandOutputWaiter so that the response can be processed.
      * This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
     private void receiveCommandOutputMessage (CommandOutputMessage msg) {
-        // Do nothing if there is no message awaiting a response or if the output is
-        // for the wrong message
-        if (!awaitingRemoteCommandProcess() || msgAwaitingResponse.id != msg.inputCmdMsgId)
-            return;
+        // Do nothing if there is no message awaiting a response or if the IDs do not match
+        if (msgAwaitingResponse == null || msgAwaitingResponse.id != msg.inputCmdMsgId) return;
         
-        // Wake up the thread waiting for the response
-        synchronized (responseWaiter) {
-            msgReceived = msg;
-            responseReceived = true;
-            responseWaiter.notifyAll();
-        }
+        // Notify the commandOutputWaiter
+        commandOutputWaiter.receive(msg);
     }
     
     /**
-     * Sends a command line to remote to be processed and sets the {@code msgAwaitingResponse} to
-     * indicate that we are now awaiting a remote command process. Blocks until the response is
+     * Sends a command line to remote to be processed and awaits a responding {@link CommandOutputMessage}
+     * signaling the completion of a remote command process. This blocks until the response is
      * received or until a timeout.
-     * @param command The command string to send to remote
-     * @throws IOException If the socket threw an exception while attempting to send the command or if
-     * a response was not received within the timeout period
+     * @param command               The command string to send to remote.
+     * @return                      The received {@code CommandOutputMessage}.
+     * @throws NoResponseException  If a response was not received within the timeout period.
+     * @throws IOException          If the socket threw an exception while attempting to send the command.
      */
-    private void sendCommandToRemote (String command) throws IOException {
+    private CommandOutputMessage sendCommandToRemote (String command) throws NoResponseException, IOException {
         try {
             // Attempt to send the message
             msgAwaitingResponse = new CommandInputMessage(currentRemoteCommandId, command);
             socket.sendInstructionMessage(msgAwaitingResponse);
         } catch (IOException e) {
-            // If the command failed to send, set msgAwaitingResponse to null to indicate we are no longer awaiting a response
+            // If the command failed to send, set msgAwaitingResponse to null so that output for this command is not received later
             msgAwaitingResponse = null;
             throw e;
         }
         
         currentRemoteCommandId ++;
         
-        // Wait until the timout or until this thread is interrupted, meaning a response has been received
-        responseReceived = false;
-        synchronized (responseWaiter) {
-            try {
-                responseWaiter.wait(responseTimeoutMillis);
-            } catch (InterruptedException e) { }
+        // Attempt to wait for an output for the command
+        try {
+            
+            CommandOutputMessage msgReceived = commandOutputWaiter.waitForValue(responseTimeoutMillis);
+            
+            // If a message has been received, set msgAwaitingResponse to null so that output for this command is not received more than once
+            msgAwaitingResponse = null;
+            return msgReceived;
+            
+        } catch (NoValueReceivedException e) {
+            
+            // If no message was received, set msgAwaitingResponse to null so that output for this command is not received later
+            msgAwaitingResponse = null;
+            throw new NoResponseException();
+            
         }
-        
-        // Set msgAwaitingResponse to null to indicate we are no longer awaiting a response
-        msgAwaitingResponse = null;
-        
-        // If no response was received, throw an exception
-        if (!responseReceived) throw new NoResponseException();
-    }
-    
-    /**
-     * Checks whether or not the local system is waiting for a remote command process
-     * to finish and send back data.
-     * @return {@code true} if the local system is awaiting a response, {@code false} otherwise
-     */
-    public boolean awaitingRemoteCommandProcess () {
-        return msgAwaitingResponse != null;
     }
     
     /**
@@ -297,7 +283,7 @@ public class LocalSystem {
         
         // If the command was not successfully processed locally, send it
         // to remote to attempt to process it
-        sendCommandToRemote(line);
+        CommandOutputMessage msgReceived = sendCommandToRemote(line);
         
         // Process received message
         if (!msgReceived.isError) {
