@@ -8,8 +8,7 @@ public class Main {
     
     public void run () {
         
-        ColorConsoleManager mgr = new ColorConsoleManager();
-        RobotControlTerminal terminal = new RobotControlTerminal(mgr);
+        RobotControlTerminal terminal = new RobotControlTerminal(new LocalConsoleManager());
         
         terminal.start();
         

@@ -5,6 +5,7 @@ import java.io.IOException;
 import rct.commands.Command.ParseException;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.local.LocalSystem.NoResponseException;
+import rct.network.low.ConsoleManager;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server

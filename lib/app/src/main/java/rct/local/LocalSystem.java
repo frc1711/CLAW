@@ -5,15 +5,16 @@ import java.util.function.Consumer;
 
 import rct.commands.Command;
 import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.network.low.ConsoleManager;
 import rct.network.low.DriverStationSocketHandler;
 import rct.network.low.ResponseMessage;
 import rct.network.low.Waiter;
 import rct.network.low.Waiter.NoValueReceivedException;
-import rct.network.messages.CommandInputMessage;
-import rct.network.messages.CommandOutputMessage;
 import rct.network.messages.ConnectionCheckMessage;
 import rct.network.messages.ConnectionResponseMessage;
 import rct.network.messages.StreamDataMessage;
+import rct.network.messages.commands.CommandInputMessage;
+import rct.network.messages.commands.CommandOutputMessage;
 
 /**
  * A interface between the robot control terminal and the socket connection to the robot.

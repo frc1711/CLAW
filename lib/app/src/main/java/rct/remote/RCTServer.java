@@ -6,10 +6,10 @@ import rct.commands.Command;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.network.low.InstructionMessage;
 import rct.network.low.RobotSocketHandler;
-import rct.network.messages.CommandInputMessage;
-import rct.network.messages.CommandOutputMessage;
 import rct.network.messages.ConnectionCheckMessage;
 import rct.network.messages.ConnectionResponseMessage;
+import rct.network.messages.commands.CommandInputMessage;
+import rct.network.messages.commands.CommandOutputMessage;
 
 public class RCTServer {
     

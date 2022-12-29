@@ -1,3 +1,6 @@
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -5,15 +8,49 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.Ansi.Color;
 
-import rct.local.ConsoleManager;
+import rct.network.low.ConsoleManager;
 
-public class ColorConsoleManager extends ConsoleManager {
+public class LocalConsoleManager implements ConsoleManager {
     
+    private final BufferedInputStream inputStream;
     private final PrintStream out;
     
-    public ColorConsoleManager () {
+    public LocalConsoleManager () {
         AnsiConsole.systemInstall();
+        inputStream = new BufferedInputStream(System.in);
         out = AnsiConsole.out();
+    }
+    
+    @Override
+    public String readInputLine () {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        int lastByte = 0;
+        
+        while (lastByte != (int)'\n') {
+            try {
+                lastByte = inputStream.read();
+                if (lastByte == -1) throw new EOFException();
+            } catch (IOException e) {
+                return "";
+            }
+            bytes.write(lastByte);
+        }
+        
+        return bytes.toString();
+    }
+    
+    @Override
+    public boolean hasInputReady () {
+        try {
+            return inputStream.available() > 0;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public void flush () {
+        System.out.flush();
     }
     
     @Override

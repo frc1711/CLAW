@@ -8,6 +8,7 @@ import rct.commands.Command;
 import rct.commands.CommandInterpreter;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.local.LocalSystem.ConnectionStatus;
+import rct.network.low.ConsoleManager;
 import rct.network.low.DriverStationSocketHandler;
 
 /**
