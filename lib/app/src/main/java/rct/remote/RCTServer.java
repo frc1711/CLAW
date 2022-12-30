@@ -2,20 +2,29 @@ package rct.remote;
 
 import java.io.IOException;
 
-import rct.commands.Command;
+import rct.commands.Command.ParseException;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.network.low.InstructionMessage;
+import rct.network.low.ResponseMessage;
 import rct.network.low.RobotSocketHandler;
 import rct.network.messages.ConnectionCheckMessage;
 import rct.network.messages.ConnectionResponseMessage;
 import rct.network.messages.commands.CommandInputMessage;
-import rct.network.messages.commands.CommandOutputMessage;
+import rct.network.messages.commands.ProcessKeepaliveLocal;
+import rct.network.messages.commands.StartCommandMessage;
+import rct.remote.CommandProcessHandler.TerminatedProcessException;
 
 public class RCTServer {
+    
+    private static final long
+        COMMAND_KEEPALIVE_DURATION_MILLIS = 1000,
+        COMMAND_KEEPALIVE_SEND_INTERVAL_MILLIS = 200;
     
     private final RobotSocketHandler serverSocket;
     private final RemoteCommandInterpreter interpreter = new RemoteCommandInterpreter();
     private boolean successfullyStarted = false;
+    
+    private CommandProcessHandler commandProcessHandler;
     
     public RCTServer (int port) throws IOException {
         // Try to create a new server socket
@@ -40,8 +49,14 @@ public class RCTServer {
             if (msgClass == ConnectionCheckMessage.class)
                 receiveConnectionCheckMessage((ConnectionCheckMessage)msg);
             
+            if (msgClass == StartCommandMessage.class)
+                receiveStartCommandMessage((StartCommandMessage)msg);
+            
             if (msgClass == CommandInputMessage.class)
                 receiveCommandInputMessage((CommandInputMessage)msg);
+            
+            if (msgClass == ProcessKeepaliveLocal.class)
+                receiveKeepaliveMessage((ProcessKeepaliveLocal)msg);
         } catch (IOException e) {
             handleNonFatalServerException(e);
         }
@@ -51,28 +66,53 @@ public class RCTServer {
         serverSocket.sendResponseMessage(new ConnectionResponseMessage());
     }
     
-    private void receiveCommandInputMessage(CommandInputMessage msg) throws IOException {
-        boolean isError = false;
-        String output = "";
+    private void receiveStartCommandMessage (StartCommandMessage msg) {
+        // Terminate the previous command process handler if one existed
+        if (commandProcessHandler != null)
+            commandProcessHandler.terminate(false);
         
+        // Create a new CommandProcessHandler for the new command
+        commandProcessHandler = new CommandProcessHandler(
+            responseMessage -> this.sendResponseMessageForProcess(responseMessage),
+            msg.commandProcessId,
+            COMMAND_KEEPALIVE_DURATION_MILLIS,
+            COMMAND_KEEPALIVE_SEND_INTERVAL_MILLIS);
+        
+        // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
+        new Thread(() -> {
+            try {
+                // Attempt to run the process via the command interpreter
+                if (!interpreter.processLine(commandProcessHandler, msg.command)) {
+                    commandProcessHandler.printlnErr("Command not recognized.");
+                }
+            } catch (ParseException e) {
+                commandProcessHandler.printlnErr("Malformatted command: " + e.getMessage());
+            } catch (BadArgumentsException e) {
+                commandProcessHandler.printlnErr(e.getMessage());
+            } catch (TerminatedProcessException e) { } // If the process was terminated (a runtime exception), exit silently
+            
+            // When the command process is finished, terminate the process and flush all output to local
+            commandProcessHandler.terminate(true);
+        }).start();
+        
+    }
+    
+    private void sendResponseMessageForProcess (ResponseMessage msg) {
         try {
-            boolean recognizedCommand = interpreter.processLine(msg.command);
-            if (!recognizedCommand) {
-                isError = true;
-                output = "Unrecognized command.";
-            } else {
-                output = "Output test. Hard-coded to be the same for all recognized commands";
-            }
-        } catch (BadArgumentsException e) {
-            isError = true;
-            output = e.getMessage();
-        } catch (Command.ParseException e) {
-            isError = true;
-            output = e.getMessage();
+            serverSocket.sendResponseMessage(msg);
+        } catch (IOException e) {
+            commandProcessHandler.terminate(false);
         }
-        
-        // TODO: Provide some extension of the ConsoleManager to the RemoteCommandInterpreter so that remote commands can also control the console
-        serverSocket.sendResponseMessage(new CommandOutputMessage(isError, msg.id, output));
+    }
+    
+    private void receiveKeepaliveMessage (ProcessKeepaliveLocal msg) {
+        if (commandProcessHandler != null)
+            commandProcessHandler.receiveKeepaliveMessage(msg);
+    }
+    
+    private void receiveCommandInputMessage (CommandInputMessage msg) throws IOException {
+        if (commandProcessHandler != null)
+            commandProcessHandler.receiveCommandInputMessage(msg);
     }
     
     // Exception handling:

@@ -2,6 +2,8 @@ package rct.commands;
 
 import java.util.HashMap;
 
+import rct.network.low.ConsoleManager;
+
 /**
  * Represents a system for interpreting {@link Command}s. Recognized commands can be added via
  * {@link #addCommandConsumer(String, CommandProcessor)} and commands can be parsed and processed
@@ -25,19 +27,20 @@ public class CommandInterpreter {
      * Processes a line into a {@link Command} and attempts to call one of this interpreter's command consumers
      * on the command. See {@link Command.ParseException} for command line formatting. Command names
      * are case insensitive.
-     * @param line                      The command line string
+     * @param console                   The {@link ConsoleManager} to put output to and take input from.
+     * @param line                      The command line string.
      * @return                          Whether or not the command was recognized by this interpreter. Use
      * {@link #addCommandConsumer(String, Consumer)} to add more recognized commands.
      * @throws Command.ParseException   An exception thrown if the command is malformed
      */
-    public boolean processLine (String line) throws Command.ParseException, BadArgumentsException {
+    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadArgumentsException {
         Command commandObj = new Command(line);
         String commandName = commandObj.getCommand().toUpperCase();
         
         // Send the command to its consumer if the command name exists in the commandConsumers hashmap,
         // otherwise throws an exception
         if (commandConsumers.containsKey(commandName)) {
-            commandConsumers.get(commandName).accept(commandObj);
+            commandConsumers.get(commandName).process(console, commandObj);
             return true;
         } else return false;
     }
@@ -47,7 +50,7 @@ public class CommandInterpreter {
      */
     @FunctionalInterface
     public static interface CommandProcessor {
-        public void accept (Command cmd) throws BadArgumentsException;
+        public void process (ConsoleManager console, Command cmd) throws BadArgumentsException;
     }
     
     /**

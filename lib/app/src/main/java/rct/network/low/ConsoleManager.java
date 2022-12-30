@@ -8,21 +8,21 @@ public interface ConsoleManager {
     /**
      * Read a single line of input from the console.
      */
-    public String readInputLine ();
+    String readInputLine ();
     
     /**
      * Returns {@code true} if there is user input waiting to be processed by the console.
      * This is useful for detecting if a user has hit enter in order to exit some continuously running
      * command.
      */
-    public boolean hasInputReady ();
+    boolean hasInputReady ();
     
     /**
      * Clear any submitted user input that is currently waiting.
      * This is useful to call so that input entered by the
      * user does not affect any input lines read long after.
      */
-    public default void clearWaitingInputLines () {
+    default void clearWaitingInputLines () {
         // Do nothing if no input is ready
         if (!hasInputReady()) return;
         
@@ -53,12 +53,12 @@ public interface ConsoleManager {
     /**
      * Move up a given number of rows in the console (also moving to the first column).
      */
-    public void moveUp (int lines);
+    void moveUp (int lines);
     
     /**
      * Clear all text in the current row in the console.
      */
-    public void clearLine ();
+    void clearLine ();
     
     /**
      * Save the cursor position so that it can be restored later with {@link ConsoleManager#restoreCursorPos()}.
@@ -73,12 +73,12 @@ public interface ConsoleManager {
     /**
      * Print white text to the console with no newline.
      */
-    public void print (String msg);
+    void print (String msg);
     
     /**
      * Print white text to the console with a trailing newline.
      */
-    public default void println (String msg) {
+    default void println (String msg) {
         print(msg + "\n");
     }
     
@@ -86,36 +86,36 @@ public interface ConsoleManager {
      * Print red text to the console with no newline. This is not the same
      * as printing to {@code System.err}.
      */
-    public void printErr (String msg);
+    void printErr (String msg);
     
     /**
      * Print red text to the console with a trailing newline. This is not the same
      * as printing to {@code System.err}.
      */
-    public default void printlnErr (String msg) {
+    default void printlnErr (String msg) {
         printErr(msg + "\n");
     }
     
     /**
      * Print yellow/orange system text to the console with no newline.
      */
-    public void printSys (String msg);
+    void printSys (String msg);
     
     /**
      * Print yellow/orange system text to the console with a trailing newline.
      */
-    public default void printlnSys (String msg) {
+    default void printlnSys (String msg) {
         printSys(msg + "\n");
     }
     
     /**
      * Flush the console output.
      */
-    public void flush ();
+    void flush ();
     
     /**
      * Clear the console of all output.
      */
-    public void clear ();
+    void clear ();
     
 }

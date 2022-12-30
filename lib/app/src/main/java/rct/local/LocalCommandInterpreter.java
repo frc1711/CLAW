@@ -17,7 +17,6 @@ import rct.network.low.DriverStationSocketHandler;
  */
 public class LocalCommandInterpreter {
     
-    private final ConsoleManager console;
     private final StreamDataStorage streamDataStorage;
     private final LocalSystem system;
     
@@ -35,8 +34,7 @@ public class LocalCommandInterpreter {
      * Construct a new {@link LocalCommandInterpreter} with all the resources it requires in order to execute
      * local commands.
      */
-    public LocalCommandInterpreter (ConsoleManager console, LocalSystem system, StreamDataStorage streamDataStorage) {
-        this.console = console;
+    public LocalCommandInterpreter (LocalSystem system, StreamDataStorage streamDataStorage) {
         this.streamDataStorage = streamDataStorage;
         this.system = system;
         addCommands();
@@ -67,14 +65,15 @@ public class LocalCommandInterpreter {
     /**
      * Processes a line as a command. If the command is not recognized by the interpreter, this will return {@code false}.
      * Commands not recognized by this local interpreter should be sent to remote.
+     * @param console                   The {@link ConsoleManager} to put output to and take input from.
      * @param line                      The line to process as command-line input.
      * @return                          Whether or not this interpreter recognized the command.
      * @throws Command.ParseException
      * @throws BadArgumentsException
      */
-    public boolean processLine (String line) throws Command.ParseException, BadArgumentsException {
+    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadArgumentsException {
         sendCommandToRemote = false;
-        boolean result = commandInterpreter.processLine(line);
+        boolean result = commandInterpreter.processLine(console, line);
         return result && !sendCommandToRemote;
     }
     
@@ -86,7 +85,7 @@ public class LocalCommandInterpreter {
      * @param processor The {@code ExtendedCommandProcessor} which processes the command
      */
     private void addDocumentedCommand (String command, String usage, String helpText, ExtendedCommandProcessor processor) {
-        commandInterpreter.addCommandConsumer(command, cmd -> processor.accept(usage, cmd));
+        commandInterpreter.addCommandConsumer(command, (console, cmd) -> processor.accept(usage, console, cmd));
         helpSections.add(new HelpSection(usage, helpText));
     }
     
@@ -97,7 +96,7 @@ public class LocalCommandInterpreter {
      * @see LocalCommandInterpreter#addDocumentedCommand(String, String, String, ExtendedCommandProcessor)
      */
     private static interface ExtendedCommandProcessor {
-        public void accept (final String commandUsage, Command cmd) throws BadArgumentsException;
+        public void accept (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException;
     }
     
     /**
@@ -127,15 +126,15 @@ public class LocalCommandInterpreter {
     
     
     
-    private void clearCommand (String commandUsage, Command cmd) {
+    private void clearCommand (String commandUsage, ConsoleManager console, Command cmd) {
         console.clear();
     }
     
-    private void exitCommand (String commandUsage, Command cmd) {
+    private void exitCommand (String commandUsage, ConsoleManager console, Command cmd) {
         System.exit(0);
     }
     
-    private void helpCommand (String commandUsage, Command cmd) throws BadArgumentsException {
+    private void helpCommand (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException {
         CommandInterpreter.checkNumArgs(commandUsage, 0, 1, cmd.argsLen());
         
         if (cmd.argsLen() == 0) {
@@ -160,7 +159,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void statusCommand (String commandUsage, Command cmd) {
+    private void statusCommand (String commandUsage, ConsoleManager console, Command cmd) {
         console.println("");
         
         // Keep repeating until the user hits enter
@@ -207,7 +206,7 @@ public class LocalCommandInterpreter {
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (String commandUsage, Command cmd) throws BadArgumentsException {
+    private void sshCommand (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException {
         CommandInterpreter.checkNumArgs(commandUsage, 1, cmd.argsLen());
         String user = cmd.getArg(0);
         CommandInterpreter.expectedOneOf(commandUsage, "user", user, "lvuser", "admin");

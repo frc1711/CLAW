@@ -7,14 +7,15 @@ import rct.commands.Command;
 import rct.commands.CommandInterpreter.BadArgumentsException;
 import rct.network.low.ConsoleManager;
 import rct.network.low.DriverStationSocketHandler;
+import rct.network.low.InstructionMessage;
 import rct.network.low.ResponseMessage;
 import rct.network.low.Waiter;
 import rct.network.low.Waiter.NoValueReceivedException;
 import rct.network.messages.ConnectionCheckMessage;
 import rct.network.messages.ConnectionResponseMessage;
 import rct.network.messages.StreamDataMessage;
-import rct.network.messages.commands.CommandInputMessage;
 import rct.network.messages.commands.CommandOutputMessage;
+import rct.network.messages.commands.ProcessKeepaliveRemote;
 
 /**
  * A interface between the robot control terminal and the socket connection to the robot.
@@ -28,20 +29,20 @@ public class LocalSystem {
     
     // Command interpreter
     private final LocalCommandInterpreter interpreter;
+    private RemoteProcessHandler remoteProcessHandler = null;
+    private int nextRemoteProcessId = 0;
     
-    private CommandInputMessage msgAwaitingResponse = null;
-    private int currentRemoteCommandId = 1;
-    
-    private final Waiter<CommandOutputMessage> commandOutputWaiter = new Waiter<CommandOutputMessage>();
+    private final long
+        responseTimeoutMillis,
+        sendKeepaliveMessageIntervalMillis;
     
     // Stream data
     private final StreamDataStorage streamDataStorage;
     
     // Socket handling
-    private DriverStationSocketHandler socket;
+    private DriverStationSocketHandler socket = null;
     private final Consumer<IOException> handleSocketReceiverException;
     private final int teamNum;
-    private final long responseTimeoutMillis;
     
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
@@ -61,6 +62,7 @@ public class LocalSystem {
             int teamNum,
             int remotePort,
             double responseTimeout,
+            double sendKeepaliveMessageInterval,
             StreamDataStorage streamDataStorage,
             ConsoleManager console,
             Consumer<IOException> handleSocketReceiverException)
@@ -69,10 +71,11 @@ public class LocalSystem {
         // Instantiating final fields
         this.teamNum = teamNum;
         this.streamDataStorage = streamDataStorage;
-        interpreter = new LocalCommandInterpreter(console, this, streamDataStorage);
-        responseTimeoutMillis = (long)(1000*responseTimeout);
         this.console = console;
         this.handleSocketReceiverException = handleSocketReceiverException;
+        interpreter = new LocalCommandInterpreter(this, streamDataStorage);
+        responseTimeoutMillis = (long)(1000*responseTimeout);
+        sendKeepaliveMessageIntervalMillis = (long)(1000*sendKeepaliveMessageInterval);
         
         // Establishing socket connection
         console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
@@ -87,7 +90,7 @@ public class LocalSystem {
         console.printlnSys("Socket connection successful. Checking for running RCT server...");
         if (checkServerConnection() != ConnectionStatus.OK) {
             console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
-            socket.close();
+            closeSocket();
             throw new NoRunningServerException();
         }
         
@@ -131,18 +134,50 @@ public class LocalSystem {
         
         // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
         try {
-            
             connectionResponseWaiter.waitForValue(responseTimeoutMillis);
             
             // Return an OK connection status because a connection response message was received
             return ConnectionStatus.OK;
-            
         } catch (NoValueReceivedException e) {
             
             // Return a NO_SERVER connection status because no connection response message was received
             return ConnectionStatus.NO_SERVER;
-            
         }
+    }
+    
+    /**
+     * Executes a command provided by an input string.
+     * <ol>
+     * <li>A local command interpreter will attempt to process the command. If it succeeds, then
+     * the command has been successfully processed and the method returns here.</li>
+     * <li>If the command is not recognized by the local interpreter, it is sent to remote
+     * to be processed. This waiting for a response is blocking. If no response is received
+     * within the timeout, a {@link NoResponseException} will be thrown.</li>
+     * </ol>
+     * @param line                      The input string to be processed into a command.
+     * @throws Command.ParseException   If the provided command string if malformed
+     * @throws NoResponseException      If no response was received from a command sent to remote
+     * @throws IOException              If the command failed to send to remote
+     */
+    public void processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
+        // Attempt to process the command locally
+        if (interpreter.processLine(console, line)) return;
+        
+        // If a remote process handler is running, terminate it
+        if (remoteProcessHandler != null)
+            remoteProcessHandler.terminate();
+        
+        // Create a new remoteProcessHandler
+        remoteProcessHandler = new RemoteProcessHandler(
+            console,
+            this::remoteProcessHandlerSendInstructionMessage,
+            responseTimeoutMillis,
+            sendKeepaliveMessageIntervalMillis,
+            nextRemoteProcessId);
+        
+        // Increment the remote process ID so that the next process uses a new ID
+        nextRemoteProcessId ++;
+        remoteProcessHandler.execute(line);
     }
     
     /**
@@ -175,6 +210,9 @@ public class LocalSystem {
         if (msgClass == ConnectionResponseMessage.class)
             receiveConnectionResponseMessage((ConnectionResponseMessage)msg);
         
+        if (msgClass == ProcessKeepaliveRemote.class)
+            receiveProcessKeepaliveMessage((ProcessKeepaliveRemote)msg);
+        
         if (msgClass == CommandOutputMessage.class)
             receiveCommandOutputMessage((CommandOutputMessage)msg);
         
@@ -192,6 +230,11 @@ public class LocalSystem {
         connectionResponseWaiter.receive(msg);
     }
     
+    private void receiveProcessKeepaliveMessage (ProcessKeepaliveRemote msg) {
+        if (remoteProcessHandler != null)
+            remoteProcessHandler.receiveKeepalive(msg);
+    }
+    
     /**
      * Receives a stream data message and sends it to the stream data storage to be
      * processed. This method will run on a receiver thread, and is delegated a message from
@@ -205,92 +248,22 @@ public class LocalSystem {
      * Closes the socket. See {@link DriverStationSocketHandler#close()}.
      * @throws IOException If the socket threw an i/o exception while closing.
      */
-    public void close () throws IOException {
+    public void closeSocket () throws IOException {
         socket.close();
     }
     
     // COMMAND INTERPRETATION
     
-    /**
-     * Receives a command output message, notifying commandOutputWaiter so that the response can be processed.
-     * This method will run on a receiver thread, and is delegated a message from
-     * {@link LocalSystem#receiveMessage(ResponseMessage)}.
-     */
     private void receiveCommandOutputMessage (CommandOutputMessage msg) {
-        // Do nothing if there is no message awaiting a response or if the IDs do not match
-        if (msgAwaitingResponse == null || msgAwaitingResponse.id != msg.inputCmdMsgId) return;
-        
-        // Notify the commandOutputWaiter
-        commandOutputWaiter.receive(msg);
+        if (remoteProcessHandler != null)
+            remoteProcessHandler.receiveCommandOutputMessage(msg);
     }
     
-    /**
-     * Sends a command line to remote to be processed and awaits a responding {@link CommandOutputMessage}
-     * signaling the completion of a remote command process. This blocks until the response is
-     * received or until a timeout.
-     * @param command               The command string to send to remote.
-     * @return                      The received {@code CommandOutputMessage}.
-     * @throws NoResponseException  If a response was not received within the timeout period.
-     * @throws IOException          If the socket threw an exception while attempting to send the command.
-     */
-    private CommandOutputMessage sendCommandToRemote (String command) throws NoResponseException, IOException {
+    private void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
         try {
-            // Attempt to send the message
-            msgAwaitingResponse = new CommandInputMessage(currentRemoteCommandId, command);
-            socket.sendInstructionMessage(msgAwaitingResponse);
+            socket.sendInstructionMessage(message);
         } catch (IOException e) {
-            // If the command failed to send, set msgAwaitingResponse to null so that output for this command is not received later
-            msgAwaitingResponse = null;
-            throw e;
-        }
-        
-        currentRemoteCommandId ++;
-        
-        // Attempt to wait for an output for the command
-        try {
-            
-            CommandOutputMessage msgReceived = commandOutputWaiter.waitForValue(responseTimeoutMillis);
-            
-            // If a message has been received, set msgAwaitingResponse to null so that output for this command is not received more than once
-            msgAwaitingResponse = null;
-            return msgReceived;
-            
-        } catch (NoValueReceivedException e) {
-            
-            // If no message was received, set msgAwaitingResponse to null so that output for this command is not received later
-            msgAwaitingResponse = null;
-            throw new NoResponseException();
-            
-        }
-    }
-    
-    /**
-     * Executes a command provided by an input string.
-     * <ol>
-     * <li>A local command interpreter will attempt to process the command. If it succeeds, then
-     * the command has been successfully processed and the method returns here.</li>
-     * <li>If the command is not recognized by the local interpreter, it is sent to remote
-     * to be processed. This waiting for a response is blocking. If no response is received
-     * within the timeout, a {@link NoResponseException} will be thrown.</li>
-     * </ol>
-     * @param line                      The input string to be processed into a command.
-     * @throws Command.ParseException   If the provided command string if malformed
-     * @throws NoResponseException      If no response was received from a command sent to remote
-     * @throws IOException              If the command failed to send to remote
-     */
-    public void processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
-        // Attempt to process the command locally
-        if (interpreter.processLine(line)) return;
-        
-        // If the command was not successfully processed locally, send it
-        // to remote to attempt to process it
-        CommandOutputMessage msgReceived = sendCommandToRemote(line);
-        
-        // Process received message
-        if (!msgReceived.isError) {
-            console.println(msgReceived.commandOutput);
-        } else {
-            console.printlnErr(msgReceived.commandOutput);
+            remoteProcessHandler.terminate();
         }
     }
     

@@ -120,7 +120,14 @@ public class RobotControlTerminal {
         
         while (system == null) {
             try {
-                system = new LocalSystem(TEAM_NUMBER, REMOTE_PORT, 5, new StreamDataStorage(), console, e -> socketReconnect());
+                system = new LocalSystem(
+                    TEAM_NUMBER,
+                    REMOTE_PORT,
+                    1,              // response timeout
+                    0.2,            // keepalive send interval
+                    new StreamDataStorage(),
+                    console,
+                    e -> socketReconnect());
             } catch (IOException e) {
                 if (!getYesOrNo("\nTry again?"))
                     throw e;

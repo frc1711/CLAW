@@ -51,12 +51,16 @@ public class RobotSocketHandler {
      * Called by the underlying {@link SocketHandler} when a message is recevied.
      */
     private void receiveMessage (Message message) {
+        InstructionMessage instruction = null;
+        
         try {
-            instructionReader.accept((InstructionMessage)message);
+            instruction = (InstructionMessage)message;
         } catch (ClassCastException e) {
             String messageClass = message.getClass().getName();
             handleReceiverIOException(new IOException("Expected an InstructionMessage but received a "+messageClass));
         }
+        
+        instructionReader.accept(instruction);
     }
     
     /**

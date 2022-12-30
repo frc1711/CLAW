@@ -11,7 +11,7 @@ import rct.network.low.ResponseMessage;
  */
 public class CommandOutputMessage extends ResponseMessage {
     
-    public static final long serialVersionUID = 2L;
+    public static final long serialVersionUID = 3L;
     
     /**
      * The process ID assigned to this command through the {@link StartCommandMessage}.
@@ -24,10 +24,9 @@ public class CommandOutputMessage extends ResponseMessage {
     public final boolean terminateCommand;
     
     /**
-     * Whether or not to request an input line from the driverstation {@link ConsoleManager} after
-     * all the {@link ConsoleManagerOperation}s are performed.
+     * Specifies what type of {@link CommandInputMessage} is requested, describing the state of the local {@link ConsoleManager}.
      */
-    public final boolean requestInputLine;
+    public final ConsoleManagerRequest request;
     
     /**
      * The list of {@link ConsoleManagerOperation}s to perform on the driverstation {@link ConsoleManager}.
@@ -38,14 +37,40 @@ public class CommandOutputMessage extends ResponseMessage {
      * Constructs a new {@link CommandOutputMessage}.
      * @param commandProcessId  See {@link CommandOutputMessage#commandProcessId}.
      * @param terminateCommand  See {@link CommandOutputMessage#terminateCommand}.
-     * @param requestInputLine  See {@link CommandOutputMessage#requestInputLine}.
+     * @param request           See {@link CommandOutputMessage#request}.
      * @param operations        See {@link CommandOutputMessage#operations}.
      */
-    public CommandOutputMessage (int commandProcessId, boolean terminateCommand, boolean requestInputLine, ConsoleManagerOperation[] operations) {
+    public CommandOutputMessage (
+            int commandProcessId,
+            boolean terminateCommand,
+            ConsoleManagerRequest request,
+            ConsoleManagerOperation[] operations) {
         this.commandProcessId = commandProcessId;
         this.terminateCommand = terminateCommand;
-        this.requestInputLine = requestInputLine;
+        this.request = request;
         this.operations = operations;
+    }
+    
+    /**
+     * A request for another {@link CommandInputMessage} with data describing the state of the local {@link ConsoleManager}.
+     */
+    public enum ConsoleManagerRequest {
+        /**
+         * No request made. No {@link CommandInputMessage} response is requested.
+         */
+        NO_REQUEST,
+        
+        /**
+         * Retrieve a {@code boolean} describing whether or not input is ready in the {@link ConsoleManager}.
+         * @see {@link ConsoleManager#hasInputReady()}.
+         */
+        HAS_INPUT_READY,
+        
+        /**
+         * Retrieve a {@code String} user input line.
+         * @see {@link ConsoleManager#readInputLine()}.
+         */
+        READ_INPUT_LINE,
     }
     
     /**
@@ -134,6 +159,24 @@ public class CommandOutputMessage extends ResponseMessage {
          * @see {@link ConsoleManager#clear()}.
          */
         CLEAR,
+        
+        /**
+         * Requires no arguments.
+         * @see {@link ConsoleManager#flush()}.
+         */
+        FLUSH,
+        
+        /**
+         * Requires no arguments.
+         * @see {@link ConsoleManager#saveCursorPos()}.
+         */
+        SAVE_CURSOR_POS,
+        
+        /**
+         * Requires no arguments.
+         * @see {@link ConsoleManager#restoreCursorPos()}.
+         */
+        RESTORE_CURSOR_POS,
     }
     
 }
