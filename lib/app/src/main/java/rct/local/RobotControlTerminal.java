@@ -4,8 +4,10 @@ import java.io.IOException;
 
 import rct.commands.Command.ParseException;
 import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.local.LocalSystem.ConnectionStatus;
 import rct.local.LocalSystem.NoResponseException;
 import rct.network.low.ConsoleManager;
+import rct.network.low.DriverStationSocketHandler;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server
@@ -13,17 +15,11 @@ import rct.network.low.ConsoleManager;
  */
 public class RobotControlTerminal {
     
-    /**
-     * The time interval between re-checking the connection status. Used by the connection watcher thread. 
-     */
-    private static final long CONNECTION_WATCHER_REFRESH_TIME_MILLIS = 3000;
-    
     private static final int
         TEAM_NUMBER = 1711,
         REMOTE_PORT = 5800;
     
     private final ConsoleManager console;
-    private boolean requireNewConnection = false;
     
     /**
      * Creates a new robot control terminal.
@@ -37,18 +33,25 @@ public class RobotControlTerminal {
      */
     public void start () {
         
-        // LocalSystem setup
-        LocalSystem system;
-        try {
-            system = getLocalSystem();
-        } catch (IOException e) {
-            console.println("");
-            System.exit(1);
-            return;
-        }
+        // Display of helpful message with roboRIO host url
+        String host = DriverStationSocketHandler.getRoborioHost(TEAM_NUMBER) + ":" + REMOTE_PORT;
+        console.printlnSys("Attempting to connect to server at " + host + "...");
         
-        // Start a thread watching the connection to the robot, restoring it when necessary
-        startConnectionWatcherThread(system);
+        // LocalSystem setup
+        LocalSystem system = new LocalSystem(
+            TEAM_NUMBER,
+            REMOTE_PORT,
+            new StreamDataStorage(),
+            console
+        );
+        
+        // Display comms status to the user
+        ConnectionStatus comms = system.checkServerConnection();
+        if (comms == ConnectionStatus.OK) {
+            console.printlnSys("Connected to Robot Control Terminal server successfully.");
+        } else {
+            console.printlnErr("Warning: Connection status " + comms.name() + " - Use 'comms' for details.");
+        }
         
         // Start the main command-line loop, and run it indefinitely
         console.println("");
@@ -75,85 +78,6 @@ public class RobotControlTerminal {
         
     }
     
-    /**
-     * Watch the connection to the robot indefinitely in a separate thread, restoring it when necessary.
-     */
-    private void startConnectionWatcherThread (LocalSystem system) {
-        // Watch the connection to the robot indefinitely in a separate thread,
-        // restoring it when necessary
-        Thread thread = new Thread(() -> {
-            while (true) {
-                // Wait for a time before trying again
-                try {
-                    Thread.sleep(CONNECTION_WATCHER_REFRESH_TIME_MILLIS);
-                } catch (InterruptedException e) { }
-                
-                try {
-                    // Check if a new connection to the server is required
-                    if (requireNewConnection) system.establishNewConnection(REMOTE_PORT);
-                    
-                    // If no exception has occurred thus far, a new connection was successfully created
-                    // and the requireNewConnection flag can be disabled
-                    requireNewConnection = false;
-                } catch (IOException e) { }
-            }
-        });
-        
-        thread.start();
-    }
-    
-    /**
-     * Set a flag so that the connection watcher thread will reconnect to the robot
-     */
-    private void socketReconnect () {
-        requireNewConnection = true;
-    }
-    
-    /**
-     * Get a new local system (for the first time) using basic UI if problems occur.
-     * @return A new {@link LocalSystem} that has an open connection to remote.
-     * @throws IOException If there were problems while connection, and the user indicated
-     * that the app should not attempt to reconnect.
-     */
-    private LocalSystem getLocalSystem () throws IOException {
-        LocalSystem system = null;
-        
-        while (system == null) {
-            try {
-                system = new LocalSystem(
-                    TEAM_NUMBER,
-                    REMOTE_PORT,
-                    1,              // response timeout
-                    0.2,            // keepalive send interval
-                    new StreamDataStorage(),
-                    console,
-                    e -> socketReconnect());
-            } catch (IOException e) {
-                if (!getYesOrNo("\nTry again?"))
-                    throw e;
-                console.clear();
-            }
-        }
-        
-        return system;
-    }
-    
-    /**
-     * Ask a yes or no question through the console manager, returning {@code true} if {@code y} is inputted
-     * and {@code false} if {@code n} is inputted.
-     */
-    private boolean getYesOrNo (String prompt) {
-        String res = "";
-        while (true) {
-            console.printSys(prompt+" (y|n) ");
-            console.flush();
-            
-            res = console.readInputLine().strip().toLowerCase();
-            if (res.equals("n")) return false;
-            else if (res.equals("y")) return true;
-        }
-    }
-    
     private void processCommand (LocalSystem system, String line) {
         try {
             system.processCommand(line);
@@ -166,7 +90,6 @@ public class RobotControlTerminal {
             console.printlnErr("Timeout reached: No response was received for the last command sent to remote.");
         } catch (IOException e) {
             console.printlnErr("The command failed to send to remote.");
-            socketReconnect();
         }
     }
     

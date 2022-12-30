@@ -1,7 +1,6 @@
 package rct.local;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 import rct.commands.Command;
 import rct.commands.CommandInterpreter.BadArgumentsException;
@@ -24,6 +23,11 @@ import rct.network.messages.commands.ProcessKeepaliveRemote;
  */
 public class LocalSystem {
     
+    private final static long
+        RESPONSE_TIMEOUT_MILLIS = 2000,
+        SEND_KEEPALIVE_INTERVAL_MILLIS = 250,
+        REESTABLISH_CONNECTION_INTERVAL_MILLIS = 100;
+    
     // Console manager
     private final ConsoleManager console;
     
@@ -32,17 +36,15 @@ public class LocalSystem {
     private RemoteProcessHandler remoteProcessHandler = null;
     private int nextRemoteProcessId = 0;
     
-    private final long
-        responseTimeoutMillis,
-        sendKeepaliveMessageIntervalMillis;
-    
     // Stream data
     private final StreamDataStorage streamDataStorage;
     
     // Socket handling
+    private final int teamNum, remotePort;
     private DriverStationSocketHandler socket = null;
-    private final Consumer<IOException> handleSocketReceiverException;
-    private final int teamNum;
+    
+    private final Thread requireNewConnectionThread = new Thread(this::requireNewConnectionThreadRunnable);
+    private boolean requireNewConnection = false;
     
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
@@ -51,50 +53,30 @@ public class LocalSystem {
      * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
      * @param teamNum                       The team number to use for the roboRIO
      * @param remotePort                    The remote port to connect to (if you don't know what to try, 5800 is a good default).
-     * @param responseTimeout               The amount 
      * @param streamDataStorage
      * @param console
-     * @param handleSocketReceiverException
-     * @throws NoRunningServerException
-     * @throws IOException
      */
     public LocalSystem (
             int teamNum,
             int remotePort,
-            double responseTimeout,
-            double sendKeepaliveMessageInterval,
             StreamDataStorage streamDataStorage,
-            ConsoleManager console,
-            Consumer<IOException> handleSocketReceiverException)
-            throws NoRunningServerException, IOException {
+            ConsoleManager console) {
         
         // Instantiating final fields
         this.teamNum = teamNum;
+        this.remotePort = remotePort;
         this.streamDataStorage = streamDataStorage;
         this.console = console;
-        this.handleSocketReceiverException = handleSocketReceiverException;
         interpreter = new LocalCommandInterpreter(this, streamDataStorage);
-        responseTimeoutMillis = (long)(1000*responseTimeout);
-        sendKeepaliveMessageIntervalMillis = (long)(1000*sendKeepaliveMessageInterval);
         
-        // Establishing socket connection
-        console.printlnSys("Connecting to "+DriverStationSocketHandler.getRoborioHost(teamNum)+":"+remotePort+"...");
+        // Start the requireNewConnectionThread, which will attempt to establish a new connection
+        // whenever it is interrupted
+        requireNewConnectionThread.start();
+        
+        // Attempt to establish socket connection
         try {
-            establishNewConnection(remotePort);
-        } catch (IOException e) {
-            console.printlnErr("Failed to connect to roboRIO.");
-            throw e;
-        }
-        
-        // Checking for a running server
-        console.printlnSys("Socket connection successful. Checking for running RCT server...");
-        if (checkServerConnection() != ConnectionStatus.OK) {
-            console.printlnErr("No running Robot Control Terminal was detected. Try restarting the robot code.");
-            closeSocket();
-            throw new NoRunningServerException();
-        }
-        
-        console.printlnSys("Successfully connected to roboRIO.");
+            establishNewConnection();
+        } catch (IOException e) { }
     }
     
     /**
@@ -103,14 +85,15 @@ public class LocalSystem {
      * @param remotePort    The remote port to connect to.
      * @throws IOException  If an i/o error occurred while trying to open the socket.
      */
-    public void establishNewConnection (int remotePort) throws IOException {
+    private void establishNewConnection () throws IOException {
         // Close the current socket (if one exists)
         try {
-            if (socket != null) socket.close();
+            throwIfNullSocket();
+            socket.close();
         } catch (IOException e) { }
         
         // Create a new socket
-        socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, handleSocketReceiverException);
+        socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, this::handleSocketReceiverException);
     }
     
     /**
@@ -127,6 +110,7 @@ public class LocalSystem {
     public ConnectionStatus checkServerConnection () {
         // Attempt to send a connection check message to remote
         try {
+            throwIfNullSocket();
             socket.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
             return ConnectionStatus.NO_CONNECTION;
@@ -134,7 +118,7 @@ public class LocalSystem {
         
         // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
         try {
-            connectionResponseWaiter.waitForValue(responseTimeoutMillis);
+            connectionResponseWaiter.waitForValue(RESPONSE_TIMEOUT_MILLIS);
             
             // Return an OK connection status because a connection response message was received
             return ConnectionStatus.OK;
@@ -171,33 +155,13 @@ public class LocalSystem {
         remoteProcessHandler = new RemoteProcessHandler(
             console,
             this::remoteProcessHandlerSendInstructionMessage,
-            responseTimeoutMillis,
-            sendKeepaliveMessageIntervalMillis,
+            RESPONSE_TIMEOUT_MILLIS,
+            SEND_KEEPALIVE_INTERVAL_MILLIS,
             nextRemoteProcessId);
         
         // Increment the remote process ID so that the next process uses a new ID
         nextRemoteProcessId ++;
         remoteProcessHandler.execute(line);
-    }
-    
-    /**
-     * Represents a connection status with remote.
-     */
-    public enum ConnectionStatus {
-        /**
-         * The socket connection failed.
-         */
-        NO_CONNECTION,
-        
-        /**
-         * There is a socket connection to remote, but the RCT server is not responding or there is no server running.
-         */
-        NO_SERVER,
-        
-        /**
-         * The connection is OK.
-         */
-        OK,
     }
     
     /**
@@ -244,14 +208,6 @@ public class LocalSystem {
         streamDataStorage.acceptDataMessage(msg);
     }
     
-    /**
-     * Closes the socket. See {@link DriverStationSocketHandler#close()}.
-     * @throws IOException If the socket threw an i/o exception while closing.
-     */
-    public void closeSocket () throws IOException {
-        socket.close();
-    }
-    
     // COMMAND INTERPRETATION
     
     private void receiveCommandOutputMessage (CommandOutputMessage msg) {
@@ -261,9 +217,44 @@ public class LocalSystem {
     
     private void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
         try {
+            throwIfNullSocket();
             socket.sendInstructionMessage(message);
         } catch (IOException e) {
+            handleSocketException(e);
+        }
+    }
+    
+    // EXCEPTION HANDLING
+    
+    private void handleSocketReceiverException (IOException e) {
+        handleSocketException(e);
+    }
+    
+    private void handleSocketException (IOException e) {
+        if (remoteProcessHandler != null)
             remoteProcessHandler.terminate();
+        
+        // Signal to the requireNewConnectionThread that a new connection is required
+        requireNewConnection = true;
+    }
+    
+    private void requireNewConnectionThreadRunnable () {
+        while (true) {
+            // If a new connection needs to be established, try to do that
+            if (requireNewConnection || checkServerConnection() != ConnectionStatus.OK) {
+                try {
+                    // Try to establish a new connection
+                    establishNewConnection();
+                    
+                    // If an i/o exception has not been thrown then the connection was established successfully
+                    requireNewConnection = false;
+                } catch (IOException e) { }
+            }
+            
+            // Sleep the thread until we need to check again
+            try {
+                Thread.sleep(REESTABLISH_CONNECTION_INTERVAL_MILLIS);
+            } catch (InterruptedException e) { }
         }
     }
     
@@ -276,17 +267,38 @@ public class LocalSystem {
         }
     }
     
+    private void throwIfNullSocket () throws IOException {
+        if (socket == null) throw new NoSocketException();
+    }
+    
     /**
-     * An exception thrown if no response was received from remote after a connection check message was sent.
+     * An exception thrown if an action is performed on the socket connection,
+     * but the intial attempt to open the socket failed.
      */
-    public class NoRunningServerException extends IOException {
-        public NoRunningServerException () {
-            super(
-                "No instance of the Robot Control Terminal server is running, " +
-                "or it has not responded within the " + responseTimeoutMillis +
-                "ms timeout"
-            );
+    public static class NoSocketException extends IOException {
+        public NoSocketException () {
+            super("No socket has been initialized.");
         }
+    }
+    
+    /**
+     * Represents a connection status with remote.
+     */
+    public enum ConnectionStatus {
+        /**
+         * The socket connection failed.
+         */
+        NO_CONNECTION,
+        
+        /**
+         * There is a socket connection to remote, but the RCT server is not responding or there is no server running.
+         */
+        NO_SERVER,
+        
+        /**
+         * The connection is OK.
+         */
+        OK,
     }
     
 }

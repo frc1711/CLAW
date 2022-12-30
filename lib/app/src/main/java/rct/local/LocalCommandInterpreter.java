@@ -53,8 +53,8 @@ public class LocalCommandInterpreter {
             "Displays a help message for the given location, either local (driverstation) or remote (roboRIO).",
             this::helpCommand);
         
-        addDocumentedCommand("netstat", "netstat",
-            "Displays the current status of the connection to remote, automatically updating over time. Press enter to stop.",
+        addDocumentedCommand("comms", "comms",
+            "Displays the current status of the connection to the remote (the roboRIO), automatically updating over time. Press enter to stop.",
             this::statusCommand);
         
         addDocumentedCommand("ssh", "ssh [user]",
@@ -164,37 +164,42 @@ public class LocalCommandInterpreter {
         
         // Keep repeating until the user hits enter
         while (!console.hasInputReady()) {
+            
+            // Display a "trying connection" banner below where the connection will be displayed
+            console.println("Trying connection...");
+            
+            // Get the new status
             ConnectionStatus status = system.checkServerConnection();
             
-            // Move up to the status line and clear previous contents
-            console.moveUp(1);
-            console.clearLine();
-            
-            // Display the new status
+            // Get the new status to display
             String output = "";
             boolean isOutputError = status != ConnectionStatus.OK;
             
-            output = status.name() + " - ";
             switch (status) {
                 case NO_CONNECTION:
-                    output += "There is no connection to remote. Check comms.";
+                    output = "There are no communications with remote.";
                     break;
                 case NO_SERVER:
-                    output += "A connection to remote exists, but the server is unresponsive.";
+                    output = "Communications with remote are OK, but the Robot Control Terminal server is unresponsive.";
                     break;
                 case OK:
-                    output += "Connection is OK.";
-                    break;
-                default:
-                    output += "Unknown status code.";
+                    output = "Connection is OK.";
                     break;
             }
             
+            // Remove the "trying connection" banner
+            console.moveUp(1);
+            console.clearLine();
+            
+            // Remove the old status banner
+            console.moveUp(1);
+            console.clearLine();
+            
+            // Print the new status banner
+            console.printSys(status.name());
+            console.print(" - ");
             if (!isOutputError) console.println(output);
             else console.printlnErr(output);
-            
-            console.print("Press enter to stop.");
-            console.flush();
             
             // Try to wait some amount of time before retrying
             try { Thread.sleep(200); }
@@ -202,7 +207,6 @@ public class LocalCommandInterpreter {
         }
         
         // Clear any user input already waiting to be processed
-        console.println("");
         console.clearWaitingInputLines();
     }
     
