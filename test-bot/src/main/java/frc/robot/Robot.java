@@ -62,10 +62,6 @@ public class Robot extends TimedRobot {
         if (m_autonomousCommand != null) {
             m_autonomousCommand.cancel();
         }
-        
-        throw new RuntimeException("This is some sort of runtime exception");
-        // System.out.println("\n\n\nSYSTEM.EXIT CALLED");
-        // System.exit(0);
     }
 
     /** This function is called periodically during operator control. */
