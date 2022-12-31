@@ -1,5 +1,6 @@
 package claw.rct.remote;
 
+import claw.api.RaptorsCLAW;
 import claw.rct.commands.Command;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -22,6 +23,7 @@ public class RemoteCommandInterpreter {
         
         addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
+        addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
@@ -37,6 +39,10 @@ public class RemoteCommandInterpreter {
         console.println("pong");
         String input = console.readInputLine();
         console.printlnSys("Read input line: " + input);
+    }
+    
+    private void restartCommand (ConsoleManager console, Command cmd) {
+        RaptorsCLAW.getInstance().restartCode();
     }
     
     private void testCommand (ConsoleManager console, Command cmd) {

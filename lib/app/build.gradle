@@ -27,17 +27,9 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:30.1.1-jre'
     
-    // Add ntcore-java
-    implementation "edu.wpi.first.ntcore:ntcore-java:2022.4.1"
-    
     // Add wpiutil-java
     implementation "edu.wpi.first.wpiutil:wpiutil-java:2022.4.1"
     
-    // Add ntcore-jni for runtime. We are adding all supported platforms
-    // so that our application will work on all supported platforms.
-    implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:windowsx86"
-    implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:windowsx86-64"
-    implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:linuxx86-64"
-    implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:linuxraspbian"
-    implementation "edu.wpi.first.ntcore:ntcore-jni:2022.4.1:osxx86-64"
+    // Add wpilibj
+    implementation "edu.wpi.first.wpilibj:wpilibj-java:2022.4.1"
 }

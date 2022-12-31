@@ -4,12 +4,9 @@
 
 package frc.robot;
 
-import java.io.IOException;
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import claw.rct.remote.RCTServer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -21,8 +18,7 @@ public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
-    private RCTServer server;
-
+    
     /**
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
@@ -32,15 +28,6 @@ public class Robot extends TimedRobot {
         // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
-        
-        try {
-            System.out.println("\n\nStarting server...");
-            server = new RCTServer(5800);
-            server.start();
-            System.out.println("Started successfully.\n\n");
-        } catch (IOException e) {
-            System.out.println(e);
-        }
     }
     
     @Override
@@ -69,12 +56,16 @@ public class Robot extends TimedRobot {
     /** This function is called periodically during autonomous. */
     @Override
     public void autonomousPeriodic() {}
-
+    
     @Override
     public void teleopInit() {
         if (m_autonomousCommand != null) {
             m_autonomousCommand.cancel();
         }
+        
+        throw new RuntimeException("This is some sort of runtime exception");
+        // System.out.println("\n\n\nSYSTEM.EXIT CALLED");
+        // System.exit(0);
     }
 
     /** This function is called periodically during operator control. */
