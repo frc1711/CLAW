@@ -8,7 +8,7 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.Ansi.Color;
 
-import rct.network.low.ConsoleManager;
+import claw.rct.network.low.ConsoleManager;
 
 public class LocalConsoleManager implements ConsoleManager {
     

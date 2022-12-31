@@ -1,8 +1,9 @@
-# Robot Control Terminal
+# CLAW - Common Library Addition to WPILib
 (Nothing here yet)
 
 ## Internal Structure
 ### The Base Library
+TODO: Update README for CLAW
 The base library, located at `lib/rct`, contains both the high-level functionality which the robot code will
 require in order to connect to the robot control terminal and the low-level functionality used within the
 driverstation-client app.

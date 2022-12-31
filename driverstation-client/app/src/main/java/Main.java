@@ -1,4 +1,4 @@
-import rct.local.RobotControlTerminal;
+import claw.rct.local.RobotControlTerminal;
 
 public class Main {
     
