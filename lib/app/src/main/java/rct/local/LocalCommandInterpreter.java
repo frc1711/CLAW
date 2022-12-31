@@ -5,14 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rct.commands.Command;
-import rct.commands.CommandInterpreter;
-import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.commands.CommandLineInterpreter;
+import rct.commands.CommandProcessor;
+import rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
+import rct.commands.CommandProcessor.BadArgumentsException;
+import rct.commands.CommandProcessor.CommandFunction;
+import rct.commands.CommandProcessor.HelpMessage;
 import rct.local.LocalSystem.ConnectionStatus;
 import rct.network.low.ConsoleManager;
 import rct.network.low.DriverStationSocketHandler;
 
 /**
- * A wrapper around the {@link CommandInterpreter}, prepared to process local (driverstation) commands. When a command
+ * A wrapper around the {@link CommandLineInterpreter}, prepared to process local (driverstation) commands. When a command
  * is not recognized locally, it should be sent to remote (roboRIO) to try processing it.
  */
 public class LocalCommandInterpreter {
@@ -20,15 +24,12 @@ public class LocalCommandInterpreter {
     private final StreamDataStorage streamDataStorage;
     private final LocalSystem system;
     
-    private final List<HelpSection> helpSections = new ArrayList<HelpSection>();
-    
     /**
      * Because commands are sent to remote when the local command interpreter indicates that it does not recognize a command,
      * this sendCommandToRemote boolean can be set in a command consumer method in order to indicate to the processLine method
      * that it should indicate it does not recognize the command and thus must send the command to remote.
      */
-    private boolean sendCommandToRemote = false;
-    private final CommandInterpreter commandInterpreter = new CommandInterpreter();
+    private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
     /**
      * Construct a new {@link LocalCommandInterpreter} with all the resources it requires in order to execute
@@ -41,78 +42,48 @@ public class LocalCommandInterpreter {
     }
     
     private void addCommands () {
-        addDocumentedCommand("clear", "clear",
+        addCommand("clear", "clear",
             "Clears the console.",
             this::clearCommand);
         
-        addDocumentedCommand("exit", "exit",
+        addCommand("exit", "exit",
             "Exits the robot control terminal immediately.",
             this::exitCommand);
         
-        addDocumentedCommand("help", "help [location]",
+        addCommand("help", "help [location]",
             "Displays a help message for the given location, either local (driverstation) or remote (roboRIO).",
             this::helpCommand);
         
-        addDocumentedCommand("comms", "comms",
+        addCommand("comms", "comms",
             "Displays the current status of the connection to the remote (the roboRIO), automatically updating over time. Press enter to stop.",
             this::statusCommand);
         
-        addDocumentedCommand("ssh", "ssh [user]",
+        addCommand("ssh", "ssh [user]",
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
     }
     
     /**
-     * Processes a line as a command. If the command is not recognized by the interpreter, this will return {@code false}.
-     * Commands not recognized by this local interpreter should be sent to remote.
+     * Processes a line as a command. If the command is not recognized by the interpreter, this will return {@code true},
+     * and the command should be sent to remote to be processed.
      * @param console                   The {@link ConsoleManager} to put output to and take input from.
      * @param line                      The line to process as command-line input.
-     * @return                          Whether or not this interpreter recognized the command.
+     * @return                          Whether or not to send the command to remote to be processed.
      * @throws Command.ParseException
      * @throws BadArgumentsException
      */
     public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadArgumentsException {
-        sendCommandToRemote = false;
-        boolean result = commandInterpreter.processLine(console, line);
-        return result && !sendCommandToRemote;
-    }
-    
-    /**
-     * Add a new {@link ExtendedCommandProcessor} to receive a particular command.
-     * @param command   The command for the command processor to watch for. This is case insensitive.
-     * @param usage     A string representing the usage of the command (e.g. {@code "ssh [user]"}).
-     * @param helpText  A string explaining how to use the command and what it does.
-     * @param processor The {@code ExtendedCommandProcessor} which processes the command
-     */
-    private void addDocumentedCommand (String command, String usage, String helpText, ExtendedCommandProcessor processor) {
-        commandInterpreter.addCommandConsumer(command, (console, cmd) -> processor.accept(usage, console, cmd));
-        helpSections.add(new HelpSection(usage, helpText));
-    }
-    
-    /**
-     * A {@link CommandInterpreter.CommandProcessor} extended to take in a {@code String commandUsage},
-     * which is used by {@link BadArgumentsException}s.
-     * 
-     * @see LocalCommandInterpreter#addDocumentedCommand(String, String, String, ExtendedCommandProcessor)
-     */
-    private static interface ExtendedCommandProcessor {
-        public void accept (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException;
-    }
-    
-    /**
-     * The entry for one command in the help display.
-     */
-    private static class HelpSection {
-        private final String usage, helpText;
-        
-        /**
-         * @param usage     A string representing the usage of the command (e.g. {@code "ssh [user]"}).
-         * @param helpText  The text describing how to use the command and what the command does.
-         */
-        public HelpSection (String usage, String helpText) {
-            this.usage = usage;
-            this.helpText = helpText;
+        try {
+            commandInterpreter.processLine(console, line);
+        } catch (CommandNotRecognizedException e) {
+            return true;
         }
+        
+        return false;
+    }
+    
+    private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
+        commandInterpreter.addCommandProcessor(new CommandProcessor(command, usage, helpDescription, function));
     }
     
     
@@ -126,40 +97,34 @@ public class LocalCommandInterpreter {
     
     
     
-    private void clearCommand (String commandUsage, ConsoleManager console, Command cmd) {
+    private void clearCommand (ConsoleManager console, Command cmd) {
         console.clear();
     }
     
-    private void exitCommand (String commandUsage, ConsoleManager console, Command cmd) {
+    private void exitCommand (ConsoleManager console, Command cmd) {
         System.exit(0);
     }
     
-    private void helpCommand (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandInterpreter.checkNumArgs(commandUsage, 0, 1, cmd.argsLen());
+    private void helpCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.checkNumArgs(0, 1, cmd.argsLen());
         
         if (cmd.argsLen() == 0) {
             console.println("Use 'help local' for a list of local commands, and 'help remote' for a list of remote commands.");
             return;
         }
         
-        CommandInterpreter.expectedOneOf(commandUsage, "location", cmd.getArg(0), "local", "remote");
-        
-        // Send the command to remote if the location argument is "remote"
-        if (cmd.getArg(0).equals("remote")) {
-            sendCommandToRemote = true;
-            return;
-        }
+        List<HelpMessage> helpMessages = commandInterpreter.getHelpMessages();
         
         console.printlnSys("\n==== Local Command Interpreter Help ====");
         console.println("All the following commands run on the local command interpreter, meaning they");
         console.println("are executed on the driverstation and not the roboRIO (with few exceptions).\n");
-        for (HelpSection helpSection : helpSections) {
-            console.printlnSys(helpSection.usage);
-            console.println("  "+helpSection.helpText+"\n");
+        for (HelpMessage helpMessage : helpMessages) {
+            console.printlnSys(helpMessage.usage);
+            console.println("  " + helpMessage.helpDescription + "\n");
         }
     }
     
-    private void statusCommand (String commandUsage, ConsoleManager console, Command cmd) {
+    private void statusCommand (ConsoleManager console, Command cmd) {
         console.println("");
         
         // Keep repeating until the user hits enter
@@ -210,10 +175,10 @@ public class LocalCommandInterpreter {
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (String commandUsage, ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandInterpreter.checkNumArgs(commandUsage, 1, cmd.argsLen());
+    private void sshCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.checkNumArgs(1, cmd.argsLen());
         String user = cmd.getArg(0);
-        CommandInterpreter.expectedOneOf(commandUsage, "user", user, "lvuser", "admin");
+        CommandProcessor.expectedOneOf("user", user, "lvuser", "admin");
         
         // Get host for ssh and generate command
         String host = DriverStationSocketHandler.getRoborioHost(system.getTeamNum());

@@ -3,7 +3,7 @@ package rct.local;
 import java.io.IOException;
 
 import rct.commands.Command.ParseException;
-import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.commands.CommandProcessor.BadArgumentsException;
 import rct.local.LocalSystem.ConnectionStatus;
 import rct.local.LocalSystem.NoResponseException;
 import rct.network.low.ConsoleManager;

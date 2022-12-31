@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import rct.commands.CommandLineInterpreter.CommandLineException;
+
 /**
- * A command obtained through user input which can processed by a {@link CommandInterpreter}.
+ * A command obtained through user input which can processed by a {@link CommandLineInterpreter}.
  */
 public class Command {
     
@@ -175,7 +177,7 @@ public class Command {
      */
     private static void addFlagsString (Set<Character> flags, String flagsString) throws ParseException {
         // No flags set
-        if (flagsString.length() == 0) throw new ParseException("List of 0 flags set");
+        if (flagsString.length() == 0) throw new ParseException("List of zero flags set");
         
         // Loop through all character flags
         for (int i = 0; i < flagsString.length(); i ++) {
@@ -223,9 +225,9 @@ public class Command {
      * </li>
      * </ul>
      */
-    public static class ParseException extends Exception {
+    public static class ParseException extends CommandLineException {
         public ParseException (String message) {
-            super(message);
+            super("Malformed command: " + message);
         }
     }
     

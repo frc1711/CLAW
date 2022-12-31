@@ -2,8 +2,7 @@ package rct.remote;
 
 import java.io.IOException;
 
-import rct.commands.Command.ParseException;
-import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.commands.CommandLineInterpreter.CommandLineException;
 import rct.network.low.InstructionMessage;
 import rct.network.low.ResponseMessage;
 import rct.network.low.RobotSocketHandler;
@@ -82,13 +81,9 @@ public class RCTServer {
         new Thread(() -> {
             try {
                 // Attempt to run the process via the command interpreter
-                if (!interpreter.processLine(commandProcessHandler, msg.command)) {
-                    commandProcessHandler.printlnErr("Command not recognized.");
-                }
-            } catch (ParseException e) {
-                commandProcessHandler.printlnErr("Malformatted command: " + e.getMessage());
-            } catch (BadArgumentsException e) {
-                commandProcessHandler.printlnErr(e.getMessage());
+                interpreter.processLine(commandProcessHandler, msg.command);
+            } catch (CommandLineException e) {
+                e.writeToConsole(commandProcessHandler);
             } catch (TerminatedProcessException e) { } // If the process was terminated (a runtime exception), exit silently
             
             // When the command process is finished, terminate the process and flush all output to local

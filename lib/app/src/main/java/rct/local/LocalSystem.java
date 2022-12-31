@@ -3,7 +3,7 @@ package rct.local;
 import java.io.IOException;
 
 import rct.commands.Command;
-import rct.commands.CommandInterpreter.BadArgumentsException;
+import rct.commands.CommandProcessor.BadArgumentsException;
 import rct.network.low.ConsoleManager;
 import rct.network.low.DriverStationSocketHandler;
 import rct.network.low.InstructionMessage;
@@ -144,8 +144,9 @@ public class LocalSystem {
      * @throws IOException              If the command failed to send to remote
      */
     public void processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
-        // Attempt to process the command locally
-        if (interpreter.processLine(console, line)) return;
+        // Attempt to process the command locally. If the command should be sent to remote,
+        // then interpreter.processLine will return true
+        if (!interpreter.processLine(console, line)) return;
         
         // If a remote process handler is running, terminate it
         if (remoteProcessHandler != null)
