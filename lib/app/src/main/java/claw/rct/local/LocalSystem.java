@@ -143,7 +143,7 @@ public class LocalSystem {
      * @throws NoResponseException      If no response was received from a command sent to remote
      * @throws IOException              If the command failed to send to remote
      */
-    public void processCommand (String line) throws Command.ParseException, NoResponseException, IOException, BadArgumentsException {
+    public void processCommand (String line) throws Command.ParseException, IOException, BadArgumentsException {
         // Attempt to process the command locally. If the command should be sent to remote,
         // then interpreter.processLine will return true
         if (!interpreter.processLine(console, line)) return;
@@ -218,9 +218,14 @@ public class LocalSystem {
     
     private void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
         try {
+            // Attempt to send the instruction message
             throwIfNullSocket();
             socket.sendInstructionMessage(message);
         } catch (IOException e) {
+            // If the call threw an exception, terminate the remote process handler with an exception
+            remoteProcessHandler.terminate(e);
+            
+            // Then handle the exception in the usual way
             handleSocketException(e);
         }
     }
@@ -232,9 +237,6 @@ public class LocalSystem {
     }
     
     private void handleSocketException (IOException e) {
-        if (remoteProcessHandler != null)
-            remoteProcessHandler.terminate();
-        
         // Signal to the requireNewConnectionThread that a new connection is required
         requireNewConnection = true;
     }

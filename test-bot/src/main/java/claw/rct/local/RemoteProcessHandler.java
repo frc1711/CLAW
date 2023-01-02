@@ -1,5 +1,6 @@
 package claw.rct.local;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import claw.rct.network.low.ConsoleManager;
@@ -27,8 +28,14 @@ public class RemoteProcessHandler {
     
     private boolean startedExecuting = false;
     private boolean terminated = false;
+    private IOException terminateException = null;
     
-    public RemoteProcessHandler (ConsoleManager console, Consumer<InstructionMessage> instructionSender, long keepaliveDuration, long keepaliveSendInterval, int processId) {
+    public RemoteProcessHandler (
+            ConsoleManager console,
+            Consumer<InstructionMessage> instructionSender,
+            long keepaliveDuration,
+            long keepaliveSendInterval,
+            int processId) {
         this.console = console;
         this.instructionSender = instructionSender;
         this.processId = processId;
@@ -48,7 +55,7 @@ public class RemoteProcessHandler {
         keepaliveWatcher.continueKeepalive();
     }
     
-    public void execute (String command) {
+    public void execute (String command) throws IOException {
         // Do nothing if the remote process has already begun executing
         if (startedExecuting) return;
         startedExecuting = true;
@@ -66,6 +73,8 @@ public class RemoteProcessHandler {
         
         // If at any point the commandOutputWaiter is killed, then the process must have
         // been terminated and we should silently exit the above block
+        
+        if (terminateException != null) throw terminateException;
     }
     
     private void awaitCommandOutputLoop () throws NoValueReceivedException {
@@ -147,8 +156,13 @@ public class RemoteProcessHandler {
     }
     
     public void terminate () {
+        terminate(null);
+    }
+    
+    public void terminate (IOException exception) {
         // Do nothing if the remote process is not executing
         if (!isExecuting()) return;
+        terminateException = exception;
         terminated = true;
         commandOutputWaiter.kill();
         keepaliveWatcher.stopWatching();

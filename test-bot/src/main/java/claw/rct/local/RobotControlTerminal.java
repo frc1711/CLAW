@@ -89,7 +89,7 @@ public class RobotControlTerminal {
             // TODO: Local command like "error [error type]" can further explain error messages like this
             console.printlnErr("Timeout reached: No response was received for the last command sent to remote.");
         } catch (IOException e) {
-            console.printlnErr("The command failed to send to remote.");
+            console.printlnErr("The connection with remote failed.");
         }
     }
     
