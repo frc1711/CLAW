@@ -1,44 +1,26 @@
 # CLAW - Common Library Addition to WPILib
-(Nothing here yet)
+## Building and Testing
+### CLAW and the Driverstation RCT Client
+CLAW is located in the `lib` directory. The entirety of the driverstation
+client for the Robot Control Terminal is located within CLAW, and is built along with the rest of CLAW using `build-lib.bat`. This batch script will also add the built library jar
+`claw.jar` to the test robot. `run-rct-client.bat` can be used to run the driverstation client in a new command prompt window (after CLAW is built).
 
-## Internal Structure
-### The Base Library
-TODO: Update README for CLAW
-The base library, located at `lib/rct`, contains both the high-level functionality which the robot code will
-require in order to connect to the robot control terminal and the low-level functionality used within the
-driverstation-client app.
+### Test Robot
+The test robot is located in the `test-bot` directory. It is not a part of CLAW. Its purpose is purely for testing CLAW as it is being written. The `test-bot` code can be deployed to a connected roboRIO using `deploy-test-bot.bat`. If updates are made to CLAW which should be reflected in this code deployment, `build-lib.bat` must be run before `deploy-test-bot.bat`.
 
-Whenever any changes are made to the `rct` base library, both `test-bot-update-lib.bat`
-and `driverstation-update-lib.bat` should be called in order to update the `rct`
-package in both the test robot code and the driverstation client app.
+## Driverstation RCT Client Usage
+The driverstation RCT client program is located at `lib\app\build\distributions\app.zip`.
+The program can be run via a batch script located within the zip at `app\bin\app.bat`.
 
-Because `test-bot-update-lib.bat` and `driverstation-update-lib.bat` replace the `rct` packages
-in the test bot source code and the driverstation client source code, whenever
-changes to the `rct` library are made they MUST be made to the original library source found at
-`lib/rct`. Otherwise, any changes will be overridden as soon as the driverstation or test robot
-code is built.
+## WPILib CLAW Usage
+### Adding CLAW to Your Classpath
+The CLAW library jar is located at `lib\app\build\libs\claw.jar`. To add it to an existing WPILib project, download this JAR and save it to `proj\libs`(where `proj` is the path to your WPILib project). You'll have to create the `libs` directory, as it probably won't exist already.
 
-### The Driverstaion Client
-The driverstation client app is the second useful export. It is the client app which will have to
-run on the driverstation in order for the terminal to show up.
+Next, add the following line to your project's `build.gradle`:
+```
+implementation files("libs/claw.jar")
+```
 
-A fully self-contained .jar file can be found in `driverstation-client/app-jar`, along with a `start.bat`
-file which is necessary for launching it. Note: If the driverstation client jar executable is run on its
-own, it will run silently in the background and will not be visible to the user. In order to use the
-terminal, the jar must be run from a `cmd.exe` instance or the provided batch file.
-
-This jar executable can be built (including updating the `rct` library) using
-`build-driverstation-client.bat`, and the test robot code can be built and deployed
-(also updating its copy of the `rct` library) using `build-test-bot.bat`.
-
-### Helpful Table
-|                       | Base Library                          | Driverstation Client                      | Test-bot                      |
-| :---:                 | :---:                                 | :---:                                     | :---:                         |
-| Location              | `lib/rct`                             | `driverstation-client/app-jar/start.bat`  | `test-bot`                    |
-| Used for / purpose    | Robot code (and DS client internally) | Used on driverstation for terminal        | Nothing (testing)             |
-| Depends on            | Nothing                               | base library                              | base library                  |
-| Update dependencies   | N/A                                   | `driverstation-update-lib.bat`            | `test-bot-update-lib.bat`     |
-| Build or deploy       | N/A                                   | `build-driverstation-client.bat`          | `build-test-bot.bat`          |
-
-In order to use the robot control terminal, you must set up the base library in your robot code and run the driverstation
-client JAR through the given `start.bat` script.
+## Implementing CLAW in Your Code
+CLAW is a work in progress, and this section is still being developed.
+TODO: Finish this
