@@ -12,6 +12,10 @@ plugins {
     id 'java'
 }
 
+jar {
+    archiveName "claw.jar"
+}
+
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
@@ -44,4 +48,13 @@ dependencies {
     // Add edu.wpi.first.ntcore
     // Used by other dependencies
     implementation "edu.wpi.first.ntcore:ntcore-java:2022.4.1"
+    
+    // Add org.fusesource.jansi
+    // Used for console ANSI processing for driverstation-side RCT
+    implementation "org.fusesource.jansi:jansi:2.4.0"
+}
+
+application {
+    // Define the main class for the application.
+    mainClass = 'claw.rct.local.LocalMain'
 }
