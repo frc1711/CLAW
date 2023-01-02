@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import claw.rct.remote.RCTServer;
+import claw.subsystems.SubsystemCLAW;
+import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class RaptorsCLAW {
     
@@ -52,18 +51,23 @@ public class RaptorsCLAW {
     
     
     
-    // RaptorsCLAW instance methods
+    // RaptorsCLAW private methods
     
+    private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
     private final RobotProxy robotProxy;
     private RCTServer server;
     
     private RaptorsCLAW (Supplier<TimedRobot> robotSupplier) {
+        // Put a message into the console indicating that the RaptorsCLAW runtime has started
         System.out.println("\n -- RaptorsCLAW is running -- \n");
         
+        // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
+        
+        // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800);
+                server = new RCTServer(5800, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
                 System.out.println("Failed to start RCT server.");
@@ -76,14 +80,31 @@ public class RaptorsCLAW {
         System.out.println("\n\n\nCaught an uncaught throwable: " + throwable.getMessage());
     }
     
+    /**
+     * The robot proxy schedules this method to be called at the default TimedRobot period
+     */
     private void robotPeriodic () {
-        if (robotProxy.isEnabled()) {
-            System.out.println("Robot periodic");
-        }
+        
+    }
+    
+    /**
+     * The robot proxy calls this method before the startCompetition method exits (regardless
+     * of whether any exceptions have been thrown) so that important operations can be finished.
+     */
+    private void onRobotProgramExit () {
+        
+    }
+    
+    
+    
+    // Public API
+    
+    public void addSubsystem (SubsystemCLAW subsystem) {
+        subsystemRegistry.addSubsystem(subsystem);
     }
     
     public void restartCode () {
-        System.out.print("\n".repeat(5));
+        onRobotProgramExit();
         System.exit(0);
     }
     
@@ -97,6 +118,8 @@ public class RaptorsCLAW {
         
         public RobotProxy (Supplier<TimedRobot> robotSupplier) {
             robot = robotSupplier.get();
+            
+            // Schedule the robotPeriodic method to be called at the default TimedRobot period
             robot.addPeriodic(RaptorsCLAW.this::robotPeriodic, TimedRobot.kDefaultPeriod);
         }
         
@@ -104,8 +127,10 @@ public class RaptorsCLAW {
         public void startCompetition () {
             try {
                 robot.startCompetition();
+                onRobotProgramExit();
             } catch (Throwable throwable) {
                 handleUncaughtThrowable(throwable);
+                onRobotProgramExit();
                 throw throwable;
             }
         }

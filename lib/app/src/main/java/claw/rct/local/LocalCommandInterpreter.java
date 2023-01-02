@@ -60,6 +60,10 @@ public class LocalCommandInterpreter {
         addCommand("ssh", "ssh [user]",
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
+        
+        addCommand("subsystems", "no usage",
+            "no help desc.",
+            this::subsystemsCommand);
     }
     
     /**
@@ -196,6 +200,10 @@ public class LocalCommandInterpreter {
             console.printlnErr("Failed to launch PuTTY from the command line.");
             console.printlnErr("Install PuTTY and ensure it is in your PATH environment variable.");
         }
+    }
+    
+    private void subsystemsCommand (ConsoleManager console, Command cmd) {
+        
     }
     
 }

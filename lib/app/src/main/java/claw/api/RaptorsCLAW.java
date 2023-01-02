@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import claw.rct.remote.RCTServer;
-import edu.wpi.first.util.sendable.SendableBuilder;
+import claw.subsystems.SubsystemCLAW;
+import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class RaptorsCLAW {
     
@@ -52,8 +51,9 @@ public class RaptorsCLAW {
     
     
     
-    // RaptorsCLAW instance methods
+    // RaptorsCLAW private methods
     
+    private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
     private final RobotProxy robotProxy;
     private RCTServer server;
     
@@ -67,7 +67,7 @@ public class RaptorsCLAW {
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800);
+                server = new RCTServer(5800, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
                 System.out.println("Failed to start RCT server.");
@@ -93,6 +93,14 @@ public class RaptorsCLAW {
      */
     private void onRobotProgramExit () {
         
+    }
+    
+    
+    
+    // Public API
+    
+    public void addSubsystem (SubsystemCLAW subsystem) {
+        subsystemRegistry.addSubsystem(subsystem);
     }
     
     public void restartCode () {
