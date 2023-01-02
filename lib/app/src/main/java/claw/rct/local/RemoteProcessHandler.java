@@ -43,7 +43,7 @@ public class RemoteProcessHandler {
             keepaliveDuration,
             keepaliveSendInterval,
             this::sendKeepaliveMessage,
-            this::terminate);
+            () -> this.terminate(new IOException("Keepalive timed out")));
     }
     
     public void receiveCommandOutputMessage (CommandOutputMessage msg) {
@@ -164,6 +164,7 @@ public class RemoteProcessHandler {
         if (!isExecuting()) return;
         terminateException = exception;
         terminated = true;
+        
         commandOutputWaiter.kill();
         keepaliveWatcher.stopWatching();
     }
