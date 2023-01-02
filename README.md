@@ -9,8 +9,8 @@ client for the Robot Control Terminal is located within CLAW, and is built along
 The test robot is located in the `test-bot` directory. It is not a part of CLAW. Its purpose is purely for testing CLAW as it is being written. The `test-bot` code can be deployed to a connected roboRIO using `deploy-test-bot.bat`. If updates are made to CLAW which should be reflected in this code deployment, `build-lib.bat` must be run before `deploy-test-bot.bat`.
 
 ## Driverstation RCT Client Usage
-The driverstation RCT client program is located at `lib\app\build\distributions\app.zip`.
-The program can be run via a batch script located within the zip at `app\bin\app.bat`.
+The driverstation RCT client program is located at `lib\app\build\distributions\driverstation-rct-client.zip`.
+The program can be run via a batch script located within the zip at `driverstation-rct-client\bin\app.bat`.
 
 ## WPILib CLAW Usage
 ### Adding CLAW to Your Classpath

@@ -12,7 +12,8 @@ echo Extracting CLAW distribution for driverstation RCT client
 
 @REM Extract the distribution zip to the driverstation-app-extract directory so it can be easily run
 rmdir /S /Q driverstation-app-extract\app
-powershell Expand-Archive lib\app\build\distributions\app.zip -DestinationPath driverstation-app-extract
+powershell Expand-Archive lib\app\build\distributions\driverstation-rct-client.zip -DestinationPath driverstation-app-extract
+rename driverstation-app-extract\driverstation-rct-client app
 
 echo Copying claw.jar to test robot
 

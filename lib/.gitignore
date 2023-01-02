@@ -2,4 +2,7 @@
 .gradle
 
 # Ignore Gradle build output directory
-build
+/app/build/*
+
+!/app/build/distributions
+!/app/build/libs

@@ -12,6 +12,10 @@ plugins {
     id 'java'
 }
 
+distZip {
+    archiveName "driverstation-rct-client.zip"
+}
+
 jar {
     archiveName "claw.jar"
 }
