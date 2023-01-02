@@ -6,3 +6,5 @@
 
 !/app/build/distributions
 !/app/build/libs
+
+/app/bin/*
