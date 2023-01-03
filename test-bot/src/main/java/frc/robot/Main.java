@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import claw.api.RaptorsCLAW;
+import claw.CLAWRuntime;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -21,6 +21,6 @@ public final class Main {
    * <p>If you change your main robot class, change the parameter type.
    */
   public static void main(String... args) {
-    RobotBase.startRobot(RaptorsCLAW.fromRobot(Robot::new));
+    RobotBase.startRobot(CLAWRuntime.fromRobot(Robot::new));
   }
 }

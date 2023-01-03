@@ -1,13 +1,13 @@
 package claw.subsystems;
 
-import claw.api.RaptorsCLAW;
+import claw.CLAWRuntime;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class SubsystemCLAW extends SubsystemBase {
     
     public SubsystemCLAW () {
         super();
-        RaptorsCLAW.getInstance().addSubsystem(this);
+        CLAWRuntime.getInstance().addSubsystem(this);
     }
     
 }

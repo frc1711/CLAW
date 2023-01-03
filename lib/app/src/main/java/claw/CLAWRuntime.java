@@ -1,4 +1,4 @@
-package claw.api;
+package claw;
 
 import java.io.IOException;
 import java.util.function.Supplier;
@@ -9,23 +9,23 @@ import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 
-public class RaptorsCLAW {
+public class CLAWRuntime {
     
     
     
-    // RaptorsCLAW singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
+    // CLAWRuntime singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
     
-    private static RaptorsCLAW instance = null;
+    private static CLAWRuntime instance = null;
     
-    public static RaptorsCLAW getInstance () {
+    public static CLAWRuntime getInstance () {
         // This runtime exception should never ever happen, as there is practically zero possibility
-        // of anyone trying to access a RaptorsCLAW instance before it is initialized by the
+        // of anyone trying to access a CLAWRuntime instance before it is initialized by the
         // fromRobot supplier sent to RobotBase.startRobot in Main.java.
         
-        // The only case in which this can reasonably happen is if the RaptorsCLAW entry point
+        // The only case in which this can reasonably happen is if the CLAWRuntime entry point
         // has not yet been added to Main.java
         if (instance == null)
-            throw new RuntimeException("RaptorsCLAW has not been initialized in Main.java");
+            throw new RuntimeException("CLAWRuntime has not been initialized in Main.java");
         return instance;
     }
     
@@ -41,9 +41,9 @@ public class RaptorsCLAW {
             @Override
             public RobotBase get () {
                 
-                // When this supplier is called in RobotBase.startRobot, it will initialize the RaptorsCLAW instance
+                // When this supplier is called in RobotBase.startRobot, it will initialize the CLAWRuntime instance
                 if (instance == null)
-                    instance = new RaptorsCLAW(robotSupplier);
+                    instance = new CLAWRuntime(robotSupplier);
                 return instance.robotProxy;
             }
         };
@@ -51,15 +51,15 @@ public class RaptorsCLAW {
     
     
     
-    // RaptorsCLAW private methods
+    // CLAWRuntime private methods
     
     private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
     private final RobotProxy robotProxy;
     private RCTServer server;
     
-    private RaptorsCLAW (Supplier<TimedRobot> robotSupplier) {
-        // Put a message into the console indicating that the RaptorsCLAW runtime has started
-        System.out.println("\n -- RaptorsCLAW is running -- \n");
+    private CLAWRuntime (Supplier<TimedRobot> robotSupplier) {
+        // Put a message into the console indicating that the CLAWRuntime runtime has started
+        System.out.println("\n -- CLAWRuntime is running -- \n");
         
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
@@ -120,7 +120,7 @@ public class RaptorsCLAW {
             robot = robotSupplier.get();
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
-            robot.addPeriodic(RaptorsCLAW.this::robotPeriodic, TimedRobot.kDefaultPeriod);
+            robot.addPeriodic(CLAWRuntime.this::robotPeriodic, TimedRobot.kDefaultPeriod);
         }
         
         @Override

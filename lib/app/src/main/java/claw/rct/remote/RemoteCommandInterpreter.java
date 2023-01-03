@@ -2,7 +2,7 @@ package claw.rct.remote;
 
 import java.util.List;
 
-import claw.api.RaptorsCLAW;
+import claw.CLAWRuntime;
 import claw.rct.commands.Command;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -51,7 +51,7 @@ public class RemoteCommandInterpreter {
     }
     
     private void restartCommand (ConsoleManager console, Command cmd) {
-        RaptorsCLAW.getInstance().restartCode();
+        CLAWRuntime.getInstance().restartCode();
     }
     
     private void subsystemsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
