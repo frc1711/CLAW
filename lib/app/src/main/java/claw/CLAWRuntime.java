@@ -1,9 +1,12 @@
 package claw;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Supplier;
 
+import claw.rct.network.messages.StreamDataMessage.StreamData;
 import claw.rct.remote.RCTServer;
+import claw.streams.StreamDataHandler;
 import claw.subsystems.SubsystemCLAW;
 import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -55,6 +58,7 @@ public class CLAWRuntime {
     
     private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
     private final RobotProxy robotProxy;
+    private final StreamDataHandler streamDataHandler;
     private RCTServer server;
     
     private CLAWRuntime (Supplier<TimedRobot> robotSupplier) {
@@ -63,6 +67,7 @@ public class CLAWRuntime {
         
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
+        streamDataHandler = new StreamDataHandler();
         
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
@@ -76,6 +81,10 @@ public class CLAWRuntime {
         }).start();
     }
     
+    public void testSendStreamData (StreamData data) {
+        streamDataHandler.addData(data);
+    }
+    
     private void handleUncaughtThrowable (Throwable throwable) {
         System.out.println("\n\n\nCaught an uncaught throwable: " + throwable.getMessage());
     }
@@ -84,7 +93,8 @@ public class CLAWRuntime {
      * The robot proxy schedules this method to be called at the default TimedRobot period
      */
     private void robotPeriodic () {
-        
+        if (server != null)
+            streamDataHandler.sendData(server);
     }
     
     /**

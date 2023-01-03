@@ -4,9 +4,8 @@
 
 package frc.robot;
 
-import edu.wpi.first.util.sendable.SendableRegistry;
-import edu.wpi.first.wpilibj.SensorUtil;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import claw.CLAWRuntime;
+import claw.rct.network.messages.StreamDataMessage.StreamData;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.TestCommand;
 import frc.robot.subsystems.TestSubsystem;
@@ -16,7 +15,8 @@ public class RobotContainer {
     private final TestSubsystem testSubsystem = new TestSubsystem();
     private final TestCommand testCommand = new TestCommand(testSubsystem);
     
-    public RobotContainer() {
+    public RobotContainer () {
+        CLAWRuntime.getInstance().testSendStreamData(new StreamData("RobotContainerStream", "Starting up RobotContainer"));
         testSubsystem.setDefaultCommand(testCommand);
     }
     

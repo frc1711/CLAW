@@ -201,8 +201,8 @@ public class LocalSystem {
     }
     
     /**
-     * Receives a stream data message and sends it to the stream data storage to be
-     * processed. This method will run on a receiver thread, and is delegated a message from
+     * Receives a stream data message and sends it to the stream
+     * data storage to be processed. This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
     private void receiveStreamDataMessage (StreamDataMessage msg) {

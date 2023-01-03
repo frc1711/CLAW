@@ -9,15 +9,17 @@ import claw.rct.network.low.ResponseMessage;
  */
 public class StreamDataMessage extends ResponseMessage {
     
-    public static final long serialVersionUID = 2L;
+    public static final long serialVersionUID = 3L;
     
+    public final int messageId;
     public final StreamData[] streamData;
     
     /**
      * Constructs a new {@link StreamDataMessage} given an array of {@link StreamData} to send.
      * @param streamData The {@code StreamData} to send.
      */
-    public StreamDataMessage (StreamData[] streamData) {
+    public StreamDataMessage (int streamDataMessageId, StreamData[] streamData) {
+        messageId = streamDataMessageId;
         this.streamData = streamData;
     }
     

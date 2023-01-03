@@ -8,6 +8,7 @@ import claw.rct.network.low.ResponseMessage;
 import claw.rct.network.low.RobotSocketHandler;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
+import claw.rct.network.messages.StreamDataMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
@@ -46,6 +47,10 @@ public class RCTServer {
         
         // If an exception has not yet been thrown, the server has started successfully
         successfullyStarted = true;
+    }
+    
+    public void sendStreamDataMessage (StreamDataMessage message) throws IOException {
+        serverSocket.sendResponseMessage(message);
     }
     
     private void receiveMessage (InstructionMessage msg) {

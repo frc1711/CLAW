@@ -13,6 +13,9 @@ import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
+import claw.rct.network.low.Waiter;
+import claw.rct.network.low.Waiter.NoValueReceivedException;
+import claw.rct.network.messages.StreamDataMessage.StreamData;
 
 /**
  * A wrapper around the {@link CommandLineInterpreter}, prepared to process local (driverstation) commands. When a command
@@ -30,12 +33,15 @@ public class LocalCommandInterpreter {
      */
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
+    private final Waiter<StreamData[]> streamDataWaiter = new Waiter<StreamData[]>();
+    
     /**
      * Construct a new {@link LocalCommandInterpreter} with all the resources it requires in order to execute
      * local commands.
      */
     public LocalCommandInterpreter (LocalSystem system, StreamDataStorage streamDataStorage) {
         this.streamDataStorage = streamDataStorage;
+        streamDataStorage.addOnReceiveDataListener(() -> streamDataWaiter.receive(streamDataStorage.getNewData()));
         this.system = system;
         addCommands();
     }
@@ -61,9 +67,9 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("subsystems", "no usage",
+        addCommand("watch", "no usage",
             "no help desc.",
-            this::subsystemsCommand);
+            this::watchCommand);
     }
     
     /**
@@ -202,8 +208,17 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void subsystemsCommand (ConsoleManager console, Command cmd) {
-        
+    private void watchCommand (ConsoleManager console, Command cmd) {
+        console.println("Receiving stream data:");
+        while (!console.hasInputReady()) {
+            try {
+                StreamData[] newData = streamDataWaiter.waitForValue(100);
+                
+                for (StreamData data : newData)
+                    console.println(data.streamName + " : " + data.data);
+                
+            } catch (NoValueReceivedException e) { }
+        }
     }
     
 }
