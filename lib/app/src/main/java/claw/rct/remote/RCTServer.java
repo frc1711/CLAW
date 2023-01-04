@@ -2,6 +2,8 @@ package claw.rct.remote;
 
 import java.io.IOException;
 
+import claw.logs.LogHandler;
+import claw.logs.RCTLog;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
@@ -16,6 +18,8 @@ import claw.rct.remote.CommandProcessHandler.TerminatedProcessException;
 import claw.subsystems.SubsystemRegistry;
 
 public class RCTServer {
+    
+    private static final RCTLog LOG = LogHandler.getInstance().getSysLog("Server");
     
     private static final long
         COMMAND_KEEPALIVE_DURATION_MILLIS = 1000,
@@ -131,7 +135,9 @@ public class RCTServer {
     private void handleNonFatalServerException (IOException e) {
         // Try to get a new connection to the driverstation
         try {
-            System.err.println("Nonfatal RCT server exception: " + e.getMessage());
+            String message = "Nonfatal RCT server exception: " + e.getMessage();
+            System.err.println(message);
+            LOG.err(message);
             serverSocket.getNewConnection();
         } catch (IOException fatalEx) {
             handleFatalServerException(fatalEx);
@@ -139,7 +145,9 @@ public class RCTServer {
     }
     
     private void handleFatalServerException (IOException e) {
-        System.err.println("Fatal RCT server exception: " + e.getMessage());
+        String message = "Fatal RCT server exception: " + e.getMessage();
+        System.err.println(message);
+        LOG.err(message);
     }
     
 }

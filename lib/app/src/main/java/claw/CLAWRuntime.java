@@ -1,18 +1,25 @@
 package claw;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.function.Supplier;
 
-import claw.rct.network.messages.StreamDataMessage.StreamData;
+import claw.devices.Config;
+import claw.logs.LogHandler;
+import claw.logs.RCTLog;
 import claw.rct.remote.RCTServer;
-import claw.streams.StreamDataHandler;
 import claw.subsystems.SubsystemCLAW;
 import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRuntime {
+    
+    
+    // Stream names
+    
+    private static final RCTLog COMMANDS_LOG = LogHandler.getInstance().getSysLog("Commands");
     
     
     
@@ -58,7 +65,6 @@ public class CLAWRuntime {
     
     private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
     private final RobotProxy robotProxy;
-    private final StreamDataHandler streamDataHandler;
     private RCTServer server;
     
     private CLAWRuntime (Supplier<TimedRobot> robotSupplier) {
@@ -67,7 +73,6 @@ public class CLAWRuntime {
         
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
-        streamDataHandler = new StreamDataHandler();
         
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
@@ -75,18 +80,14 @@ public class CLAWRuntime {
                 server = new RCTServer(5800, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
-                System.out.println("Failed to start RCT server.");
+                System.err.println("Failed to start RCT server.");
                 e.printStackTrace();
             }
         }).start();
     }
     
-    public void testSendStreamData (StreamData data) {
-        streamDataHandler.addData(data);
-    }
-    
     private void handleUncaughtThrowable (Throwable throwable) {
-        System.out.println("\n\n\nCaught an uncaught throwable: " + throwable.getMessage());
+        System.err.println("\n\n\nCaught an uncaught throwable: " + throwable.getMessage());
     }
     
     /**
@@ -94,7 +95,7 @@ public class CLAWRuntime {
      */
     private void robotPeriodic () {
         if (server != null)
-            streamDataHandler.sendData(server);
+            LogHandler.getInstance().sendData(server);
     }
     
     /**
@@ -102,7 +103,29 @@ public class CLAWRuntime {
      * of whether any exceptions have been thrown) so that important operations can be finished.
      */
     private void onRobotProgramExit () {
+        LogHandler.getInstance().saveUnsentData();
         
+        try {
+            Config.getInstance().save();
+        } catch (IOException e) {
+            System.err.println("Failed to save CLAW config data: " + e.getMessage());
+        }
+    }
+    
+    private void onCommandInitialize (Command command) {
+        COMMANDS_LOG.out(command.getName() + " initialized");
+    }
+    
+    private void onCommandExecute (Command command) {
+        
+    }
+    
+    private void onCommandFinish (Command command) {
+        COMMANDS_LOG.out(command.getName() + " finished");
+    }
+    
+    private void onCommandInterrupt (Command command) {
+        COMMANDS_LOG.out(command.getName() + " was interrupted");
     }
     
     
@@ -131,6 +154,11 @@ public class CLAWRuntime {
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
             robot.addPeriodic(CLAWRuntime.this::robotPeriodic, TimedRobot.kDefaultPeriod);
+            
+            CommandScheduler.getInstance().onCommandInitialize(CLAWRuntime.this::onCommandInitialize);
+            CommandScheduler.getInstance().onCommandExecute(CLAWRuntime.this::onCommandExecute);
+            CommandScheduler.getInstance().onCommandFinish(CLAWRuntime.this::onCommandFinish);
+            CommandScheduler.getInstance().onCommandInterrupt(CLAWRuntime.this::onCommandInterrupt);
         }
         
         @Override

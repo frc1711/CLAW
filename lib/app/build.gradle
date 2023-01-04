@@ -56,6 +56,10 @@ dependencies {
     // Add org.fusesource.jansi
     // Used for console ANSI processing for driverstation-side RCT
     implementation "org.fusesource.jansi:jansi:2.4.0"
+    
+    // Add jna
+    // Prevent enter and spacebar keys from being picked up by the driverstation and disable the robot
+    implementation "net.java.dev.jna:jna-platform:5.12.1"
 }
 
 application {

@@ -1,6 +1,7 @@
 package claw.rct.local;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import claw.rct.commands.Command;
@@ -13,8 +14,6 @@ import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
-import claw.rct.network.low.Waiter;
-import claw.rct.network.low.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.StreamDataMessage.StreamData;
 
 /**
@@ -33,7 +32,9 @@ public class LocalCommandInterpreter {
      */
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
-    private final Waiter<StreamData[]> streamDataWaiter = new Waiter<StreamData[]>();
+    private boolean hasNewStreamData = false;
+    private StreamData[] newStreamData = new StreamData[0];
+    private final Object newStreamDataLock = new Object();
     
     /**
      * Construct a new {@link LocalCommandInterpreter} with all the resources it requires in order to execute
@@ -41,7 +42,7 @@ public class LocalCommandInterpreter {
      */
     public LocalCommandInterpreter (LocalSystem system, StreamDataStorage streamDataStorage) {
         this.streamDataStorage = streamDataStorage;
-        streamDataStorage.addOnReceiveDataListener(() -> streamDataWaiter.receive(streamDataStorage.getNewData()));
+        streamDataStorage.addOnReceiveDataListener(this::receiveLogDataListener);
         this.system = system;
         addCommands();
     }
@@ -209,15 +210,39 @@ public class LocalCommandInterpreter {
     }
     
     private void watchCommand (ConsoleManager console, Command cmd) {
-        console.println("Receiving stream data:");
         while (!console.hasInputReady()) {
             try {
-                StreamData[] newData = streamDataWaiter.waitForValue(100);
-                
-                for (StreamData data : newData)
-                    console.println(data.streamName + " : " + data.data);
-                
-            } catch (NoValueReceivedException e) { }
+                Thread.sleep(20);
+            } catch (InterruptedException e) { }
+            
+            synchronized (newStreamDataLock) {
+                if (hasNewStreamData) {
+                    hasNewStreamData = false;
+                    for (StreamData data : newStreamData)
+                        printStreamData(console, data);
+                }
+            }
+        }
+    }
+    
+    private void receiveLogDataListener (StreamData[] data) {
+        synchronized (newStreamDataLock) {
+            newStreamData = data;
+            hasNewStreamData = true;
+        }
+    }
+    
+    private void printStreamData (ConsoleManager console, StreamData data) {
+        String streamNamePrint = "["+data.streamName+"] ";
+        String messagePrint = data.data;
+        
+        if (data.isError) {
+            console.printlnErr(streamNamePrint + messagePrint);
+        } else if (data.streamName.startsWith("#")) {
+            console.printSys(streamNamePrint);
+            console.println(messagePrint);
+        } else {
+            console.println(streamNamePrint + messagePrint);
         }
     }
     

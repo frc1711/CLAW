@@ -32,6 +32,8 @@ public class RobotControlTerminal {
      */
     public void start () {
         
+        // KeyHook.blockWindowsKey();
+        
         // Display of helpful message with roboRIO host url
         String host = DriverStationSocketHandler.getRoborioHost(TEAM_NUMBER) + ":" + REMOTE_PORT;
         console.printlnSys("Attempting to connect to server at " + host + "...");

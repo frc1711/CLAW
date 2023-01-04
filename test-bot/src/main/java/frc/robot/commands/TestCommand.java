@@ -1,19 +1,22 @@
 package frc.robot.commands;
 
-import claw.CLAWRuntime;
-import claw.rct.network.messages.StreamDataMessage.StreamData;
+import claw.logs.LogHandler;
+import claw.logs.RCTLog;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 
 public class TestCommand extends CommandBase {
     
+    private final static RCTLog LOG = LogHandler.getInstance().getLog("TestCommand");
     private final TestSubsystem subsystem;
+    private long time = 0;
+    private int counter = 0;
     
     public TestCommand (TestSubsystem subsystem) {
         this.subsystem = subsystem;
         addRequirements(subsystem);
-        CLAWRuntime.getInstance().testSendStreamData(new StreamData("TestCommandStream", "Constructing TestCommand"));
+        LOG.out("Constructing TestCommand");
     }
     
     @Override
@@ -23,17 +26,20 @@ public class TestCommand extends CommandBase {
     
     @Override
     public void initialize () {
-        CLAWRuntime.getInstance().testSendStreamData(new StreamData("TestCommandStream", "Initializing TestCommand"));
+        LOG.out("Initializing TestCommand");
     }
     
     @Override
     public void execute () {
-        CLAWRuntime.getInstance().testSendStreamData(new StreamData("TestCommandStream", "Executing TestCommand"));
+        long currentTime = System.currentTimeMillis();
+        LOG.out("Time: " + (currentTime - time) + " ".repeat(8) + "Counter: " + counter);
+        counter ++;
+        time = currentTime;
     }
     
     @Override
     public void end (boolean interrupted) {
-        CLAWRuntime.getInstance().testSendStreamData(new StreamData("TestCommandStream", "Ending TestCommand"));
+        LOG.out("Ending TestCommand");
     }
     
     @Override

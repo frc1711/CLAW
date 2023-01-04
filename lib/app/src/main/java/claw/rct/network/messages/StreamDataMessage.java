@@ -28,18 +28,21 @@ public class StreamDataMessage extends ResponseMessage {
      */
     public static class StreamData implements Serializable {
         
-        public static final long serialVersionUID = 1L;
+        public static final long serialVersionUID = 2L;
         
         public final String streamName, data;
+        
+        public final boolean isError;
         
         /**
          * Constructs a new {@link StreamData} object.
          * @param streamName    The name of the stream with which the data is associated.
          * @param data          The stream data.
          */
-        public StreamData (String streamName, String data) {
+        public StreamData (String streamName, String data, boolean isError) {
             this.streamName = streamName;
             this.data = data;
+            this.isError = isError;
         }
         
     }

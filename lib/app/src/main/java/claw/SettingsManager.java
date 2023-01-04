@@ -10,24 +10,24 @@ public class SettingsManager {
     private static final String PREF_PREFIX = "CLAW_SETTING#";
     private static final Set<String> usedSettingsNames = new HashSet<String>();
     
-    public static BooleanSettingsField getBooleanSettingsField (String name, Boolean defaultValue) throws NameConflict {
+    public static BooleanSettingsField getBooleanSettingsField (String name, Boolean defaultValue) throws SettingsNameConflict {
         addFieldName(name);
         return new BooleanSettingsField(name, defaultValue);
     }
     
-    public static DoubleSettingsField getDoubleSettingsField (String name, Double defaultValue) throws NameConflict {
+    public static DoubleSettingsField getDoubleSettingsField (String name, Double defaultValue) throws SettingsNameConflict {
         addFieldName(name);
         return new DoubleSettingsField(name, defaultValue);
     }
     
-    public static IntegerSettingsField getIntegerSettingsField (String name, Integer defaultValue) throws NameConflict {
+    public static IntegerSettingsField getIntegerSettingsField (String name, Integer defaultValue) throws SettingsNameConflict {
         addFieldName(name);
         return new IntegerSettingsField(name, defaultValue);
     }
     
-    private static void addFieldName (String name) throws NameConflict {
+    private static void addFieldName (String name) throws SettingsNameConflict {
         if (usedSettingsNames.contains(name))
-            throw new NameConflict(name);
+            throw new SettingsNameConflict(name);
         usedSettingsNames.add(name);
     }
     
@@ -89,8 +89,8 @@ public class SettingsManager {
         }
     }
     
-    public static class NameConflict extends RuntimeException {
-        public NameConflict (String name) {
+    public static class SettingsNameConflict extends RuntimeException {
+        public SettingsNameConflict (String name) {
             super("The settings field '"+name+"' is already in use.");
         }
     }
