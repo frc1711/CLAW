@@ -2,6 +2,7 @@ package claw.rct.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import claw.rct.commands.Command;
@@ -33,7 +34,7 @@ public class LocalCommandInterpreter {
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
     private boolean hasNewStreamData = false;
-    private StreamData[] newStreamData = new StreamData[0];
+    private List<StreamData> newStreamData = new ArrayList<StreamData>();
     private final Object newStreamDataLock = new Object();
     
     /**
@@ -211,15 +212,12 @@ public class LocalCommandInterpreter {
     
     private void watchCommand (ConsoleManager console, Command cmd) {
         while (!console.hasInputReady()) {
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) { }
-            
             synchronized (newStreamDataLock) {
                 if (hasNewStreamData) {
                     hasNewStreamData = false;
                     for (StreamData data : newStreamData)
                         printStreamData(console, data);
+                    newStreamData.clear();
                 }
             }
         }
@@ -227,7 +225,7 @@ public class LocalCommandInterpreter {
     
     private void receiveLogDataListener (StreamData[] data) {
         synchronized (newStreamDataLock) {
-            newStreamData = data;
+            newStreamData.addAll(Arrays.asList(data));
             hasNewStreamData = true;
         }
     }

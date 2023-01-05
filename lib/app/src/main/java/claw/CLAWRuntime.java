@@ -3,7 +3,6 @@ package claw;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-import claw.devices.Config;
 import claw.logs.LogHandler;
 import claw.logs.RCTLog;
 import claw.rct.remote.RCTServer;

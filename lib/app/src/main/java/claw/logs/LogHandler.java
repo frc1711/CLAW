@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.devices.Config;
-import claw.devices.Config.ConfigField;
+import claw.Config;
+import claw.Config.ConfigField;
 import claw.rct.network.low.Waiter;
 import claw.rct.network.low.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.StreamDataMessage;
@@ -75,6 +75,7 @@ public class LogHandler {
                 
                 for (StreamData data : streamDataToSend)
                     System.out.println("Sent: " + data.data);
+                System.out.println("Sending "+streamDataToSend.length+" message(s)");
                 
                 // If no IOException was thrown, the message was sent, so clear out all the messages just sent
                 // from the streamDataBuffer

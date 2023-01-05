@@ -27,6 +27,7 @@ public class TestCommand extends CommandBase {
     @Override
     public void initialize () {
         LOG.out("Initializing TestCommand");
+        subsystem.stop();
     }
     
     @Override
@@ -35,11 +36,14 @@ public class TestCommand extends CommandBase {
         LOG.out("Time: " + (currentTime - time) + " ".repeat(8) + "Counter: " + counter);
         counter ++;
         time = currentTime;
+        
+        subsystem.set(0.4);
     }
     
     @Override
     public void end (boolean interrupted) {
         LOG.out("Ending TestCommand");
+        subsystem.stop();
     }
     
     @Override
