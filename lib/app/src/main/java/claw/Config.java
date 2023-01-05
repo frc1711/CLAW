@@ -1,5 +1,7 @@
 package claw;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,9 +14,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class Config implements Serializable {
+public class Config {
     
-    public static final long serialVersionUID = 1L;
+    public static final long serialVersionUID = 2L;
     private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
     
     private static Config instance = null;
@@ -25,36 +27,94 @@ public class Config implements Serializable {
     private transient Set<String> usedFieldNames;
     
     /**
-     * The map of all value obtained from the config file, updated by fields during runtime.
+     * The map of all values obtained from the config file, updated by fields during runtime.
      */
-    private final Map<String, Serializable> entries = new HashMap<String, Serializable>();
+    private final Map<String, Serializable> entries;
     
-    private Config () { }
+    private Config () {
+        this(new HashMap<String, Serializable>());
+    }
+    
+    private Config (Map<String, Serializable> entries) {
+        this.entries = entries;
+    }
     
     public static Config getInstance () {
-        
-        // If instance is null, set it to a new config object read from the config file
-        if (instance == null) {
+        if (instance == null)
+            instance = readConfig();
+        return instance;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Config readConfig () {
+        // Attempt to open a file input stream
+        try (FileInputStream fileInput = new FileInputStream(CONFIG_FILE)) {
+                
+            // Try to read the config object from the file input stream and set the instance
+            ObjectInputStream objIn = new ObjectInputStream(fileInput);
+            return new Config(readSerializedEntries((Map<String, byte[]>)objIn.readObject()));
             
-            // TODO: Have config not be deserialized from a single file but instead use a folder so all fields can be serialized separately and one bad field will not take down the config
+        } catch (Exception e) {
             
-            // Attempt to open a file input stream
-            try (FileInputStream fileInput = new FileInputStream(CONFIG_FILE)) {
-                
-                // Try to read the config object from the file input stream and set the instance
-                ObjectInputStream objIn = new ObjectInputStream(fileInput);
-                instance = (Config)objIn.readObject();
-                
-            } catch (Exception e) {
-                
-                // If something went wrong just create a new, empty config object
-                instance = new Config();
-                
-            }
+            // If something went wrong just create a new, empty config object
+            return new Config();
             
         }
+    }
+    
+    private static void writeConfig (Map<String, Serializable> entries) throws IOException {
+        // Attempt to open a file output stream
+        FileOutputStream fileOutput = new FileOutputStream(CONFIG_FILE);
         
-        return instance;
+        // Try to write the config object to the file output stream
+        new ObjectOutputStream(fileOutput).writeObject(writeSerializedEntries(entries));
+        
+        // Close the output stream
+        fileOutput.close();
+    }
+    
+    private static Map<String, Serializable> readSerializedEntries (Map<String, byte[]> dataMap) {
+        
+        // Create a new serialMap of string names onto serializable objects
+        Map<String, Serializable> serialMap = new HashMap<String, Serializable>();
+        
+        // For each entry in the dataMap, add another entry to the serialMap
+        dataMap.forEach((key, bytes) -> {
+            
+            // Try to deserialize the value from the dataMap
+            Serializable obj;
+            try {
+                obj = (Serializable)(new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject());
+            } catch (Exception e) {
+                obj = null;
+            }
+            
+            // Add the object read from the dataMap to the serialMap
+            serialMap.put(key, obj);
+        });
+        
+        return serialMap;
+        
+    }
+    
+    private static Map<String, byte[]> writeSerializedEntries (Map<String, Serializable> serialMap) {
+        
+        // Create a new dataMap of string names onto serialized objects
+        Map<String, byte[]> dataMap = new HashMap<String, byte[]>();
+        
+        // For each entry in the serialMap, add another entry to the dataMap
+        serialMap.forEach((key, obj) -> {
+            try {
+                // Try to serialize the object from the serialMap
+                ByteArrayOutputStream objBytes = new ByteArrayOutputStream();
+                new ObjectOutputStream(objBytes).writeObject(obj);
+                
+                // Add the object from the serialMap to the dataMap
+                dataMap.put(key, objBytes.toByteArray());
+            } catch (Exception e) { }
+        });
+        
+        return dataMap;
     }
     
     @SuppressWarnings("unchecked")
@@ -114,14 +174,7 @@ public class Config implements Serializable {
     }
     
     public void save () throws IOException {
-        // Attempt to open a file output stream
-        FileOutputStream fileOutput = new FileOutputStream(CONFIG_FILE);
-        
-        // Try to write the config object to the file output stream
-        new ObjectOutputStream(fileOutput).writeObject(this);
-        
-        // Close the output stream
-        fileOutput.close();
+        writeConfig(entries);
     }
     
     public static class ConfigNameConflict extends RuntimeException {
