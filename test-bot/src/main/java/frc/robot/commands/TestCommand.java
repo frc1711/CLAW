@@ -10,8 +10,6 @@ public class TestCommand extends CommandBase {
     
     private final static RCTLog LOG = LogHandler.getInstance().getLog("TestCommand");
     private final TestSubsystem subsystem;
-    private long time = 0;
-    private int counter = 0;
     
     public TestCommand (TestSubsystem subsystem) {
         this.subsystem = subsystem;
@@ -32,11 +30,6 @@ public class TestCommand extends CommandBase {
     
     @Override
     public void execute () {
-        long currentTime = System.currentTimeMillis();
-        LOG.out("Time: " + (currentTime - time) + " ".repeat(8) + "Counter: " + counter);
-        counter ++;
-        time = currentTime;
-        
         subsystem.set(0.4);
     }
     

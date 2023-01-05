@@ -12,6 +12,8 @@ import claw.rct.network.messages.StreamDataMessage.StreamData;
 
 public class StreamDataStorage {
     
+    // TODO: Connect a robot connection watcher to the stream data storage
+    
     private final List<StreamData> streamData = new ArrayList<StreamData>();
     
     private final Set<Consumer<StreamData[]>> onReceiveNewData = new HashSet<Consumer<StreamData[]>>();

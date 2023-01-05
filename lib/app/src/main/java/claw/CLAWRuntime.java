@@ -1,8 +1,11 @@
 package claw;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.function.Supplier;
 
+import claw.Config.ConfigField;
 import claw.logs.LogHandler;
 import claw.logs.RCTLog;
 import claw.rct.remote.RCTServer;
@@ -15,10 +18,16 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRuntime {
     
+    // Config fields
     
-    // Stream names
+    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = Config.getInstance().getField("UNCAUGHT_EXCEPTION_FIELD");
     
-    private static final RCTLog COMMANDS_LOG = LogHandler.getInstance().getSysLog("Commands");
+    
+    // Log names
+    
+    private static final RCTLog
+        COMMANDS_LOG = LogHandler.getInstance().getSysLog("Commands"),
+        ROBOT_LOG = LogHandler.getInstance().getSysLog("Robot");
     
     
     
@@ -73,6 +82,12 @@ public class CLAWRuntime {
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
         
+        // Send the last uncaught exception
+        String uncaughtException = UNCAUGHT_EXCEPTION_FIELD.getValue(null);
+        UNCAUGHT_EXCEPTION_FIELD.setValue(null);
+        if (uncaughtException != null)
+            ROBOT_LOG.err("Uncaught exception from last execution:\n" + uncaughtException);
+        
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
@@ -85,8 +100,14 @@ public class CLAWRuntime {
         }).start();
     }
     
-    private void handleUncaughtThrowable (Throwable throwable) {
-        System.err.println("\n\n\nCaught an uncaught throwable: " + throwable.getMessage());
+    private void handleUncaughtThrowable (Throwable e) {
+        // Try printing to the driver station
+        System.err.println("Caught an uncaught exception: " + e.getMessage());
+        
+        // Put the stack trace to the uncaught exception field
+        StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+        UNCAUGHT_EXCEPTION_FIELD.setValue(stringWriter.toString());
     }
     
     /**
@@ -102,8 +123,6 @@ public class CLAWRuntime {
      * of whether any exceptions have been thrown) so that important operations can be finished.
      */
     private void onRobotProgramExit () {
-        LogHandler.getInstance().saveUnsentData();
-        
         try {
             Config.getInstance().save();
         } catch (IOException e) {
@@ -149,6 +168,7 @@ public class CLAWRuntime {
         private final TimedRobot robot;
         
         public RobotProxy (Supplier<TimedRobot> robotSupplier) {
+            ROBOT_LOG.out("Initializing robot proxy");
             robot = robotSupplier.get();
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
@@ -163,6 +183,7 @@ public class CLAWRuntime {
         @Override
         public void startCompetition () {
             try {
+                ROBOT_LOG.out("Robot code starting");
                 robot.startCompetition();
                 onRobotProgramExit();
             } catch (Throwable throwable) {

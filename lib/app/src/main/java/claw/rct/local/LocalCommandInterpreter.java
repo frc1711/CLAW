@@ -236,11 +236,9 @@ public class LocalCommandInterpreter {
         
         if (data.isError) {
             console.printlnErr(streamNamePrint + messagePrint);
-        } else if (data.streamName.startsWith("#")) {
+        } else {
             console.printSys(streamNamePrint);
             console.println(messagePrint);
-        } else {
-            console.println(streamNamePrint + messagePrint);
         }
     }
     

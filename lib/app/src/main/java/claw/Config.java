@@ -36,6 +36,8 @@ public class Config implements Serializable {
         // If instance is null, set it to a new config object read from the config file
         if (instance == null) {
             
+            // TODO: Have config not be deserialized from a single file but instead use a folder so all fields can be serialized separately and one bad field will not take down the config
+            
             // Attempt to open a file input stream
             try (FileInputStream fileInput = new FileInputStream(CONFIG_FILE)) {
                 

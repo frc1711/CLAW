@@ -2,13 +2,10 @@ package claw.logs;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.Config;
-import claw.Config.ConfigField;
 import claw.rct.network.low.Waiter;
 import claw.rct.network.low.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.StreamDataMessage;
@@ -25,8 +22,6 @@ public class LogHandler {
         return instance;
     }
     
-    private static final ConfigField<StreamData[]> UNSAVED_STREAM_DATA_CONFIG_FIELD = Config.getInstance().getField("UNSAVED_STREAM_DATA");
-    
     private final Set<String> usedStreamNames = new HashSet<String>();
     private final List<StreamData> streamDataBuffer;
     
@@ -37,7 +32,7 @@ public class LogHandler {
     private int nextStreamDataMessageId = 0;
     
     private LogHandler () {
-        streamDataBuffer = new ArrayList<StreamData>(Arrays.asList(UNSAVED_STREAM_DATA_CONFIG_FIELD.getValue(new StreamData[0])));
+        streamDataBuffer = new ArrayList<StreamData>();
         dataSenderThread = new Thread(this::dataSenderThreadRunnable);
         dataSenderThread.start();
     }
@@ -73,10 +68,6 @@ public class LogHandler {
                 // Try to send the data message
                 server.sendStreamDataMessage(new StreamDataMessage(nextStreamDataMessageId, streamDataToSend));
                 
-                for (StreamData data : streamDataToSend)
-                    System.out.println("Sent: " + data.data);
-                System.out.println("Sending "+streamDataToSend.length+" message(s)");
-                
                 // If no IOException was thrown, the message was sent, so clear out all the messages just sent
                 // from the streamDataBuffer
                 synchronized (streamDataBuffer) {
@@ -90,18 +81,6 @@ public class LogHandler {
                 // If an IOException was thrown, nothing happens. Next time the StreamDataHandler is notified,
                 // the stream data will be sent (as the buffer is only cleared if no IOException was thrown)
             }
-        }
-    }
-    
-    /**
-     * Save any data that hasn't yet been sent
-     */
-    public void saveUnsentData () {
-        synchronized (streamDataBuffer) {
-            isClosed = true;
-            StreamData[] remainingData = streamDataBuffer.toArray(new StreamData[0]);
-            UNSAVED_STREAM_DATA_CONFIG_FIELD.setValue(remainingData);
-            streamDataBuffer.clear();
         }
     }
     
