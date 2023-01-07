@@ -29,7 +29,6 @@ public class LogHandler {
     private final Waiter<RCTServer> dataSenderThreadServerWaiter = new Waiter<RCTServer>();
     
     private boolean isClosed = false;
-    private int nextStreamDataMessageId = 0;
     
     private LogHandler () {
         streamDataBuffer = new ArrayList<StreamData>();
@@ -66,16 +65,13 @@ public class LogHandler {
             // Send the data message
             try {
                 // Try to send the data message
-                server.sendStreamDataMessage(new StreamDataMessage(nextStreamDataMessageId, streamDataToSend));
+                server.sendStreamDataMessage(new StreamDataMessage(streamDataToSend));
                 
                 // If no IOException was thrown, the message was sent, so clear out all the messages just sent
                 // from the streamDataBuffer
                 synchronized (streamDataBuffer) {
                     for (int i = 0; i < streamDataToSend.length; i ++)
                         streamDataBuffer.remove(0);
-                    
-                    // Increment the stream data message ID so the next message has a new ID and won't be ignored
-                    nextStreamDataMessageId ++;
                 }
             } catch (IOException e) {
                 // If an IOException was thrown, nothing happens. Next time the StreamDataHandler is notified,

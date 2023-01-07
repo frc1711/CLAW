@@ -1,6 +1,8 @@
 package claw.rct.remote;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import claw.logs.LogHandler;
 import claw.logs.RCTLog;
@@ -135,9 +137,13 @@ public class RCTServer {
     private void handleNonFatalServerException (IOException e) {
         // Try to get a new connection to the driverstation
         try {
-            String message = "Nonfatal RCT server exception: " + e.getMessage();
+            StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            String message = "Nonfatal RCT server exception:\n" + stringWriter.toString();
+            
             System.err.println(message);
             LOG.err(message);
+            
             serverSocket.getNewConnection();
         } catch (IOException fatalEx) {
             handleFatalServerException(fatalEx);

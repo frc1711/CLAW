@@ -13,6 +13,7 @@ import claw.rct.network.low.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
 import claw.rct.network.messages.StreamDataMessage;
+import claw.rct.network.messages.StreamDataMessage.StreamData;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveRemote;
 
@@ -48,6 +49,7 @@ public class LocalSystem {
     
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
+    private ConnectionStatus lastConnectionStatus = ConnectionStatus.NO_CONNECTION;
     
     /**
      * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
@@ -113,7 +115,7 @@ public class LocalSystem {
             throwIfNullSocket();
             socket.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
-            return ConnectionStatus.NO_CONNECTION;
+            return updateConnectionStatus(ConnectionStatus.NO_CONNECTION);
         }
         
         // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
@@ -121,12 +123,30 @@ public class LocalSystem {
             connectionResponseWaiter.waitForValue(RESPONSE_TIMEOUT_MILLIS);
             
             // Return an OK connection status because a connection response message was received
-            return ConnectionStatus.OK;
+            return updateConnectionStatus(ConnectionStatus.OK);
         } catch (NoValueReceivedException e) {
             
             // Return a NO_SERVER connection status because no connection response message was received
-            return ConnectionStatus.NO_SERVER;
+            return updateConnectionStatus(ConnectionStatus.NO_SERVER);
         }
+    }
+    
+    private ConnectionStatus updateConnectionStatus (ConnectionStatus status) {
+        if (status != lastConnectionStatus) {
+            streamDataStorage.acceptDataMessage(new StreamDataMessage(new StreamData[]{
+                new StreamData(
+                    "#Connection",
+                    "Connection status changed to " + status.name(),
+                    status != ConnectionStatus.OK
+                )
+            }));
+            lastConnectionStatus = status;
+        }
+        
+        if (status == ConnectionStatus.NO_CONNECTION)
+            requireNewConnection = true;
+        
+        return status;
     }
     
     /**
@@ -237,14 +257,16 @@ public class LocalSystem {
     }
     
     private void handleSocketException (IOException e) {
-        // Signal to the requireNewConnectionThread that a new connection is required
-        requireNewConnection = true;
+        // Update the connection status to NO_CONNECTION so the requireNewConnectionThread will try
+        // to create a new connection
+        updateConnectionStatus(ConnectionStatus.NO_CONNECTION);
     }
     
     private void requireNewConnectionThreadRunnable () {
         while (true) {
             // If a new connection needs to be established, try to do that
-            if (requireNewConnection || checkServerConnection() != ConnectionStatus.OK) {
+            checkServerConnection(); // This will update the requireNewConnection flag
+            if (requireNewConnection) {
                 try {
                     // Try to establish a new connection
                     establishNewConnection();
