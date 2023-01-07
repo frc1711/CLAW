@@ -5,6 +5,7 @@ import java.io.IOException;
 import claw.rct.commands.Command.ParseException;
 import claw.rct.commands.CommandProcessor.BadArgumentsException;
 import claw.rct.local.LocalSystem.ConnectionStatus;
+import claw.rct.local.console.LocalConsoleManager;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 
@@ -23,7 +24,7 @@ public class RobotControlTerminal {
     /**
      * Creates a new robot control terminal.
      */
-    public RobotControlTerminal () {
+    public RobotControlTerminal () throws IOException {
         this.console = new LocalConsoleManager();
     }
     
@@ -31,8 +32,6 @@ public class RobotControlTerminal {
      * Starts the robot control terminal.
      */
     public void start () {
-        
-        // KeyHook.blockWindowsKey();
         
         // Display of helpful message with roboRIO host url
         String host = DriverStationSocketHandler.getRoborioHost(TEAM_NUMBER) + ":" + REMOTE_PORT;

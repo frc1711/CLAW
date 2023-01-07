@@ -175,6 +175,16 @@ public class CommandProcessHandler implements ConsoleManager {
     }
     
     @Override
+    public void clearWaitingInputLines () {
+        // Throw an exception if the process is terminated
+        if (isTerminated)
+            throw new TerminatedProcessException();
+        
+        // Add the restoreCursorPos operation
+        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_WAITING_INPUT_LINES, 0, null));
+    }
+    
+    @Override
     public void flush () {
         // Throw an exception if the process is terminated
         if (isTerminated)

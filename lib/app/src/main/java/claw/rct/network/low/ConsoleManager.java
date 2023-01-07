@@ -22,33 +22,7 @@ public interface ConsoleManager {
      * This is useful to call so that input entered by the
      * user does not affect any input lines read long after.
      */
-    default void clearWaitingInputLines () {
-        // Do nothing if no input is ready
-        if (!hasInputReady()) return;
-        
-        // Save the cursor position so we can return when finished
-        saveCursorPos();
-        
-        // Move to a new line so we don't erase the current line
-        println("");
-        
-        // Read all available input lines
-        String lines = "";
-        while (hasInputReady()) {
-            lines += readInputLine();
-        }
-        
-        // Clear all the lines inputted
-        for (int i = 0; i < lines.length(); i ++) {
-            if (lines.charAt(i) == '\n') {
-                moveUp(1);
-                clearLine();
-            }
-        }
-        
-        // Move the cursor back to the starting position
-        restoreCursorPos();
-    }
+    void clearWaitingInputLines ();
     
     /**
      * Move up a given number of rows in the console (also moving to the first column).

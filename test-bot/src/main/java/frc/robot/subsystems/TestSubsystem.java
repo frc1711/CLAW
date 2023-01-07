@@ -17,7 +17,6 @@ public class TestSubsystem extends SubsystemCLAW {
     
     public void set (double speed) {
         device.get().set(speed);
-        throw new RuntimeException("This is a runtime exception");
     }
     
     public void stop () {

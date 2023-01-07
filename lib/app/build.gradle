@@ -53,9 +53,16 @@ dependencies {
     // Used by other dependencies
     implementation "edu.wpi.first.ntcore:ntcore-java:2022.4.1"
     
+    
     // Add org.fusesource.jansi
     // Used for console ANSI processing for driverstation-side RCT
     implementation "org.fusesource.jansi:jansi:2.4.0"
+    
+    // Add org.jline
+    // Used for console input processing
+    implementation "org.jline:jline-terminal-jansi:3.21.0"
+    implementation "org.jline:jline-reader:3.21.0"
+    
     
     // Add jna
     // Prevent enter and spacebar keys from being picked up by the driverstation and disable the robot

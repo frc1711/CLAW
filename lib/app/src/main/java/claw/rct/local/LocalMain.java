@@ -6,7 +6,11 @@ package claw.rct.local;
 public class LocalMain {
     
     public static void main (String[] args) {
-        new RobotControlTerminal().start();
+        try {
+            new RobotControlTerminal().start();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
     
 }
