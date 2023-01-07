@@ -2,15 +2,21 @@ package claw.rct.local.console;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.network.low.ConsoleManager;
 
 public class LocalConsoleManager implements ConsoleManager {
+    
+    private static final char
+        BEL = '\u0007',
+        ESC = '\u001b';
     
     private final Terminal terminal;
     private final PrintWriter out;
@@ -23,6 +29,9 @@ public class LocalConsoleManager implements ConsoleManager {
             .build();
         out = terminal.writer();
         inputManager = new InputManager(terminal);
+        
+        setTitle("RAPTORS CLAW - Robot Control Terminal");
+        // setScrollingRegion(3, terminal.getHeight() - 1);
     }
     
     @Override
@@ -87,6 +96,35 @@ public class LocalConsoleManager implements ConsoleManager {
     @Override
     public void restoreCursorPos () {
         out.print(Ansi.ansi().restoreCursorPosition());
+    }
+    
+    // See https://learn.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
+    
+    public void setTitle (String title) {
+        out.print(ESC+"]0;"+title+BEL);
+    }
+    
+    private void writeToTop (String text) {
+        out.print(Ansi.ansi().saveCursorPosition());
+        out.print(ESC+"[1;1H");
+        out.print(Ansi.ansi().a(text).restoreCursorPosition());
+        // out.print(ESC+"[1;1H");
+    }
+    
+    private void setScrollingRegion (int top, int bottom) {
+        out.print(ESC+"["+top+";"+bottom+"r");
+    }
+    
+    private void useAlternateScrollingRegion () {
+        out.print(ESC+"[?1049h");
+    }
+    
+    private void setLineDrawMode (boolean enabled) {
+        if (enabled) {
+            out.print(ESC+"(0");
+        } else {
+            out.print(ESC+"(B");
+        }
     }
     
 }
