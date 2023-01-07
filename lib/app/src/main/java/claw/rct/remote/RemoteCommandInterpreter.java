@@ -1,8 +1,12 @@
 package claw.rct.remote;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import claw.CLAWRuntime;
+import claw.Config;
+import claw.CLAWRuntime.RobotMode;
 import claw.rct.commands.Command;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -31,6 +35,7 @@ public class RemoteCommandInterpreter {
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
+        addCommand("config", "config", "config", this::configCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
@@ -50,8 +55,25 @@ public class RemoteCommandInterpreter {
         console.printlnSys("Read input line: " + input);
     }
     
-    private void restartCommand (ConsoleManager console, Command cmd) {
-        CLAWRuntime.getInstance().restartCode();
+    private void restartCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.checkNumArgs(0, 1, cmd.argsLen());
+        
+        RobotMode restartMode = RobotMode.DEFAULT;
+        
+        if (cmd.argsLen() == 1) {
+            
+            // Restart mode passed in as an argument
+            CommandProcessor.expectedOneOf("restart mode", cmd.getArg(0), "default", "sysconfig");
+            
+            if (cmd.getArg(0).equals("sysconfig")) {
+                restartMode = RobotMode.SYSCONFIG;
+            }
+            
+        }
+        
+        console.println("Restarting...");
+        
+        CLAWRuntime.getInstance().restartCode(restartMode);
     }
     
     private void subsystemsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
@@ -74,6 +96,19 @@ public class RemoteCommandInterpreter {
             
         }
         
+    }
+    
+    private void configCommand (ConsoleManager console, Command cmd) {
+        Map<String, String> fields = Config.getInstance().getFields();
+        for (Entry<String, String> field : fields.entrySet()) {
+            String limitKey = field.getKey();
+            if (limitKey.length() > 25)
+                limitKey = limitKey.substring(0, 25) + "...";
+            
+            console.println(limitKey + " : " + " ".repeat(30 - limitKey.length()) + field.getValue());
+        }
+        
+        console.println(fields.size() + " fields");
     }
     
     private void testCommand (ConsoleManager console, Command cmd) {

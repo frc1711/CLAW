@@ -96,7 +96,7 @@ public class RCTServer {
             COMMAND_KEEPALIVE_SEND_INTERVAL_MILLIS);
         
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
-        new Thread(() -> {
+        Thread commandProcessorThread = new Thread(() -> {
             try {
                 // Attempt to run the process via the command interpreter
                 interpreter.processLine(commandProcessHandler, msg.command);
@@ -106,7 +106,14 @@ public class RCTServer {
             
             // When the command process is finished, terminate the process and flush all output to local
             commandProcessHandler.terminate(true);
-        }).start();
+        });
+        
+        commandProcessorThread.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+            commandProcessHandler.terminate(false);
+            Thread.getDefaultUncaughtExceptionHandler().uncaughtException(thread, throwable);
+        });
+        
+        commandProcessorThread.start();
         
     }
     

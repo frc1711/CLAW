@@ -9,15 +9,23 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
+import claw.logs.LogHandler;
+import claw.logs.RCTLog;
 
 public class Config {
     
     public static final long serialVersionUID = 2L;
     private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
+    
+    private static final RCTLog LOG = LogHandler.getInstance().getSysLog("Config");
     
     private static Config instance = null;
     
@@ -47,6 +55,8 @@ public class Config {
     
     @SuppressWarnings("unchecked")
     private static Config readConfig () {
+        LOG.out("Reading CLAW configuration from "+CONFIG_FILE.getName());
+        
         // Attempt to open a file input stream
         try (FileInputStream fileInput = new FileInputStream(CONFIG_FILE)) {
                 
@@ -56,6 +66,8 @@ public class Config {
             
         } catch (Exception e) {
             
+            LOG.err("Critical config error. Config entirely failed to load:\n" + e);
+            
             // If something went wrong just create a new, empty config object
             return new Config();
             
@@ -63,14 +75,21 @@ public class Config {
     }
     
     private static void writeConfig (Map<String, Serializable> entries) throws IOException {
-        // Attempt to open a file output stream
-        FileOutputStream fileOutput = new FileOutputStream(CONFIG_FILE);
+        LOG.out("Saving CLAW configuration to "+CONFIG_FILE.getName());
         
-        // Try to write the config object to the file output stream
-        new ObjectOutputStream(fileOutput).writeObject(writeSerializedEntries(entries));
-        
-        // Close the output stream
-        fileOutput.close();
+        try {
+            // Attempt to open a file output stream
+            FileOutputStream fileOutput = new FileOutputStream(CONFIG_FILE);
+            
+            // Try to write the config object to the file output stream
+            new ObjectOutputStream(fileOutput).writeObject(writeSerializedEntries(entries));
+            
+            // Close the output stream
+            fileOutput.close();
+        } catch (IOException e) {
+            LOG.err("CLAW configuration failed to save: " + e.getMessage());
+            throw e;
+        }
     }
     
     private static Map<String, Serializable> readSerializedEntries (Map<String, byte[]> dataMap) {
@@ -86,6 +105,7 @@ public class Config {
             try {
                 obj = (Serializable)(new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject());
             } catch (Exception e) {
+                LOG.err("Failed to deserialize field '" + key + "'");
                 obj = null;
             }
             
@@ -111,7 +131,9 @@ public class Config {
                 
                 // Add the object from the serialMap to the dataMap
                 dataMap.put(key, objBytes.toByteArray());
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                LOG.err("Failed to write serializable field '" + key + "'");
+            }
         });
         
         return dataMap;
@@ -123,9 +145,13 @@ public class Config {
             try {
                 return (T)entries.get(name);
             } catch (ClassCastException e) {
+                LOG.out("Warning: Field '"+name+"' exists but is the wrong type (defaulted)");
+                entries.put(name, defaultValue);
                 return defaultValue;
             }
         } else {
+            LOG.out("Warning: Field '"+name+"' does not exist (defaulted)");
+            entries.put(name, defaultValue);
             return defaultValue;
         }
     }
@@ -175,6 +201,21 @@ public class Config {
     
     public void save () throws IOException {
         writeConfig(entries);
+    }
+    
+    public Map<String, String> getFields () {
+        HashMap<String, String> fields = new HashMap<String, String>();
+        
+        for (Entry<String, Serializable> entry : entries.entrySet()) {
+            String valueString;
+            
+            if (entry.getValue() == null) valueString = "null";
+            else valueString = entry.getValue().toString();
+            
+            fields.put(entry.getKey(), valueString);
+        }
+        
+        return fields;
     }
     
     public static class ConfigNameConflict extends RuntimeException {

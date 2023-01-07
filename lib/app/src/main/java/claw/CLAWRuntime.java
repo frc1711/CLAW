@@ -20,7 +20,8 @@ public class CLAWRuntime {
     
     // Config fields
     
-    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = Config.getInstance().getField("UNCAUGHT_EXCEPTION_FIELD");
+    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = Config.getInstance().getField("UNCAUGHT_EXCEPTION");
+    private static final ConfigField<RobotMode> ROBOT_MODE_FIELD = Config.getInstance().getField("ROBOT_MODE");
     
     
     // Log names
@@ -75,12 +76,20 @@ public class CLAWRuntime {
     private final RobotProxy robotProxy;
     private RCTServer server;
     
+    private final RobotMode robotMode;
+    
     private CLAWRuntime (Supplier<TimedRobot> robotSupplier) {
         // Put a message into the console indicating that the CLAWRuntime runtime has started
         System.out.println("\n -- CLAWRuntime is running -- \n");
         
+        // Get the robot initialization mode
+        robotMode = ROBOT_MODE_FIELD.getValue(RobotMode.DEFAULT);
+        
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
+        
+        // Default uncaught exception handler
+        Thread.setDefaultUncaughtExceptionHandler(this::handleUncaughtException);
         
         // Send the last uncaught exception
         String uncaughtException = UNCAUGHT_EXCEPTION_FIELD.getValue(null);
@@ -100,14 +109,26 @@ public class CLAWRuntime {
         }).start();
     }
     
-    private void handleUncaughtThrowable (Throwable e) {
-        // Try printing to the driver station
-        System.err.println("Caught an uncaught exception: " + e.getMessage());
-        
-        // Put the stack trace to the uncaught exception field
+    private String getStackTrace (Throwable e) {
         StringWriter stringWriter = new StringWriter();
         e.printStackTrace(new PrintWriter(stringWriter));
-        UNCAUGHT_EXCEPTION_FIELD.setValue(stringWriter.toString());
+        return stringWriter.toString();
+    }
+    
+    private void handleUncaughtException (Thread thread, Throwable e) {
+        // Print to the driver station
+        System.err.println("Caught an uncaught exception: " + e.getMessage());
+        
+        // Put to the logger
+        ROBOT_LOG.err("Uncaught exception in a thread '"+thread.getName()+"':\n"+getStackTrace(e));
+    }
+    
+    private void handleFatalUncaughtException (Throwable e) {
+        // Try printing to the driver station
+        System.err.println("Caught a fatal uncaught exception: " + e.getMessage());
+        
+        // Put the stack trace to the uncaught exception field
+        UNCAUGHT_EXCEPTION_FIELD.setValue(getStackTrace(e));
     }
     
     /**
@@ -128,6 +149,9 @@ public class CLAWRuntime {
         } catch (IOException e) {
             System.err.println("Failed to save CLAW config data: " + e.getMessage());
         }
+        
+        ROBOT_LOG.out("Exiting robot program");
+        LogHandler.getInstance().sendData(server);
     }
     
     private void onCommandInitialize (Command command) {
@@ -146,6 +170,10 @@ public class CLAWRuntime {
         COMMANDS_LOG.out(command.getName() + " was interrupted");
     }
     
+    private void robotSysconfigMode () {
+        System.out.println("BOOTING ROBOT IN SYSCONFIG MODE");
+    }
+    
     
     
     // Public API
@@ -155,6 +183,11 @@ public class CLAWRuntime {
     }
     
     public void restartCode () {
+        restartCode(RobotMode.DEFAULT);
+    }
+    
+    public void restartCode (RobotMode mode) {
+        ROBOT_MODE_FIELD.setValue(mode);
         onRobotProgramExit();
         System.exit(0);
     }
@@ -183,11 +216,20 @@ public class CLAWRuntime {
         @Override
         public void startCompetition () {
             try {
-                ROBOT_LOG.out("Robot code starting");
-                robot.startCompetition();
+                // Robot mode handling
+                ROBOT_LOG.out("Robot code starting in "+robotMode.name()+" mode");
+                
+                // Always reset the robot mode to start in DEFAULT next reboot
+                ROBOT_MODE_FIELD.setValue(RobotMode.DEFAULT);
+                
+                // Get the current robot mode and start the robot based on it
+                if (robotMode == RobotMode.SYSCONFIG) robotSysconfigMode();
+                else robot.startCompetition();
+                
+                // Handle robot program exiting
                 onRobotProgramExit();
             } catch (Throwable throwable) {
-                handleUncaughtThrowable(throwable);
+                handleFatalUncaughtException(throwable);
                 onRobotProgramExit();
                 throw throwable;
             }
@@ -198,6 +240,11 @@ public class CLAWRuntime {
             robot.endCompetition();
         }
         
+    }
+    
+    public enum RobotMode {
+        DEFAULT,
+        SYSCONFIG,
     }
     
 }
