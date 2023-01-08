@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import claw.Registry;
 import claw.logs.LogHandler;
 import claw.logs.RCTLog;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
@@ -17,7 +18,7 @@ import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
 import claw.rct.remote.CommandProcessHandler.TerminatedProcessException;
-import claw.subsystems.SubsystemRegistry;
+import claw.subsystems.SubsystemCLAW;
 
 public class RCTServer {
     
@@ -27,20 +28,15 @@ public class RCTServer {
         COMMAND_KEEPALIVE_DURATION_MILLIS = 1000,
         COMMAND_KEEPALIVE_SEND_INTERVAL_MILLIS = 200;
     
-    // CLAW runtime
-    private final SubsystemRegistry subsystemRegistry;
-    
     private final RobotSocketHandler serverSocket;
     private final RemoteCommandInterpreter interpreter;
     private boolean successfullyStarted = false;
     
     private CommandProcessHandler commandProcessHandler;
     
-    public RCTServer (int port, SubsystemRegistry subsystemRegistry) throws IOException {
+    public RCTServer (int port, Registry<SubsystemCLAW> subsystemRegistry) throws IOException {
         // Try to create a new server socket
         serverSocket = new RobotSocketHandler(port, this::receiveMessage, this::handleReceiverException);
-        
-        this.subsystemRegistry = subsystemRegistry;
         interpreter = new RemoteCommandInterpreter(subsystemRegistry);
     }
     

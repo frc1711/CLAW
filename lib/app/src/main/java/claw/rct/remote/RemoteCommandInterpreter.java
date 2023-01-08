@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import claw.CLAWRuntime;
 import claw.Config;
+import claw.Registry;
 import claw.CLAWRuntime.RobotMode;
 import claw.rct.commands.Command;
 import claw.rct.commands.CommandLineInterpreter;
@@ -14,15 +15,15 @@ import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
 import claw.rct.commands.CommandProcessor.BadArgumentsException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.network.low.ConsoleManager;
-import claw.subsystems.SubsystemRegistry;
+import claw.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
     
     private final CommandLineInterpreter interpreter = new CommandLineInterpreter();
     
-    private final SubsystemRegistry subsystemRegistry;
+    private final Registry<SubsystemCLAW> subsystemRegistry;
     
-    public RemoteCommandInterpreter (SubsystemRegistry subsystemRegistry) {
+    public RemoteCommandInterpreter (Registry<SubsystemCLAW> subsystemRegistry) {
         this.subsystemRegistry = subsystemRegistry;
         addCommands();
     }
@@ -85,7 +86,7 @@ public class RemoteCommandInterpreter {
         
         if (firstArg.equals("list")) {
             
-            List<String> subsystemNames = subsystemRegistry.getSubsystemNames();
+            List<String> subsystemNames = subsystemRegistry.getItemNames();
             if (subsystemNames.size() == 0) {
                 console.println("No CLAW subsystems were found.");
             } else {

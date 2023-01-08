@@ -6,11 +6,11 @@ import java.io.StringWriter;
 import java.util.function.Supplier;
 
 import claw.Config.ConfigField;
+import claw.devices.Device;
 import claw.logs.LogHandler;
 import claw.logs.RCTLog;
 import claw.rct.remote.RCTServer;
 import claw.subsystems.SubsystemCLAW;
-import claw.subsystems.SubsystemRegistry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,8 +28,9 @@ public class CLAWRuntime {
     
     private static final RCTLog
         COMMANDS_LOG = LogHandler.getInstance().getSysLog("Commands"),
-        ROBOT_LOG = LogHandler.getInstance().getSysLog("Robot");
-    
+        ROBOT_LOG = LogHandler.getInstance().getSysLog("Robot"),
+        SUBSYSTEM_REGISTRY_LOG = LogHandler.getInstance().getSysLog("SubsystemRegistry"),
+        DEVICE_REGISTRY_LOG = LogHandler.getInstance().getSysLog("DeviceRegistry");
     
     
     // CLAWRuntime singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
@@ -72,7 +73,8 @@ public class CLAWRuntime {
     
     // CLAWRuntime private methods
     
-    private final SubsystemRegistry subsystemRegistry = new SubsystemRegistry();
+    private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem", SUBSYSTEM_REGISTRY_LOG);
+    private final Registry<Device<Object>> deviceRegistry = new Registry<>("device", DEVICE_REGISTRY_LOG);
     private final RobotProxy robotProxy;
     private RCTServer server;
     
@@ -179,7 +181,11 @@ public class CLAWRuntime {
     // Public API
     
     public void addSubsystem (SubsystemCLAW subsystem) {
-        subsystemRegistry.addSubsystem(subsystem);
+        subsystemRegistry.add(subsystem.getName(), subsystem);
+    }
+    
+    public void addDevice (Device<Object> device) {
+        deviceRegistry.add(device.getName(), device);
     }
     
     public void restartCode () {
@@ -201,8 +207,17 @@ public class CLAWRuntime {
         private final TimedRobot robot;
         
         public RobotProxy (Supplier<TimedRobot> robotSupplier) {
-            ROBOT_LOG.out("Initializing robot proxy");
-            robot = robotSupplier.get();
+            // Robot mode handling
+            ROBOT_LOG.out("Robot code starting in "+robotMode.name()+" mode");
+            
+            // Always reset the robot mode to start in DEFAULT next reboot
+            ROBOT_MODE_FIELD.setValue(RobotMode.DEFAULT);
+            
+            // Get the robot to use based on the robotMode
+            if (robotMode == RobotMode.SYSCONFIG)
+                robot = new SystemConfigRobot(deviceRegistry);
+            else
+                robot = robotSupplier.get();
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
             robot.addPeriodic(CLAWRuntime.this::robotPeriodic, TimedRobot.kDefaultPeriod);
@@ -216,11 +231,7 @@ public class CLAWRuntime {
         @Override
         public void startCompetition () {
             try {
-                // Robot mode handling
-                ROBOT_LOG.out("Robot code starting in "+robotMode.name()+" mode");
                 
-                // Always reset the robot mode to start in DEFAULT next reboot
-                ROBOT_MODE_FIELD.setValue(RobotMode.DEFAULT);
                 
                 // Get the current robot mode and start the robot based on it
                 if (robotMode == RobotMode.SYSCONFIG) robotSysconfigMode();

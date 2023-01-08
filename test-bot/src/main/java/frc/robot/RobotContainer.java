@@ -12,7 +12,7 @@ import frc.robot.subsystems.TestSubsystem;
 
 public class RobotContainer {
     
-    private final RCTLog LOG = LogHandler.getInstance().getLog("RobotContainer");
+    private static final RCTLog LOG = LogHandler.getInstance().getLog("RobotContainer");
     private final TestSubsystem testSubsystem = new TestSubsystem();
     private final TestCommand testCommand = new TestCommand(testSubsystem);
     
