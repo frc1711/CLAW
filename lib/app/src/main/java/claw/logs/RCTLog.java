@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import claw.rct.network.messages.StreamDataMessage.StreamData;
 
 public class RCTLog {
-        
+    
     private final String name;
     private final Consumer<StreamData> streamDataSender;
     

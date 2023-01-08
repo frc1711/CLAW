@@ -5,138 +5,47 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
-import claw.logs.LogHandler;
 import claw.logs.RCTLog;
 
 public class Config {
     
-    public static final long serialVersionUID = 2L;
-    private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
-    
-    private static final RCTLog LOG = LogHandler.getInstance().getSysLog("Config");
-    
-    private static Config instance = null;
+    private final File configFile;
+    private final RCTLog log;
     
     /**
      * The set of all field names used by {@link ConfigField}s.
      */
-    private transient Set<String> usedFieldNames;
+    private final Registry<ConfigField<Serializable>> fieldRegistry;
     
     /**
      * The map of all values obtained from the config file, updated by fields during runtime.
      */
     private final Map<String, Serializable> entries;
     
-    private Config () {
-        this(new HashMap<String, Serializable>());
-    }
-    
-    private Config (Map<String, Serializable> entries) {
-        this.entries = entries;
-    }
-    
-    public static Config getInstance () {
-        if (instance == null)
-            instance = readConfig();
-        return instance;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private static Config readConfig () {
-        LOG.out("Reading CLAW configuration from "+CONFIG_FILE.getName());
+    public Config (RCTLog log, File configFile) {
+        this.configFile = configFile;
+        this.log = log;
         
-        // Attempt to open a file input stream
-        try (FileInputStream fileInput = new FileInputStream(CONFIG_FILE)) {
-                
-            // Try to read the config object from the file input stream and set the instance
-            ObjectInputStream objIn = new ObjectInputStream(fileInput);
-            return new Config(readSerializedEntries((Map<String, byte[]>)objIn.readObject()));
-            
-        } catch (Exception e) {
-            
-            LOG.err("Critical config error. Config entirely failed to load:\n" + e);
-            
-            // If something went wrong just create a new, empty config object
-            return new Config();
-            
-        }
-    }
-    
-    private static void writeConfig (Map<String, Serializable> entries) throws IOException {
-        LOG.out("Saving CLAW configuration to "+CONFIG_FILE.getName());
+        fieldRegistry = new Registry<>("config field");
         
+        log.out("Reading CLAW configuration from "+configFile.getName());
+        
+        ConfigSerial serial;
         try {
-            // Attempt to open a file output stream
-            FileOutputStream fileOutput = new FileOutputStream(CONFIG_FILE);
-            
-            // Try to write the config object to the file output stream
-            new ObjectOutputStream(fileOutput).writeObject(writeSerializedEntries(entries));
-            
-            // Close the output stream
-            fileOutput.close();
-        } catch (IOException e) {
-            LOG.err("CLAW configuration failed to save: " + e.getMessage());
-            throw e;
+            serial = ConfigSerial.readFromFile(configFile);
+        } catch (Exception e) {
+            serial = new ConfigSerial();
+            log.err("Critical config error. Config entirely failed to load:\n" + e);
         }
-    }
-    
-    private static Map<String, Serializable> readSerializedEntries (Map<String, byte[]> dataMap) {
         
-        // Create a new serialMap of string names onto serializable objects
-        Map<String, Serializable> serialMap = new HashMap<String, Serializable>();
-        
-        // For each entry in the dataMap, add another entry to the serialMap
-        dataMap.forEach((key, bytes) -> {
-            
-            // Try to deserialize the value from the dataMap
-            Serializable obj;
-            try {
-                obj = (Serializable)(new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject());
-            } catch (Exception e) {
-                LOG.err("Failed to deserialize field '" + key + "'");
-                obj = null;
-            }
-            
-            // Add the object read from the dataMap to the serialMap
-            serialMap.put(key, obj);
-        });
-        
-        return serialMap;
-        
-    }
-    
-    private static Map<String, byte[]> writeSerializedEntries (Map<String, Serializable> serialMap) {
-        
-        // Create a new dataMap of string names onto serialized objects
-        Map<String, byte[]> dataMap = new HashMap<String, byte[]>();
-        
-        // For each entry in the serialMap, add another entry to the dataMap
-        serialMap.forEach((key, obj) -> {
-            try {
-                // Try to serialize the object from the serialMap
-                ByteArrayOutputStream objBytes = new ByteArrayOutputStream();
-                new ObjectOutputStream(objBytes).writeObject(obj);
-                
-                // Add the object from the serialMap to the dataMap
-                dataMap.put(key, objBytes.toByteArray());
-            } catch (Exception e) {
-                LOG.err("Failed to write serializable field '" + key + "'");
-            }
-        });
-        
-        return dataMap;
+        entries = serial.getDeserializedEntries(log);
     }
     
     @SuppressWarnings("unchecked")
@@ -145,12 +54,12 @@ public class Config {
             try {
                 return (T)entries.get(name);
             } catch (ClassCastException e) {
-                LOG.out("Warning: Field '"+name+"' exists but is the wrong type (defaulted)");
+                log.out("Warning: Field '"+name+"' exists but is not the expected type (defaulted)");
                 entries.put(name, defaultValue);
                 return defaultValue;
             }
         } else {
-            LOG.out("Warning: Field '"+name+"' does not exist (defaulted)");
+            log.out("Warning: Field '"+name+"' could not be found (defaulted)");
             entries.put(name, defaultValue);
             return defaultValue;
         }
@@ -160,21 +69,11 @@ public class Config {
         entries.put(name, newValue);
     }
     
-    public <T extends Serializable> ConfigField<T> getField (String name) throws ConfigNameConflict {
-        // Create a new HashSet for usedFieldNames if it is null, because as a transient
-        // field it is not read from the config serialization file
-        if (usedFieldNames == null)
-            usedFieldNames = new HashSet<String>();
-        
-        // If the field name already exists, throw an exception
-        if (usedFieldNames.contains(name))
-            throw new ConfigNameConflict(name);
-        
-        // Add the new field name
-        usedFieldNames.add(name);
-        
-        // Return a new field
-        return new ConfigField<T>(name);
+    @SuppressWarnings("unchecked")
+    public <T extends Serializable> ConfigField<T> getField (String name) {
+        ConfigField<T> field = new ConfigField<T>(name);
+        fieldRegistry.add(name, (ConfigField<Serializable>)field);
+        return field;
     }
     
     public class ConfigField <T extends Serializable> {
@@ -199,8 +98,19 @@ public class Config {
         
     }
     
-    public void save () throws IOException {
-        writeConfig(entries);
+    public void save () {
+        log.out("Saving CLAW configuration to "+configFile.getName());
+        ConfigSerial serial = ConfigSerial.fromObjectMap(entries, log);
+        
+        try {
+            serial.writeToFile(configFile);
+        } catch (Exception e) {
+            logCriticalError("CLAW config failed to save", e);
+        }
+    }
+    
+    private void logCriticalError (String message, Exception e) {
+        log.err("Critical config error. "+message+":\n" + e.getMessage());
     }
     
     public Map<String, String> getFields () {
@@ -218,10 +128,92 @@ public class Config {
         return fields;
     }
     
-    public static class ConfigNameConflict extends RuntimeException {
-        public ConfigNameConflict (String name) {
-            super("The config field '"+name+"' is already in use.");
+    /**
+     * The {@code Serializable} written to and read from the config file. 
+     */
+    private static class ConfigSerial implements Serializable {
+        
+        public static final long serialVersionUID = 1L;
+        
+        private final Map<String, byte[]> serializedObjMap;
+        
+        public ConfigSerial () {
+            this(new HashMap<String, byte[]>());
         }
+        
+        public ConfigSerial (Map<String, byte[]> serializedObjMap) {
+            this.serializedObjMap = serializedObjMap;
+        }
+        
+        public static ConfigSerial readFromFile (File file) throws Exception {
+            // Try to get an object input stream from the file
+            ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(file));
+            ConfigSerial serial = (ConfigSerial)(objIn.readObject());
+            objIn.close();
+            return serial;
+        }
+        
+        public static ConfigSerial fromObjectMap (Map<String, Serializable> objMap, RCTLog log) {
+            
+            // Create a new serialized object map of string names onto raw bytes
+            Map<String, byte[]> serializedObjMap = new HashMap<String, byte[]>();
+            
+            // Serialize each value in the object map and add to the serialized object map
+            objMap.forEach((key, obj) -> {
+                
+                try {
+                    
+                    // Try to serialize the object from the object map
+                    ByteArrayOutputStream objBytes = new ByteArrayOutputStream();
+                    new ObjectOutputStream(objBytes).writeObject(obj);
+                    
+                    // Add the serialized bytes to the serialized object map
+                    serializedObjMap.put(key, objBytes.toByteArray());
+                    
+                } catch (Exception e) {
+                    log.err("Failed to write serializable field '" + key + "'");
+                }
+            });
+            
+            return new ConfigSerial(serializedObjMap);
+        }
+        
+        public void writeToFile (File file) throws Exception {
+            // Attempt to open a file output stream
+            FileOutputStream fileOutput = new FileOutputStream(file);
+            
+            // Try to write the config object to the file output stream
+            ObjectOutputStream objOut = new ObjectOutputStream(fileOutput);
+            objOut.writeObject(this);
+            objOut.close();
+        }
+        
+        public Map<String, Serializable> getDeserializedEntries (RCTLog log) {
+            
+            // Create a new map of object names onto serializable objects
+            Map<String, Serializable> objMap = new HashMap<String, Serializable>();
+            
+            // For each entry in the serialized object map, add another entry to the serialMap
+            serializedObjMap.forEach((key, bytes) -> {
+                
+                // Try to deserialize the bytes into an object
+                Serializable obj;
+                
+                try {
+                    ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                    obj = (Serializable)(objIn.readObject());
+                } catch (Exception e) {
+                    log.err("Failed to deserialize field '" + key + "'");
+                    obj = null;
+                }
+                
+                // Add the deserialized object to the object map
+                objMap.put(key, obj);
+            });
+            
+            return objMap;
+        }
+        
     }
     
 }

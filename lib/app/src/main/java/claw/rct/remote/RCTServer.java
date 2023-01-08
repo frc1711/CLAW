@@ -22,7 +22,7 @@ import claw.subsystems.SubsystemCLAW;
 
 public class RCTServer {
     
-    private static final RCTLog LOG = LogHandler.getInstance().getSysLog("Server");
+    private static final RCTLog LOG = LogHandler.getSysLog("Server");
     
     private static final long
         COMMAND_KEEPALIVE_DURATION_MILLIS = 1000,

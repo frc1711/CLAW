@@ -14,35 +14,27 @@ import claw.rct.remote.RCTServer;
 
 public class LogHandler {
     
-    private static LogHandler instance;
+    private static final Set<String> usedLogNames = new HashSet<String>();
+    private static final List<StreamData> streamDataBuffer = new ArrayList<StreamData>();
     
-    public static LogHandler getInstance () {
-        if (instance == null)
-            instance = new LogHandler();
-        return instance;
-    }
+    private static final Thread dataSenderThread = new Thread(LogHandler::dataSenderThreadRunnable);
+    private static final Waiter<RCTServer> dataSenderThreadServerWaiter = new Waiter<RCTServer>();
     
-    private final Set<String> usedStreamNames = new HashSet<String>();
-    private final List<StreamData> streamDataBuffer;
+    private static boolean isClosed = false;
     
-    private final Thread dataSenderThread;
-    private final Waiter<RCTServer> dataSenderThreadServerWaiter = new Waiter<RCTServer>();
-    
-    private boolean isClosed = false;
-    
-    private LogHandler () {
-        streamDataBuffer = new ArrayList<StreamData>();
-        dataSenderThread = new Thread(this::dataSenderThreadRunnable);
+    static {
         dataSenderThread.start();
     }
     
-    private void addData (StreamData data) {
+    private LogHandler () { }
+    
+    private static void addData (StreamData data) {
         synchronized (streamDataBuffer) {
             streamDataBuffer.add(data);
         }
     }
     
-    private void dataSenderThreadRunnable () {
+    private static void dataSenderThreadRunnable () {
         while (!isClosed) {
             RCTServer server;
             
@@ -80,19 +72,19 @@ public class LogHandler {
         }
     }
     
-    public void sendData (RCTServer server) {
+    public static void sendData (RCTServer server) {
         if (isClosed) return;
         dataSenderThreadServerWaiter.receive(server);
     }
     
-    public RCTLog getLog (String name) {
-        if (usedStreamNames.contains(name))
+    public static RCTLog getLog (String name) {
+        if (usedLogNames.contains(name))
             throw new LogNameConflict(name);
-        usedStreamNames.add(name);
-        return new RCTLog(name, this::addData);
+        usedLogNames.add(name);
+        return new RCTLog(name, LogHandler::addData);
     }
     
-    public RCTLog getSysLog (String name) {
+    public static RCTLog getSysLog (String name) {
         return getLog("#"+name);
     }
     

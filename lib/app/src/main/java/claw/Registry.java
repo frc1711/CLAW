@@ -4,42 +4,111 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import claw.logs.RCTLog;
 
+/**
+ * A registry class which stores named items and can be configured in name conflict handling.
+ */
 public class Registry <T> {
     
     private final Map<String, T> items = new HashMap<String, T>();
     
     private final String itemsType;
-    private final RCTLog log;
+    private final Optional<RCTLog> log;
     
+    /**
+     * Creates a new registry which logs a warning to the given {@link RCTLog} when {@link #add(String, Object)}
+     * is called on an item whose name is already in the registry.
+     * @param itemsType A string to use to describe the type of item the registry stores (e.g. "device",
+     * "config field").
+     * @param log       The {@code RCTLog} to use for logging name conflict warnings.
+     */
     public Registry (String itemsType, RCTLog log) {
         this.itemsType = itemsType;
-        this.log = log;
+        this.log = Optional.ofNullable(log);
     }
     
+    /**
+     * Creates a new registry which throws a {@link NameConflictException} when {@link #add(String, Object)}
+     * is called on an item whose name is already in the registry.
+     * @param itemsType A string to use to describe the type of item the registry stores (e.g. "device",
+     * "config field").
+     */
+    public Registry (String itemsType) {
+        this(itemsType, null);
+    }
+    
+    /**
+     * Checks whether the registry contains an item with a given name.
+     * @param name  The item name to check against.
+     * @return      Whether the item name exists in the registry.
+     */
     public boolean hasItem (String name) {
         return items.containsKey(name);
     }
     
-    public T getItem (String name) {
-        return items.get(name);
+    /**
+     * Gets a named item from the registry.
+     * @param name  The item's name.
+     * @return      An {@code Optional} which contains the item (if it exists in the registry).
+     */
+    public Optional<T> getItem (String name) {
+        return Optional.ofNullable(items.get(name));
     }
     
-    public void add (String name, T item) {
-        // Log a warning if the item already exists in the registry
-        if (hasItem(name))
-            log.out("Warning: "+itemsType+" \""+name+"\" already exists in the "+itemsType+" registry");
-        
-        // Add the item to the registry
-        items.put(name, item);
+    /**
+     * Add a named item to the registry.
+     * @param name                      The item's name.
+     * @param item                      The item.
+     * @throws NameConflictException    If an item in the registry already has the provided name,
+     * there is a name conflict. If the registry is configured to throw an exception when
+     * a name conflict arises, this runtime exception will be thrown.
+     * Otherwise, name conflicts will be logged as warnings to an {@link RCTLog} provided to the registry.
+     * In either case, if a name conflict occurs, the addition of the item to the registry will fail.
+     */
+    public void add (String name, T item) throws NameConflictException {
+        try {
+            
+            // Throw an exception if the item already exists in the registry
+            if (hasItem(name))
+                throw new NameConflictException(itemsType, name);
+            
+            // Add the item to the registry
+            items.put(name, item);
+            
+        } catch (NameConflictException e) {
+            
+            // If the log optional is not empty, then we should log the exception instead of throwing it
+            if (log.isPresent()) {
+                // Log the exception
+                log.get().out("Warning: " + e.getMessage());
+            } else {
+                // Otherwise, we should throw the name conflict exception
+                throw e;
+            }
+            
+        }
     }
     
+    /**
+     * Get all item names in the registry, sorted alphabetically.
+     * @return A {@code List<String>} containing the item names.
+     */
     public List<String> getItemNames () {
         List<String> itemNames = new ArrayList<>(items.keySet());
         itemNames.sort((a, b) -> a.compareTo(b));
         return itemNames;
+    }
+    
+    /**
+     * A runtime exception which can be thrown by a {@link Registry} if an item
+     */
+    public static class NameConflictException extends RuntimeException {
+        public NameConflictException (String itemsType, String name) {
+            super(itemsType+" \""+name+"\" already exists in the "+itemsType+" registry");
+        }
     }
     
 }

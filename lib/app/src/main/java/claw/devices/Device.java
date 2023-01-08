@@ -5,7 +5,7 @@ import claw.logs.RCTLog;
 
 public abstract class Device <T> {
     
-    private static final RCTLog LOG = LogHandler.getInstance().getSysLog("Devices");
+    private static final RCTLog LOG = LogHandler.getSysLog("Devices");
     
     private final String deviceName;
     

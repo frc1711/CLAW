@@ -1,11 +1,8 @@
 package claw.rct.remote;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import claw.CLAWRuntime;
-import claw.Config;
 import claw.Registry;
 import claw.CLAWRuntime.RobotMode;
 import claw.rct.commands.Command;
@@ -100,16 +97,19 @@ public class RemoteCommandInterpreter {
     }
     
     private void configCommand (ConsoleManager console, Command cmd) {
-        Map<String, String> fields = Config.getInstance().getFields();
-        for (Entry<String, String> field : fields.entrySet()) {
-            String limitKey = field.getKey();
-            if (limitKey.length() > 25)
-                limitKey = limitKey.substring(0, 25) + "...";
-            
-            console.println(limitKey + " : " + " ".repeat(30 - limitKey.length()) + field.getValue());
-        }
         
-        console.println(fields.size() + " fields");
+        // TODO: Fix config command
+        
+        // Map<String, String> fields = Config.getInstance().getFields();
+        // for (Entry<String, String> field : fields.entrySet()) {
+        //     String limitKey = field.getKey();
+        //     if (limitKey.length() > 25)
+        //         limitKey = limitKey.substring(0, 25) + "...";
+            
+        //     console.println(limitKey + " : " + " ".repeat(30 - limitKey.length()) + field.getValue());
+        // }
+        
+        // console.println(fields.size() + " fields");
     }
     
     private void testCommand (ConsoleManager console, Command cmd) {

@@ -1,5 +1,6 @@
 package claw;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -18,19 +19,22 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRuntime {
     
-    // Config fields
-    
-    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = Config.getInstance().getField("UNCAUGHT_EXCEPTION");
-    private static final ConfigField<RobotMode> ROBOT_MODE_FIELD = Config.getInstance().getField("ROBOT_MODE");
-    
-    
-    // Log names
+    // Logs
     
     private static final RCTLog
-        COMMANDS_LOG = LogHandler.getInstance().getSysLog("Commands"),
-        ROBOT_LOG = LogHandler.getInstance().getSysLog("Robot"),
-        SUBSYSTEM_REGISTRY_LOG = LogHandler.getInstance().getSysLog("SubsystemRegistry"),
-        DEVICE_REGISTRY_LOG = LogHandler.getInstance().getSysLog("DeviceRegistry");
+        COMMANDS_LOG = LogHandler.getSysLog("Commands"),
+        CONFIG_LOG = LogHandler.getSysLog("Config"),
+        DEVICE_REGISTRY_LOG = LogHandler.getSysLog("DeviceRegistry"),
+        ROBOT_LOG = LogHandler.getSysLog("Robot"),
+        SUBSYSTEM_REGISTRY_LOG = LogHandler.getSysLog("SubsystemRegistry");
+    
+    // Config
+    
+    private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
+    private static final Config CONFIG = new Config(CONFIG_LOG, CONFIG_FILE);
+    
+    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = CONFIG.getField("UNCAUGHT_EXCEPTION");
+    private static final ConfigField<RobotMode> ROBOT_MODE_FIELD = CONFIG.getField("ROBOT_MODE");
     
     
     // CLAWRuntime singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
@@ -138,7 +142,7 @@ public class CLAWRuntime {
      */
     private void robotPeriodic () {
         if (server != null)
-            LogHandler.getInstance().sendData(server);
+            LogHandler.sendData(server);
     }
     
     /**
@@ -146,14 +150,9 @@ public class CLAWRuntime {
      * of whether any exceptions have been thrown) so that important operations can be finished.
      */
     private void onRobotProgramExit () {
-        try {
-            Config.getInstance().save();
-        } catch (IOException e) {
-            System.err.println("Failed to save CLAW config data: " + e.getMessage());
-        }
-        
+        CONFIG.save();
         ROBOT_LOG.out("Exiting robot program");
-        LogHandler.getInstance().sendData(server);
+        LogHandler.sendData(server);
     }
     
     private void onCommandInitialize (Command command) {
