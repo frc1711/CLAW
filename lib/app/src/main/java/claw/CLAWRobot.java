@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-public class CLAWRuntime {
+public class CLAWRobot {
     
     // Logs
     
@@ -40,19 +40,19 @@ public class CLAWRuntime {
     private static final ConfigField<RobotMode> ROBOT_MODE_FIELD = CONFIG.getField("ROBOT_MODE");
     
     
-    // CLAWRuntime singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
+    // CLAWRobot singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
     
-    private static CLAWRuntime instance = null;
+    private static CLAWRobot instance = null;
     
-    public static CLAWRuntime getInstance () {
+    public static CLAWRobot getInstance () {
         // This runtime exception should never ever happen, as there is practically zero possibility
-        // of anyone trying to access a CLAWRuntime instance before it is initialized by the
+        // of anyone trying to access a CLAWRobot instance before it is initialized by the
         // fromRobot supplier sent to RobotBase.startRobot in Main.java.
         
-        // The only case in which this can reasonably happen is if the CLAWRuntime entry point
+        // The only case in which this can reasonably happen is if the CLAWRobot entry point
         // has not yet been added to Main.java
         if (instance == null)
-            throw new RuntimeException("CLAWRuntime has not been initialized in Main.java");
+            throw new RuntimeException("CLAWRobot has not been initialized in Main.java");
         return instance;
     }
     
@@ -68,9 +68,9 @@ public class CLAWRuntime {
             @Override
             public RobotBase get () {
                 
-                // When this supplier is called in RobotBase.startRobot, it will initialize the CLAWRuntime instance
+                // When this supplier is called in RobotBase.startRobot, it will initialize the CLAWRobot instance
                 if (instance == null)
-                    instance = new CLAWRuntime(robotSupplier);
+                    instance = new CLAWRobot(robotSupplier);
                 return instance.robotProxy;
             }
         };
@@ -78,7 +78,7 @@ public class CLAWRuntime {
     
     
     
-    // CLAWRuntime private methods
+    // CLAWRobot private methods
     
     private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem", SUBSYSTEM_REGISTRY_LOG);
     private final Registry<Device<Object>> deviceRegistry = new Registry<>("device", DEVICE_REGISTRY_LOG);
@@ -87,9 +87,9 @@ public class CLAWRuntime {
     
     private final RobotMode robotMode;
     
-    private CLAWRuntime (Supplier<TimedRobot> robotSupplier) {
-        // Put a message into the console indicating that the CLAWRuntime runtime has started
-        System.out.println("\n -- CLAWRuntime is running -- \n");
+    private CLAWRobot (Supplier<TimedRobot> robotSupplier) {
+        // Put a message into the console indicating that the CLAWRobot runtime has started
+        System.out.println("\n -- CLAWRobot is running -- \n");
         
         // Get the robot initialization mode
         robotMode = ROBOT_MODE_FIELD.getValue(RobotMode.DEFAULT);
@@ -222,12 +222,12 @@ public class CLAWRuntime {
                 robot = robotSupplier.get();
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
-            robot.addPeriodic(CLAWRuntime.this::robotPeriodic, TimedRobot.kDefaultPeriod);
+            robot.addPeriodic(CLAWRobot.this::robotPeriodic, TimedRobot.kDefaultPeriod);
             
-            CommandScheduler.getInstance().onCommandInitialize(CLAWRuntime.this::onCommandInitialize);
-            CommandScheduler.getInstance().onCommandExecute(CLAWRuntime.this::onCommandExecute);
-            CommandScheduler.getInstance().onCommandFinish(CLAWRuntime.this::onCommandFinish);
-            CommandScheduler.getInstance().onCommandInterrupt(CLAWRuntime.this::onCommandInterrupt);
+            CommandScheduler.getInstance().onCommandInitialize(CLAWRobot.this::onCommandInitialize);
+            CommandScheduler.getInstance().onCommandExecute(CLAWRobot.this::onCommandExecute);
+            CommandScheduler.getInstance().onCommandFinish(CLAWRobot.this::onCommandFinish);
+            CommandScheduler.getInstance().onCommandInterrupt(CLAWRobot.this::onCommandInterrupt);
         }
         
         @Override

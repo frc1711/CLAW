@@ -2,9 +2,9 @@ package claw.internal.rct.remote;
 
 import java.util.List;
 
-import claw.CLAWRuntime;
+import claw.CLAWRobot;
 import claw.internal.Registry;
-import claw.CLAWRuntime.RobotMode;
+import claw.CLAWRobot.RobotMode;
 import claw.internal.rct.commands.Command;
 import claw.internal.rct.commands.CommandLineInterpreter;
 import claw.internal.rct.commands.CommandProcessor;
@@ -71,7 +71,7 @@ public class RemoteCommandInterpreter {
         
         console.println("Restarting...");
         
-        CLAWRuntime.getInstance().restartCode(restartMode);
+        CLAWRobot.getInstance().restartCode(restartMode);
     }
     
     private void subsystemsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
