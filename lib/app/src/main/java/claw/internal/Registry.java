@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import claw.api.logs.RCTLog;
+import claw.api.CLAWLogger;
 
 /**
  * A registry class which stores named items and can be configured in name conflict handling.
@@ -16,16 +16,16 @@ public class Registry <T> {
     private final Map<String, T> items = new HashMap<String, T>();
     
     private final String itemsType;
-    private final Optional<RCTLog> log;
+    private final Optional<CLAWLogger> log;
     
     /**
-     * Creates a new registry which logs a warning to the given {@link RCTLog} when {@link #add(String, Object)}
+     * Creates a new registry which logs a warning to the given {@link CLAWLogger} when {@link #add(String, Object)}
      * is called on an item whose name is already in the registry.
      * @param itemsType A string to use to describe the type of item the registry stores (e.g. "device",
      * "config field").
-     * @param log       The {@code RCTLog} to use for logging name conflict warnings.
+     * @param log       The {@code CLAWLogger} to use for logging name conflict warnings.
      */
-    public Registry (String itemsType, RCTLog log) {
+    public Registry (String itemsType, CLAWLogger log) {
         this.itemsType = itemsType;
         this.log = Optional.ofNullable(log);
     }
@@ -65,7 +65,7 @@ public class Registry <T> {
      * @throws NameConflictException    If an item in the registry already has the provided name,
      * there is a name conflict. If the registry is configured to throw an exception when
      * a name conflict arises, this runtime exception will be thrown.
-     * Otherwise, name conflicts will be logged as warnings to an {@link RCTLog} provided to the registry.
+     * Otherwise, name conflicts will be logged as warnings to an {@link CLAWLogger} provided to the registry.
      * In either case, if a name conflict occurs, the addition of the item to the registry will fail.
      */
     public void add (String name, T item) throws NameConflictException {

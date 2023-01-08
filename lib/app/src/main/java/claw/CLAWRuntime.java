@@ -11,8 +11,7 @@ import claw.internal.Registry;
 import claw.internal.SystemConfigRobot;
 import claw.internal.Config.ConfigField;
 import claw.api.devices.Device;
-import claw.api.logs.LogHandler;
-import claw.api.logs.RCTLog;
+import claw.api.CLAWLogger;
 import claw.internal.rct.remote.RCTServer;
 import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -24,12 +23,13 @@ public class CLAWRuntime {
     
     // Logs
     
-    private static final RCTLog
-        COMMANDS_LOG = LogHandler.getSysLog("Commands"),
-        CONFIG_LOG = LogHandler.getSysLog("Config"),
-        DEVICE_REGISTRY_LOG = LogHandler.getSysLog("DeviceRegistry"),
-        ROBOT_LOG = LogHandler.getSysLog("Robot"),
-        SUBSYSTEM_REGISTRY_LOG = LogHandler.getSysLog("SubsystemRegistry");
+    private static final CLAWLogger
+        COMMANDS_LOG = CLAWLogger.getSysLog("Commands"),
+        CONFIG_LOG = CLAWLogger.getSysLog("Config"),
+        DEVICE_REGISTRY_LOG = CLAWLogger.getSysLog("DeviceRegistry"),
+        ROBOT_LOG = CLAWLogger.getSysLog("Robot"),
+        SUBSYSTEM_REGISTRY_LOG = CLAWLogger.getSysLog("SubsystemRegistry"),
+        SERVER_LOG = CLAWLogger.getSysLog("Server");
     
     // Config
     
@@ -109,7 +109,7 @@ public class CLAWRuntime {
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800, subsystemRegistry);
+                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");
@@ -145,7 +145,7 @@ public class CLAWRuntime {
      */
     private void robotPeriodic () {
         if (server != null)
-            LogHandler.sendData(server);
+            CLAWLogger.sendData(server);
     }
     
     /**
@@ -155,7 +155,7 @@ public class CLAWRuntime {
     private void onRobotProgramExit () {
         CONFIG.save();
         ROBOT_LOG.out("Exiting robot program");
-        LogHandler.sendData(server);
+        CLAWLogger.sendData(server);
     }
     
     private void onCommandInitialize (Command command) {

@@ -12,8 +12,8 @@ import claw.internal.rct.network.low.Waiter;
 import claw.internal.rct.network.low.Waiter.NoValueReceivedException;
 import claw.internal.rct.network.messages.ConnectionCheckMessage;
 import claw.internal.rct.network.messages.ConnectionResponseMessage;
-import claw.internal.rct.network.messages.StreamDataMessage;
-import claw.internal.rct.network.messages.StreamDataMessage.StreamData;
+import claw.internal.rct.network.messages.LogDataMessage;
+import claw.internal.rct.network.messages.LogDataMessage.LogData;
 import claw.internal.rct.network.messages.commands.CommandOutputMessage;
 import claw.internal.rct.network.messages.commands.ProcessKeepaliveRemote;
 
@@ -37,8 +37,8 @@ public class LocalSystem {
     private RemoteProcessHandler remoteProcessHandler = null;
     private int nextRemoteProcessId = 0;
     
-    // Stream data
-    private final StreamDataStorage streamDataStorage;
+    // log data
+    private final LogDataStorage logDataStorage;
     
     // Socket handling
     private final int teamNum, remotePort;
@@ -55,21 +55,21 @@ public class LocalSystem {
      * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
      * @param teamNum                       The team number to use for the roboRIO
      * @param remotePort                    The remote port to connect to (if you don't know what to try, 5800 is a good default).
-     * @param streamDataStorage
+     * @param logDataStorage
      * @param console
      */
     public LocalSystem (
             int teamNum,
             int remotePort,
-            StreamDataStorage streamDataStorage,
+            LogDataStorage logDataStorage,
             ConsoleManager console) {
         
         // Instantiating final fields
         this.teamNum = teamNum;
         this.remotePort = remotePort;
-        this.streamDataStorage = streamDataStorage;
+        this.logDataStorage = logDataStorage;
         this.console = console;
-        interpreter = new LocalCommandInterpreter(this, streamDataStorage);
+        interpreter = new LocalCommandInterpreter(this, logDataStorage);
         
         // Start the requireNewConnectionThread, which will attempt to establish a new connection
         // whenever it is interrupted
@@ -133,8 +133,8 @@ public class LocalSystem {
     
     private ConnectionStatus updateConnectionStatus (ConnectionStatus status) {
         if (status != lastConnectionStatus) {
-            streamDataStorage.acceptDataMessage(new StreamDataMessage(new StreamData[]{
-                new StreamData(
+            logDataStorage.acceptDataMessage(new LogDataMessage(new LogData[]{
+                new LogData(
                     "#Connection",
                     "Connection status changed to " + status.name(),
                     status != ConnectionStatus.OK
@@ -201,8 +201,8 @@ public class LocalSystem {
         if (msgClass == CommandOutputMessage.class)
             receiveCommandOutputMessage((CommandOutputMessage)msg);
         
-        if (msgClass == StreamDataMessage.class)
-            receiveStreamDataMessage((StreamDataMessage)msg);
+        if (msgClass == LogDataMessage.class)
+            receiveLogDataMessage((LogDataMessage)msg);
     }
     
     /**
@@ -221,12 +221,12 @@ public class LocalSystem {
     }
     
     /**
-     * Receives a stream data message and sends it to the stream
+     * Receives a log data message and sends it to the log
      * data storage to be processed. This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
-    private void receiveStreamDataMessage (StreamDataMessage msg) {
-        streamDataStorage.acceptDataMessage(msg);
+    private void receiveLogDataMessage (LogDataMessage msg) {
+        logDataStorage.acceptDataMessage(msg);
     }
     
     // COMMAND INTERPRETATION

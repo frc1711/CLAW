@@ -15,7 +15,7 @@ import claw.internal.rct.commands.CommandProcessor.HelpMessage;
 import claw.internal.rct.local.LocalSystem.ConnectionStatus;
 import claw.internal.rct.network.low.ConsoleManager;
 import claw.internal.rct.network.low.DriverStationSocketHandler;
-import claw.internal.rct.network.messages.StreamDataMessage.StreamData;
+import claw.internal.rct.network.messages.LogDataMessage.LogData;
 
 /**
  * A wrapper around the {@link CommandLineInterpreter}, prepared to process local (driverstation) commands. When a command
@@ -23,7 +23,7 @@ import claw.internal.rct.network.messages.StreamDataMessage.StreamData;
  */
 public class LocalCommandInterpreter {
     
-    private final StreamDataStorage streamDataStorage;
+    private final LogDataStorage logDataStorage;
     private final LocalSystem system;
     
     /**
@@ -33,17 +33,17 @@ public class LocalCommandInterpreter {
      */
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
-    private boolean hasNewStreamData = false;
-    private List<StreamData> newStreamData = new ArrayList<StreamData>();
-    private final Object newStreamDataLock = new Object();
+    private boolean hasNewLogData = false;
+    private List<LogData> newLogData = new ArrayList<LogData>();
+    private final Object newLogDataLock = new Object();
     
     /**
      * Construct a new {@link LocalCommandInterpreter} with all the resources it requires in order to execute
      * local commands.
      */
-    public LocalCommandInterpreter (LocalSystem system, StreamDataStorage streamDataStorage) {
-        this.streamDataStorage = streamDataStorage;
-        streamDataStorage.addOnReceiveDataListener(this::receiveLogDataListener);
+    public LocalCommandInterpreter (LocalSystem system, LogDataStorage logDataStorage) {
+        this.logDataStorage = logDataStorage;
+        logDataStorage.addOnReceiveDataListener(this::receiveLogDataListener);
         this.system = system;
         addCommands();
     }
@@ -212,32 +212,32 @@ public class LocalCommandInterpreter {
     
     private void watchCommand (ConsoleManager console, Command cmd) {
         while (!console.hasInputReady()) {
-            synchronized (newStreamDataLock) {
-                if (hasNewStreamData) {
-                    hasNewStreamData = false;
-                    for (StreamData data : newStreamData)
-                        printStreamData(console, data);
-                    newStreamData.clear();
+            synchronized (newLogDataLock) {
+                if (hasNewLogData) {
+                    hasNewLogData = false;
+                    for (LogData data : newLogData)
+                        printLogData(console, data);
+                    newLogData.clear();
                 }
             }
         }
     }
     
-    private void receiveLogDataListener (StreamData[] data) {
-        synchronized (newStreamDataLock) {
-            newStreamData.addAll(Arrays.asList(data));
-            hasNewStreamData = true;
+    private void receiveLogDataListener (LogData[] data) {
+        synchronized (newLogDataLock) {
+            newLogData.addAll(Arrays.asList(data));
+            hasNewLogData = true;
         }
     }
     
-    private void printStreamData (ConsoleManager console, StreamData data) {
-        String streamNamePrint = "["+data.streamName+"] ";
+    private void printLogData (ConsoleManager console, LogData data) {
+        String logNamePrint = "["+data.logName+"] ";
         String messagePrint = data.data;
         
         if (data.isError) {
-            console.printlnErr(streamNamePrint + messagePrint);
+            console.printlnErr(logNamePrint + messagePrint);
         } else {
-            console.printSys(streamNamePrint);
+            console.printSys(logNamePrint);
             console.println(messagePrint);
         }
     }

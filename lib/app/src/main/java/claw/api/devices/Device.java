@@ -1,11 +1,10 @@
 package claw.api.devices;
 
-import claw.api.logs.LogHandler;
-import claw.api.logs.RCTLog;
+import claw.api.CLAWLogger;
 
 public abstract class Device <T> {
     
-    private static final RCTLog LOG = LogHandler.getSysLog("Devices");
+    private static final CLAWLogger LOG = CLAWLogger.getSysLog("Devices");
     
     private final String deviceName;
     

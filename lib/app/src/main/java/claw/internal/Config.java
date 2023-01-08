@@ -12,12 +12,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import claw.api.logs.RCTLog;
+import claw.api.CLAWLogger;
 
 public class Config {
     
     private final File configFile;
-    private final RCTLog log;
+    private final CLAWLogger log;
     
     /**
      * The set of all field names used by {@link ConfigField}s.
@@ -29,7 +29,7 @@ public class Config {
      */
     private final Map<String, Serializable> entries;
     
-    public Config (RCTLog log, File configFile) {
+    public Config (CLAWLogger log, File configFile) {
         this.configFile = configFile;
         this.log = log;
         
@@ -153,7 +153,7 @@ public class Config {
             return serial;
         }
         
-        public static ConfigSerial fromObjectMap (Map<String, Serializable> objMap, RCTLog log) {
+        public static ConfigSerial fromObjectMap (Map<String, Serializable> objMap, CLAWLogger log) {
             
             // Create a new serialized object map of string names onto raw bytes
             Map<String, byte[]> serializedObjMap = new HashMap<String, byte[]>();
@@ -188,7 +188,7 @@ public class Config {
             objOut.close();
         }
         
-        public Map<String, Serializable> getDeserializedEntries (RCTLog log) {
+        public Map<String, Serializable> getDeserializedEntries (CLAWLogger log) {
             
             // Create a new map of object names onto serializable objects
             Map<String, Serializable> objMap = new HashMap<String, Serializable>();

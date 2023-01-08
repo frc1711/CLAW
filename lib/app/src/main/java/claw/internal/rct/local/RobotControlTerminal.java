@@ -41,7 +41,7 @@ public class RobotControlTerminal {
         LocalSystem system = new LocalSystem(
             TEAM_NUMBER,
             REMOTE_PORT,
-            new StreamDataStorage(),
+            new LogDataStorage(),
             console
         );
         
