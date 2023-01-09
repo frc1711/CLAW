@@ -8,9 +8,7 @@ import java.util.function.Supplier;
 
 import claw.internal.Config;
 import claw.internal.Registry;
-import claw.internal.SystemConfigRobot;
 import claw.internal.Config.ConfigField;
-import claw.api.devices.Device;
 import claw.api.CLAWLogger;
 import claw.internal.rct.remote.RCTServer;
 import claw.api.subsystems.SubsystemCLAW;
@@ -26,7 +24,6 @@ public class CLAWRobot {
     private static final CLAWLogger
         COMMANDS_LOG = CLAWLogger.getSysLog("Commands"),
         CONFIG_LOG = CLAWLogger.getSysLog("Config"),
-        DEVICE_REGISTRY_LOG = CLAWLogger.getSysLog("DeviceRegistry"),
         ROBOT_LOG = CLAWLogger.getSysLog("Robot"),
         SUBSYSTEM_REGISTRY_LOG = CLAWLogger.getSysLog("SubsystemRegistry"),
         SERVER_LOG = CLAWLogger.getSysLog("Server");
@@ -37,7 +34,6 @@ public class CLAWRobot {
     private static final Config CONFIG = new Config(CONFIG_LOG, CONFIG_FILE);
     
     private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = CONFIG.getField("UNCAUGHT_EXCEPTION");
-    private static final ConfigField<RobotMode> ROBOT_MODE_FIELD = CONFIG.getField("ROBOT_MODE");
     
     
     // CLAWRobot singleton initialization with fromRobot (called in Main.java) and retrieval with getInstance
@@ -81,18 +77,12 @@ public class CLAWRobot {
     // CLAWRobot private methods
     
     private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem", SUBSYSTEM_REGISTRY_LOG);
-    private final Registry<Device<?>> deviceRegistry = new Registry<>("device", DEVICE_REGISTRY_LOG);
     private final RobotProxy robotProxy;
     private RCTServer server;
-    
-    private final RobotMode robotMode;
     
     private CLAWRobot (Supplier<TimedRobot> robotSupplier) {
         // Put a message into the console indicating that the CLAWRobot runtime has started
         System.out.println("\n -- CLAWRobot is running -- \n");
-        
-        // Get the robot initialization mode
-        robotMode = ROBOT_MODE_FIELD.getValue(RobotMode.DEFAULT);
         
         // Initialize the robot proxy
         robotProxy = new RobotProxy(robotSupplier);
@@ -109,7 +99,7 @@ public class CLAWRobot {
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry, deviceRegistry);
+                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");
@@ -174,10 +164,6 @@ public class CLAWRobot {
         COMMANDS_LOG.out(command.getName() + " was interrupted");
     }
     
-    private void robotSysconfigMode () {
-        System.out.println("BOOTING ROBOT IN SYSCONFIG MODE");
-    }
-    
     
     
     // Public API
@@ -186,16 +172,7 @@ public class CLAWRobot {
         subsystemRegistry.add(subsystem.getName(), subsystem);
     }
     
-    public void addDevice (Device<?> device) {
-        deviceRegistry.add(device.getName(), device);
-    }
-    
     public void restartCode () {
-        restartCode(RobotMode.DEFAULT);
-    }
-    
-    public void restartCode (RobotMode mode) {
-        ROBOT_MODE_FIELD.setValue(mode);
         onRobotProgramExit();
         System.exit(0);
     }
@@ -209,17 +186,8 @@ public class CLAWRobot {
         private final TimedRobot robot;
         
         public RobotProxy (Supplier<TimedRobot> robotSupplier) {
-            // Robot mode handling
-            ROBOT_LOG.out("Robot code starting in "+robotMode.name()+" mode");
-            
-            // Always reset the robot mode to start in DEFAULT next reboot
-            ROBOT_MODE_FIELD.setValue(RobotMode.DEFAULT);
-            
-            // Get the robot to use based on the robotMode
-            if (robotMode == RobotMode.SYSCONFIG)
-                robot = new SystemConfigRobot(deviceRegistry);
-            else
-                robot = robotSupplier.get();
+            ROBOT_LOG.out("Starting robot code");
+            robot = robotSupplier.get();
             
             // Schedule the robotPeriodic method to be called at the default TimedRobot period
             robot.addPeriodic(CLAWRobot.this::robotPeriodic, TimedRobot.kDefaultPeriod);
@@ -234,10 +202,8 @@ public class CLAWRobot {
         public void startCompetition () {
             try {
                 
-                
-                // Get the current robot mode and start the robot based on it
-                if (robotMode == RobotMode.SYSCONFIG) robotSysconfigMode();
-                else robot.startCompetition();
+                // Call the main robot's startCompetition method
+                robot.startCompetition();
                 
                 // Handle robot program exiting
                 onRobotProgramExit();
@@ -253,11 +219,6 @@ public class CLAWRobot {
             robot.endCompetition();
         }
         
-    }
-    
-    public enum RobotMode {
-        DEFAULT,
-        SYSCONFIG,
     }
     
 }
