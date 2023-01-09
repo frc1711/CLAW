@@ -63,7 +63,7 @@ public class LocalCommandInterpreter {
         
         addCommand("comms", "comms",
             "Displays the current status of the connection to the remote (the roboRIO), automatically updating over time. Press enter to stop.",
-            this::statusCommand);
+            this::commsCommand);
         
         addCommand("ssh", "ssh [user]",
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
@@ -108,21 +108,18 @@ public class LocalCommandInterpreter {
     
     
     
-    private void clearCommand (ConsoleManager console, Command cmd) {
+    private void clearCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.expectNothing(cmd);
         console.clear();
     }
     
-    private void exitCommand (ConsoleManager console, Command cmd) {
+    private void exitCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.expectNothing(cmd);
         System.exit(0);
     }
     
     private void helpCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.checkNumArgs(0, 1, cmd.argsLen());
-        
-        if (cmd.argsLen() == 0) {
-            console.println("Use 'help local' for a list of local commands, and 'help remote' for a list of remote commands.");
-            return;
-        }
+        CommandProcessor.expectNothing(cmd);
         
         List<HelpMessage> helpMessages = commandInterpreter.getHelpMessages();
         
@@ -135,7 +132,9 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void statusCommand (ConsoleManager console, Command cmd) {
+    private void commsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.expectNothing(cmd);
+        
         console.println("");
         
         // Keep repeating until the user hits enter
@@ -187,9 +186,12 @@ public class LocalCommandInterpreter {
     }
     
     private void sshCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.checkNumArgs(1, cmd.argsLen());
-        String user = cmd.getArg(0);
-        CommandProcessor.expectedOneOf("user", user, "lvuser", "admin");
+        CommandProcessor.expectNoOptions(cmd);
+        CommandProcessor.expectNoFlags(cmd);
+        CommandProcessor.expectMaxArgs(cmd, 1);
+        
+        // Get the user
+        String user = CommandProcessor.expectOneOf(cmd, "user", 0, "lvuser", "admin");
         
         // Get host for ssh and generate command
         String host = DriverStationSocketHandler.getRoborioHost(system.getTeamNum());
@@ -210,7 +212,9 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void watchCommand (ConsoleManager console, Command cmd) {
+    private void watchCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.expectNothing(cmd);
+        
         while (!console.hasInputReady()) {
             synchronized (newLogDataLock) {
                 if (hasNewLogData) {

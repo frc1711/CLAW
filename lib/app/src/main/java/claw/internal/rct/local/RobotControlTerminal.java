@@ -82,7 +82,7 @@ public class RobotControlTerminal {
         try {
             system.processCommand(line);
         } catch (ParseException e) {
-            console.printlnErr("Malformatted command: " + e.getMessage());
+            console.printlnErr(e.getMessage());
         } catch (BadArgumentsException e) {
             console.printlnErr(e.getMessage());
         } catch (IOException e) {

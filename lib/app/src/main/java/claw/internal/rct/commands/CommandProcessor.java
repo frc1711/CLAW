@@ -1,5 +1,9 @@
 package claw.internal.rct.commands;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import claw.internal.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.internal.rct.network.low.ConsoleManager;
 
@@ -72,7 +76,7 @@ public class CommandProcessor {
          * @param processor The {@link CommandProcessor} which threw this exception.
          */
         private BadArgumentsException (String msg, CommandProcessor processor) {
-            super("Bad command arguments. " + msg + (processor == null ? "" : ("\nUsage: " + processor.helpMessage.usage)));
+            super(msg + (processor == null ? "" : ("\nUsage: " + processor.helpMessage.usage)));
             this.msg = msg;
         }
         
@@ -88,75 +92,95 @@ public class CommandProcessor {
         
     }
     
-    /**
-     * A extension of a {@link BadArgumentsException} which can be used in coordination with
-     * {@link CommandLineInterpreter#checkNumArgs(String, int, int)} or {@link CommandLineInterpreter#checkNumArgs(String, int, int, int)}
-     * to easily throw exceptions indicating that an incorrect number of arguments were passed to the command processor.
-     */
-    public static class IncorrectNumArgsException extends BadArgumentsException {
-        /**
-         * Use this constructor when the number of arguments passed to the command should fall within a range.
-         */
-        public IncorrectNumArgsException (int minArgs, int maxArgs, int receivedArgs) {
-            this(minArgs+" to "+maxArgs, receivedArgs);
-        }
-        
-        /**
-         * Use this constructor when there is a precise number of arguments that passed to the command.
-         */
-        public IncorrectNumArgsException (int requiredArgs, int receivedArgs) {
-            this(Integer.toString(requiredArgs), receivedArgs);
-        }
-        
-        private IncorrectNumArgsException (String requiredArgs, int receivedArgs) {
-            super("Received "+receivedArgs+" argument(s) but required "+requiredArgs+".");
-        }
+    public static void expectNothing (Command cmd) throws BadArgumentsException {
+        expectNoArgs(cmd);
+        expectNoOptions(cmd);
+        expectNoFlags(cmd);
     }
     
-    /**
-     * Checks whether the number of arguments {@code receivedArgs} falls within the given maximum and minimum,
-     * throwing an {@link IncorrectNumArgsException} if out of range.
-     * @param minArgs                      The minimum number of arguments that should be passed to the command.
-     * @param maxArgs                      The maximum number of arguments that should be passed to the command.
-     * @param receivedArgs                 The number of arguments that were passed to the command.
-     * @throws IncorrectNumArgsException
-     */
-    public static void checkNumArgs (int minArgs, int maxArgs, int receivedArgs) throws IncorrectNumArgsException {
-        if (receivedArgs < minArgs || receivedArgs > maxArgs)
-            throw new IncorrectNumArgsException(minArgs, maxArgs, receivedArgs);
+    public static void expectNoOptions (Command cmd) throws BadArgumentsException {
+        if (cmd.hasAnyOptions())
+            throw new BadArgumentsException("Command takes no options.");
     }
     
-    /**
-     * Checks whether the number of arguments {@code receivedArgs} is correct, throwing an {@link IncorrectNumArgsException} if it is not.
-     * @param requiredArgs                  The number of arguments that should be passed to the command.
-     * @param receivedArgs                  The number of arguments that were passed to the command.
-     * @throws IncorrectNumArgsException
-     */
-    public static void checkNumArgs (int requiredArgs, int receivedArgs) throws IncorrectNumArgsException {
-        if (receivedArgs != requiredArgs)
-            throw new IncorrectNumArgsException(requiredArgs, receivedArgs);
+    public static void expectNoFlags (Command cmd) throws BadArgumentsException {
+        if (cmd.hasAnyFlags())
+            throw new BadArgumentsException("Command takes no flags.");
     }
     
-    /**
-     * Checks whether a string argument is one of several options, throwing a {@link BadArgumentsException} if it is not.
-     * @param argName                   The name to use to refer to the particular argument when explaining the issue.
-     * @param argReceived               The string argument passed in.
-     * @param argOptions                The list of possible valid arguments (varargs).
-     * @throws BadArgumentsException
-     */
-    public static void expectedOneOf (
-            String argName,
-            String argReceived,
-            String ...argOptions)
-            throws BadArgumentsException {
+    public static void expectNoArgs (Command cmd) throws BadArgumentsException {
+        if (cmd.argsLen() > 0)
+            throw new BadArgumentsException("Command takes no arguments.");
+    }
+    
+    public static void expectMaxArgs (Command cmd, int numArgs) throws BadArgumentsException {
+        if (cmd.argsLen() > numArgs)
+            throw new BadArgumentsException("Too many arguments.");
+    }
+    
+    public static String expectString (Command cmd, String argName, int argIndex) throws BadArgumentsException {
+        // If exactly one more argument was required, throw an error with the required argument name
+        if (cmd.argsLen() == argIndex)
+            throw new BadArgumentsException("Expected another argument: \""+argName+"\".");
         
-        // Look through argument options to see if any match
-        for (String argOption : argOptions)
-            if (argOption.equals(argReceived)) return;
+        // If more than one more arg was required, put a more generic error message
+        if (cmd.argsLen() <= argIndex)
+            throw new BadArgumentsException("Expected more arguments.");
         
-        // The method hasn't returned yet, so not argument options matched
-        throw new BadArgumentsException(
-            "'"+argName+"' argument must be one of: " + String.join(", ", argOptions) + " but '"+argReceived+"' was received.");
+        // Return the argument string
+        return cmd.getArg(argIndex);
+    }
+    
+    public static int expectInt (Command cmd, String argName, int argIndex) throws BadArgumentsException {
+        
+        // Expect the string argument
+        String arg = expectString(cmd, argName, argIndex);
+        
+        // Attempt to parse the argument to an int
+        try {
+            return Integer.parseInt(arg);
+        } catch (NumberFormatException e) {
+            throw new BadArgumentsException("\""+argName+"\" argument must be an integer.");
+        }
+        
+    }
+    
+    public static double expectDouble (Command cmd, String argName, int argIndex) throws BadArgumentsException {
+        
+        // Expect the string argument
+        String arg = expectString(cmd, argName, argIndex);
+        
+        // Attempt to parse the argument to a double
+        try {
+            return Double.parseDouble(arg);
+        } catch (NumberFormatException e) {
+            throw new BadArgumentsException("\""+argName+"\" argument must be a decimal number.");
+        }
+        
+    }
+    
+    public static String expectOneOf (Command cmd, String argName, int argIndex, Collection<String> argOptions) throws BadArgumentsException {
+        
+        // Expect the string argument
+        String arg = expectString(cmd, argName, argIndex);
+        
+        // Look through argument options to see if any match one of the given argument options
+        Iterator<String> iter = argOptions.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().equals(arg))
+                return arg;
+        }
+        
+        // No argument options matched
+        if (argOptions.size() <= 4)
+            throw new BadArgumentsException("\""+argName+"\" argument must be one of: " + String.join(", ", argOptions) + ", but \""+arg+"\" was received.");
+        else
+            throw new BadArgumentsException("\""+arg+"\" argument did not match any expected argument.");
+        
+    }
+    
+    public static String expectOneOf (Command cmd, String argName, int argIndex, String ...argOptions) throws BadArgumentsException {
+        return expectOneOf(cmd, argName, argIndex, List.of(argOptions));
     }
     
 }

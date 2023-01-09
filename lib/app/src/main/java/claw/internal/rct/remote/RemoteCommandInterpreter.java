@@ -53,7 +53,7 @@ public class RemoteCommandInterpreter {
     }
     
     private void restartCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.checkNumArgs(0, cmd.argsLen());
+        CommandProcessor.expectNothing(cmd);
         
         console.println("Restarting...");
         console.flush();
@@ -62,9 +62,9 @@ public class RemoteCommandInterpreter {
     }
     
     private void subsystemsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.checkNumArgs(1, 3, cmd.argsLen());
-        
-        String firstArg = cmd.getArg(0);
+        CommandProcessor.expectNoOptions(cmd);
+        CommandProcessor.expectNoFlags(cmd);
+        String firstArg = CommandProcessor.expectString(cmd, "operation", 0);
         
         // TODO: Migrate functionality to new status and config commands (status subsystem SubsystemName, config subsystem SubsystemName)
         

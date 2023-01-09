@@ -51,6 +51,13 @@ public class Command {
     }
     
     /**
+     * Returns whether or not any flags are set.
+     */
+    public boolean hasAnyFlags () {
+        return flags.size() > 0;
+    }
+    
+    /**
      * Returns whether or not a given option is set. If the given option is provided, either as a key-value pair
      * or as a marker, this method will return true.
      */
@@ -68,6 +75,13 @@ public class Command {
      */
     public String getOptionValue (String option) {
         return options.get(option);
+    }
+    
+    /**
+     * Returns whether or not any options are set.
+     */
+    public boolean hasAnyOptions () {
+        return options.size() > 0;
     }
     
     /**
