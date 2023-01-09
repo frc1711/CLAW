@@ -71,5 +71,5 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'claw.rct.local.LocalMain'
+    mainClass = 'claw.internal.rct.local.LocalMain'
 }

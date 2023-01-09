@@ -6,6 +6,7 @@ import java.io.StringWriter;
 
 import claw.internal.Registry;
 import claw.api.CLAWLogger;
+import claw.api.devices.Device;
 import claw.internal.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.internal.rct.network.low.InstructionMessage;
 import claw.internal.rct.network.low.ResponseMessage;
@@ -33,12 +34,12 @@ public class RCTServer {
     
     private CommandProcessHandler commandProcessHandler;
     
-    public RCTServer (int port, CLAWLogger log, Registry<SubsystemCLAW> subsystemRegistry) throws IOException {
+    public RCTServer (int port, CLAWLogger log, Registry<SubsystemCLAW> subsystemRegistry, Registry<Device<?>> deviceRegistry) throws IOException {
         this.log = log;
         
         // Try to create a new server socket
         serverSocket = new RobotSocketHandler(port, this::receiveMessage, this::handleReceiverException);
-        interpreter = new RemoteCommandInterpreter(subsystemRegistry);
+        interpreter = new RemoteCommandInterpreter(subsystemRegistry, deviceRegistry);
     }
     
     public void start () throws IOException {

@@ -1,6 +1,7 @@
 package claw.internal.rct.remote;
 
 import java.util.List;
+import java.util.Set;
 
 import claw.CLAWRobot;
 import claw.internal.Registry;
@@ -12,6 +13,8 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
+import claw.api.devices.Device;
+import claw.api.devices.ConfigBuilder.BadMethodCall;
 import claw.api.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
@@ -19,9 +22,11 @@ public class RemoteCommandInterpreter {
     private final CommandLineInterpreter interpreter = new CommandLineInterpreter();
     
     private final Registry<SubsystemCLAW> subsystemRegistry;
+    private final Registry<Device<?>> deviceRegistry;
     
-    public RemoteCommandInterpreter (Registry<SubsystemCLAW> subsystemRegistry) {
+    public RemoteCommandInterpreter (Registry<SubsystemCLAW> subsystemRegistry, Registry<Device<?>> deviceRegistry) {
         this.subsystemRegistry = subsystemRegistry;
+        this.deviceRegistry = deviceRegistry;
         addCommands();
     }
     
@@ -34,6 +39,7 @@ public class RemoteCommandInterpreter {
         addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
+        addCommand("devices", "devices", "devices", this::devicesCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
@@ -94,6 +100,78 @@ public class RemoteCommandInterpreter {
             
         }
         
+    }
+    
+    private void devicesCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
+        CommandProcessor.checkNumArgs(1, 2, cmd.argsLen());
+        
+        String operation = cmd.getArg(0);
+        
+        CommandProcessor.expectedOneOf("operation", operation, "list", "read", "call");
+        
+        if (operation.equals("list")) {
+            
+            if (cmd.argsLen() == 1) {
+                
+                for (Device<?> device : deviceRegistry.getAllItems())
+                    console.println(device.getName());
+                console.println(deviceRegistry.getSize() + " devices found");
+                
+            } else {
+                
+                Device<?> device = getDevice(cmd);
+                Set<String> methodNames = device.getMethods();
+                Set<String> fieldNames = device.getFields();
+                
+                if (methodNames.size() == 0) {
+                    console.println("No methods");
+                } else {
+                    console.println("Methods");
+                    for (String methodName : device.getMethods())
+                        console.println("  "+methodName);
+                    console.println("");
+                }
+                
+                if (fieldNames.size() == 0) {
+                    console.println("No fields");
+                } else {
+                    console.println("Fields");
+                    for (String fieldName : device.getFields())
+                        console.println("  "+fieldName);
+                }
+            }
+            
+        } else if (operation.equals("read")) {
+            
+            Device<?> device = getDevice(cmd);
+            console.print("Read value: ");
+            String line = console.readInputLine();
+            console.println(device.readField(line));
+            
+        } else if (operation.equals("call")) {
+            
+            Device<?> device = getDevice(cmd);
+            console.print("Set value: ");
+            String line = console.readInputLine();
+            
+            try {
+                device.callConfigMethod(line);
+            } catch (BadMethodCall e) {
+                console.printlnErr(e.getMessage());
+            }
+            
+        }
+    }
+    
+    private Device<?> getDevice (Command cmd) throws BadArgumentsException {
+        if (cmd.argsLen() != 2)
+            throw new BadArgumentsException("Operation requires a device name.");
+        String deviceName = cmd.getArg(1);
+        
+        if (!deviceRegistry.hasItem(deviceName))
+            throw new BadArgumentsException("Device name not found.");
+        
+        return deviceRegistry.getItem(deviceName);
     }
     
     private void configCommand (ConsoleManager console, Command cmd) {

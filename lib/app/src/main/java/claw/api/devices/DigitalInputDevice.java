@@ -5,7 +5,14 @@ import edu.wpi.first.wpilibj.DigitalInput;
 public class DigitalInputDevice extends Device<DigitalInput> {
     
     public DigitalInputDevice (String deviceName, int defaultId) {
-        super(deviceName, defaultId);
+        super(DigitalInput.class, deviceName, defaultId);
+    }
+    
+    @Override
+    public void initConfig (ConfigBuilder builder) {
+        builder.addField("value", () -> {
+            return "" + get().get();
+        });
     }
     
     @Override
@@ -14,8 +21,8 @@ public class DigitalInputDevice extends Device<DigitalInput> {
     }
     
     @Override
-    protected void closeDevice (DigitalInput device) {
-        device.close();
+    protected void closeDevice (DigitalInput digitalInput) {
+        digitalInput.close();
     }
     
 }

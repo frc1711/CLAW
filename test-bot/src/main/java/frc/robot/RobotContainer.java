@@ -4,15 +4,14 @@
 
 package frc.robot;
 
-import claw.logs.LogHandler;
-import claw.logs.RCTLog;
+import claw.api.CLAWLogger;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.TestCommand;
 import frc.robot.subsystems.TestSubsystem;
 
 public class RobotContainer {
     
-    private static final RCTLog LOG = LogHandler.getInstance().getLog("RobotContainer");
+    private static final CLAWLogger LOG = CLAWLogger.getLog("RobotContainer");
     private final TestSubsystem testSubsystem = new TestSubsystem();
     private final TestCommand testCommand = new TestCommand(testSubsystem);
     

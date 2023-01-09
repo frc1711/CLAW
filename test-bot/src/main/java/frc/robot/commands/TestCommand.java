@@ -1,14 +1,13 @@
 package frc.robot.commands;
 
-import claw.logs.LogHandler;
-import claw.logs.RCTLog;
+import claw.api.CLAWLogger;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 
 public class TestCommand extends CommandBase {
     
-    private final static RCTLog LOG = LogHandler.getInstance().getLog("TestCommand");
+    private final static CLAWLogger LOG = CLAWLogger.getLog("TestCommand");
     private final TestSubsystem subsystem;
     
     public TestCommand (TestSubsystem subsystem) {

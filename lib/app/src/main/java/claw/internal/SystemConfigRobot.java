@@ -5,9 +5,9 @@ import edu.wpi.first.wpilibj.TimedRobot;
 
 public class SystemConfigRobot extends TimedRobot {
     
-    private final Registry<Device<Object>> deviceRegistry;
+    private final Registry<Device<?>> deviceRegistry;
     
-    public SystemConfigRobot (Registry<Device<Object>> deviceRegistry) {
+    public SystemConfigRobot (Registry<Device<?>> deviceRegistry) {
         this.deviceRegistry = deviceRegistry;
     }
     
@@ -65,7 +65,8 @@ public class SystemConfigRobot extends TimedRobot {
     }
     
     private void enabledPeriodic () {
-        
+        // Call device config periodic methods
+        deviceRegistry.getAllItems().forEach(Device::configPeriodic);
     }
     
     @Override

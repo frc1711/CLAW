@@ -1,14 +1,14 @@
 package frc.robot.subsystems;
 
-import claw.devices.MotorControllerDevice;
-import claw.subsystems.SubsystemCLAW;
+import claw.api.devices.MotorControllerDevice;
+import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import frc.robot.util.CustomMotorController;
 
 public class TestSubsystem extends SubsystemCLAW {
     
     private final MotorControllerDevice<CustomMotorController> device =
-        new MotorControllerDevice<CustomMotorController>("MotorControllerDevice", CustomMotorController::new, 0);
+        new MotorControllerDevice<CustomMotorController>(CustomMotorController.class, "MotorControllerDevice", 0, CustomMotorController::new);
     
     @Override
     public void initSendable (SendableBuilder builder) {

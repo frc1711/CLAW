@@ -1,6 +1,7 @@
 package claw.internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +53,10 @@ public class Registry <T> {
     /**
      * Gets a named item from the registry.
      * @param name  The item's name.
-     * @return      An {@code Optional} which contains the item (if it exists in the registry).
+     * @return      The item if it exists in the registry, {@code null} otherwise.
      */
-    public Optional<T> getItem (String name) {
-        return Optional.ofNullable(items.get(name));
+    public T getItem (String name) {
+        return items.get(name);
     }
     
     /**
@@ -100,6 +101,22 @@ public class Registry <T> {
         List<String> itemNames = new ArrayList<>(items.keySet());
         itemNames.sort((a, b) -> a.compareTo(b));
         return itemNames;
+    }
+    
+    /**
+     * Get all items in the registry.
+     * @return A {@code Collection<T>} containing the items.
+     */
+    public Collection<T> getAllItems () {
+        return items.values();
+    }
+    
+    /**
+     * Get the size of the registry.
+     * @return The number of items in the registry.
+     */
+    public int getSize () {
+        return items.size();
     }
     
     /**

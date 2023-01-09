@@ -81,7 +81,7 @@ public class CLAWRobot {
     // CLAWRobot private methods
     
     private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem", SUBSYSTEM_REGISTRY_LOG);
-    private final Registry<Device<Object>> deviceRegistry = new Registry<>("device", DEVICE_REGISTRY_LOG);
+    private final Registry<Device<?>> deviceRegistry = new Registry<>("device", DEVICE_REGISTRY_LOG);
     private final RobotProxy robotProxy;
     private RCTServer server;
     
@@ -109,7 +109,7 @@ public class CLAWRobot {
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry);
+                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry, deviceRegistry);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");
@@ -186,7 +186,7 @@ public class CLAWRobot {
         subsystemRegistry.add(subsystem.getName(), subsystem);
     }
     
-    public void addDevice (Device<Object> device) {
+    public void addDevice (Device<?> device) {
         deviceRegistry.add(device.getName(), device);
     }
     
