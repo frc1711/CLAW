@@ -12,15 +12,15 @@ public interface ConsoleManager {
     
     /**
      * Returns {@code true} if there is user input waiting to be processed by the console.
-     * This is useful for detecting if a user has hit enter in order to exit some continuously running
-     * command.
+     * This can detect whether the user has hit a key, so that a continuously running command
+     * can exit some condition.
      */
     boolean hasInputReady ();
     
     /**
-     * Clear any submitted user input that is currently waiting.
-     * This is useful to call so that input entered by the
-     * user does not affect any input lines read long after.
+     * Clear any submitted user input that is currently waiting to be processed.
+     * This prevents user input typed during some console-blocking operation from
+     * appearing again when you wait for their next line of input. 
      */
     void clearWaitingInputLines ();
     
