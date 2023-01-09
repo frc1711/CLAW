@@ -77,7 +77,16 @@ public class InputManager {
         try {
             int charIn;
             while ((charIn = reader.read()) != NonBlockingReader.EOF) {
-                focusTracker.receiveInput((char)charIn);
+                char ch = (char)charIn;
+                
+                // Space and enter characters should not be received through the terminal
+                // but are instead received through the DriverStationDisableKeysHook
+                
+                // Note that on Windows, enter is generally represented as \r\n (including in command prompt
+                // standard input), so both characters should be blocked. If \r is let through it would put
+                // the cursor back at the beginning of the line
+                if (ch != '\n' && ch != '\r' && ch != ' ')
+                    focusTracker.receiveInput(ch);
             }
         } catch (IOException e) { }
     }

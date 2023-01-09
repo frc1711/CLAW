@@ -24,9 +24,9 @@ import com.sun.jna.platform.win32.WinUser;
  * with the following information. A safety notice is printed on startup explaining the key hook and all the following as well.
  * If the driver station RCT is running, then the DriverStation app should be focused whenever the robot is actively being
  * controlled. The RCT should only be focused while the robot is enabled if the robot is in a state where it cannot hurt
- * anyone (propped on its side, for example). Additionally, the ESCAPE key can be pressed at any time while the RCT is focused
- * in order to disable the robot (assuming the robot is running).
- * TODO: Make ESC key disable the robot
+ * anyone (propped on its side, for example). Additionally, the enter key can be double pressed at any time while the RCT is focused
+ * in order to disable the robot.
+ * TODO: DS hook safety notice
  * <br></br>
  * The following class is adapted from an answer on Stack Overflow.
  * https://stackoverflow.com/a/7793900
@@ -36,6 +36,9 @@ class DriverStationDisableKeysHook {
     private static final int
         VK_RETURN = 0x0D,
         VK_SPACE = 0x20;
+    
+    private static final long RETURN_KEY_DOUBLE_TAP_INTERVAL_MILLIS = 250;
+    private static long lastReturnKeyTapEpoch = 0;
     
     private static HHOOK hhk;
     private static LowLevelKeyboardProc keyboardHook;
@@ -71,8 +74,25 @@ class DriverStationDisableKeysHook {
                     // If the enter or spacebar was pressed, intercept the event
                     
                     if (info.vkCode == VK_RETURN) {
-                        onEnterKey.run();
-                        return new LRESULT(1);
+                        
+                        // Get the current time in milliseconds
+                        long epoch = System.currentTimeMillis();
+                        
+                        // If the time is outside the range of being considered a double tap,
+                        // then intercept the event and prevent the DS from seeing the return key press
+                        if (epoch > lastReturnKeyTapEpoch + RETURN_KEY_DOUBLE_TAP_INTERVAL_MILLIS) {
+                            lastReturnKeyTapEpoch = epoch;
+                            onEnterKey.run();
+                            return new LRESULT(1);
+                        } else onEnterKey.run();
+                        
+                        // Otherwise, do not capture the input so that the DS can disable (return key
+                        // event was considered to be a double tap)
+                        
+                        // The enter key runnable should still be run though, so that
+                        // any functionality built off the runnable doesn't need to also be implemented
+                        // to work for enter keys received through stdin
+                        
                     } else if (info.vkCode == VK_SPACE) {
                         onSpaceKey.run();
                         return new LRESULT(1);
