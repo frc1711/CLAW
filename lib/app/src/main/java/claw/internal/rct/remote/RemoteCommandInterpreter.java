@@ -79,6 +79,16 @@ public class RemoteCommandInterpreter {
                 console.println("count: " + subsystemNames.size());
             }
             
+        } else {
+            String subsystemName = CommandProcessor.expectOneOf(cmd, "subsystem name", 0, subsystemRegistry.getItemNames());
+            
+            SubsystemCLAW subsystem = subsystemRegistry.getItem(subsystemName);
+            RCTSendableBuilder builder = new RCTSendableBuilder(console, subsystem);
+            subsystem.initSendable(builder);
+            
+            String[] lines = builder.getFieldsDisplay();
+            for (String line : lines)
+                console.println(line);
         }
         
     }
