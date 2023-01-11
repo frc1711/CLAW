@@ -1,4 +1,5 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "java.dependency.syncWithFolderExplorer": true
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.dependency.syncWithFolderExplorer": true,
+    "java.compile.nullAnalysis.mode": "automatic"
 }

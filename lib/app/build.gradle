@@ -39,19 +39,19 @@ dependencies {
     
     // Add edu.wpi.first.wpiutil
     // Used by other dependencies
-    implementation "edu.wpi.first.wpiutil:wpiutil-java:2022.4.1"
+    implementation "edu.wpi.first.wpiutil:wpiutil-java:2023.1.1"
     
     // Add edu.wpi.first.wpilibj
     // Tons of basic WPILib functionality
-    implementation "edu.wpi.first.wpilibj:wpilibj-java:2022.4.1"
+    implementation "edu.wpi.first.wpilibj:wpilibj-java:2023.1.1"
     
     // Add edu.wpi.first.wpilibj2
     // Mostly contains command-based stuff
-    implementation "edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2022.4.1"
+    implementation "edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2023.1.1"
     
     // Add edu.wpi.first.ntcore
     // Used by other dependencies
-    implementation "edu.wpi.first.ntcore:ntcore-java:2022.4.1"
+    implementation "edu.wpi.first.ntcore:ntcore-java:2023.1.1"
     
     
     // Add org.fusesource.jansi

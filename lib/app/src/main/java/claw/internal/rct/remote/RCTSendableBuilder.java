@@ -9,11 +9,15 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.LongConsumer;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 import claw.api.subsystems.SubsystemCLAW;
 import claw.internal.rct.network.low.ConsoleManager;
 import edu.wpi.first.util.function.BooleanConsumer;
+import edu.wpi.first.util.function.FloatConsumer;
+import edu.wpi.first.util.function.FloatSupplier;
 import edu.wpi.first.util.sendable.SendableBuilder;
 
 public class RCTSendableBuilder implements SendableBuilder {
@@ -22,6 +26,7 @@ public class RCTSendableBuilder implements SendableBuilder {
     private boolean isActuator = false;
     private Runnable setSafeStateFunc = () -> { };
     private final Map<String, RCTField> map = new HashMap<String, RCTField>();
+    private final List<AutoCloseable> closeables = new ArrayList<AutoCloseable>();
     
     public RCTSendableBuilder (ConsoleManager console, SubsystemCLAW subsystem) {
         dataTypeString = subsystem.getName();
@@ -75,10 +80,12 @@ public class RCTSendableBuilder implements SendableBuilder {
     @Override
     public void addBooleanProperty (String key, BooleanSupplier getter, BooleanConsumer setter) {
         addField(key, new RCTField(() -> String.valueOf(getter.getAsBoolean()), str -> {
+            throwForNullSetter(setter);
+            
             str = str.toLowerCase();
-            if (str.equals("true") || str.equals("t") || str.equals("1"))
+            if (str.equals("true") || str.equals("t"))
                 setter.accept(true);
-            else if (str.equals("false") || str.equals("f") || str.equals("0"))
+            else if (str.equals("false") || str.equals("f"))
                 setter.accept(false);
             else
                 throw new BadRepresentationException("Did not receive a valid boolean representation.");
@@ -86,12 +93,40 @@ public class RCTSendableBuilder implements SendableBuilder {
     }
     
     @Override
+    public void addIntegerProperty (String key, LongSupplier getter, LongConsumer setter) {
+        addField(key, new RCTField(() -> String.valueOf(getter.getAsLong()), str -> {
+            throwForNullSetter(setter);
+            
+            try {
+                setter.accept(Long.parseLong(str));
+            } catch (NumberFormatException e) {
+                throw new BadRepresentationException("Did not receive a valid long integer representation.");
+            }
+        }));
+    }
+    
+    @Override
     public void addDoubleProperty (String key, DoubleSupplier getter, DoubleConsumer setter) {
         addField(key, new RCTField(() -> String.valueOf(getter.getAsDouble()), str -> {
+            throwForNullSetter(setter);
+            
             try {
                 setter.accept(Double.parseDouble(str));
             } catch (NumberFormatException e) {
                 throw new BadRepresentationException("Did not receive a valid double representation.");
+            }
+        }));
+    }
+    
+    @Override
+    public void addFloatProperty (String key, FloatSupplier getter, FloatConsumer setter) {
+        addField(key, new RCTField(() -> String.valueOf(getter.getAsFloat()), str -> {
+            throwForNullSetter(setter);
+            
+            try {
+                setter.accept(Float.parseFloat(str));
+            } catch (NumberFormatException e) {
+                throw new BadRepresentationException("Did not receive a valid float representation.");
             }
         }));
     }
@@ -103,29 +138,37 @@ public class RCTSendableBuilder implements SendableBuilder {
     
     @Override
     public void addBooleanArrayProperty (String key, Supplier<boolean[]> getter, Consumer<boolean[]> setter) {
-        addField(key, new RCTField(() -> "boolean["+getter.get().length+"]", str -> {
-            throw new BadRepresentationException("Setting arrays is not supported");
-        }));
+        addArrayProperty(key, "boolean", () -> getter.get().length);
+    }
+    
+    @Override
+    public void addIntegerArrayProperty (String key, Supplier<long[]> getter, Consumer<long[]> setter) {
+        addArrayProperty(key, "long", () -> getter.get().length);
     }
     
     @Override
     public void addDoubleArrayProperty (String key, Supplier<double[]> getter, Consumer<double[]> setter) {
-        addField(key, new RCTField(() -> "double["+getter.get().length+"]", str -> {
-            throw new BadRepresentationException("Setting arrays is not supported");
-        }));
+        addArrayProperty(key, "double", () -> getter.get().length);
+    }
+    
+    @Override
+    public void addFloatArrayProperty (String key, Supplier<float[]> getter, Consumer<float[]> setter) {
+        addArrayProperty(key, "float", () -> getter.get().length);
     }
     
     @Override
     public void addStringArrayProperty (String key, Supplier<String[]> getter, Consumer<String[]> setter) {
-        addField(key, new RCTField(() -> "String["+getter.get().length+"]", str -> {
-            throw new BadRepresentationException("Setting arrays is not supported");
-        }));
+        addArrayProperty(key, "String", () -> getter.get().length);
     }
     
     @Override
-    public void addRawProperty (String key, Supplier<byte[]> getter, Consumer<byte[]> setter) {
-        addField(key, new RCTField(() -> "byte["+getter.get().length+"]", str -> {
-            throw new BadRepresentationException("Setting raw properties is not supported");
+    public void addRawProperty (String key, String typeString, Supplier<byte[]> getter, Consumer<byte[]> setter) {
+        addArrayProperty(key, typeString+": byte", () -> getter.get().length);
+    }
+    
+    private void addArrayProperty (String key, String typeString, LongSupplier length) {
+        addField(key, new RCTField(() -> (typeString+"["+length.getAsLong()+"]"), str -> {
+            throw new BadRepresentationException("Setting array properties is not supported");
         }));
     }
     
@@ -149,18 +192,34 @@ public class RCTSendableBuilder implements SendableBuilder {
         map.clear();
     }
     
+    @Override
+    public void close () throws Exception {
+        for (AutoCloseable closeable : closeables)
+            closeable.close();
+    }
+    
+    @Override
+    public void addCloseable (AutoCloseable closeable) {
+        closeables.add(closeable);
+    }
+    
+    private void throwForNullSetter (Object setter) throws BadRepresentationException {
+        if (setter == null)
+            throw new BadRepresentationException("This field does not support mutation.");
+    }
+    
     private static class RCTField {
         private final Supplier<String> getter;
-        private final FieldSetter setter;
-        private RCTField (Supplier<String> getter, FieldSetter setter) {
+        private final FieldSetter<String> setter;
+        private RCTField (Supplier<String> getter, FieldSetter<String> setter) {
             this.getter = getter;
             this.setter = setter;
         }
     }
     
     @FunctionalInterface
-    private static interface FieldSetter {
-        public void setField (String newValue) throws BadRepresentationException;
+    private static interface FieldSetter<T> {
+        public void setField (T newValue) throws BadRepresentationException;
     }
     
     public static class BadRepresentationException extends Exception {
