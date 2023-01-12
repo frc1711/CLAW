@@ -3,7 +3,7 @@ package claw.internal.rct.local;
 import java.io.IOException;
 
 import claw.internal.rct.commands.Command.ParseException;
-import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
+import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.local.LocalSystem.ConnectionStatus;
 import claw.internal.rct.local.console.LocalConsoleManager;
 import claw.internal.rct.network.low.ConsoleManager;
@@ -83,7 +83,7 @@ public class RobotControlTerminal {
             system.processCommand(line);
         } catch (ParseException e) {
             console.printlnErr(e.getMessage());
-        } catch (BadArgumentsException e) {
+        } catch (BadCallException e) {
             console.printlnErr(e.getMessage());
         } catch (IOException e) {
             console.printlnErr("The connection with remote failed.");

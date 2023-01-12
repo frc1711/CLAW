@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
+import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.HelpMessage;
 import claw.internal.rct.network.low.ConsoleManager;
 
@@ -33,11 +33,11 @@ public class CommandLineInterpreter {
      * @param console                           The {@link ConsoleManager} to put output to and take input from.
      * @param line                              The command line string.
      * @throws Command.ParseException           An exception thrown if the command is malformed.
-     * @throws BadArgumentsException            An exception thrown by the command processor if it received bad arguments.
+     * @throws BadCallException            An exception thrown by the command processor if it received bad arguments.
      * @throws CommandNotRecognizedException    An exception thrown if the command is not recognized by this interpreter.
      */
     public void processLine (ConsoleManager console, String line)
-            throws Command.ParseException, CommandNotRecognizedException, BadArgumentsException {
+            throws Command.ParseException, CommandNotRecognizedException, BadCallException {
         // Attempt to parse the command and get the command name
         Command commandObj = new Command(line);
         String commandName = commandObj.getCommand().toUpperCase();
@@ -49,10 +49,10 @@ public class CommandLineInterpreter {
             try {
                 
                 // Command is recognized, so run it
-                processor.function.process(console, commandObj);
+                processor.function.process(console, new CommandReader(commandObj));
                 
-            } catch (BadArgumentsException exception) {
-                // Command threw a BadArgumentsException, so tack on the CommandProcessor and throw it again
+            } catch (BadCallException exception) {
+                // Command threw a BadCallException, so tack on the CommandProcessor and throw it again
                 throw exception.forCommandProcessor(processor);
             }
         } else {

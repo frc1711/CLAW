@@ -8,8 +8,9 @@ import java.util.List;
 import claw.internal.rct.commands.Command;
 import claw.internal.rct.commands.CommandLineInterpreter;
 import claw.internal.rct.commands.CommandProcessor;
+import claw.internal.rct.commands.CommandReader;
 import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
-import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
+import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.commands.CommandProcessor.HelpMessage;
 import claw.internal.rct.local.LocalSystem.ConnectionStatus;
@@ -81,9 +82,9 @@ public class LocalCommandInterpreter {
      * @param line                      The line to process as command-line input.
      * @return                          Whether or not to send the command to remote to be processed.
      * @throws Command.ParseException
-     * @throws BadArgumentsException
+     * @throws BadCallException
      */
-    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadArgumentsException {
+    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadCallException {
         try {
             commandInterpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {
@@ -108,18 +109,18 @@ public class LocalCommandInterpreter {
     
     
     
-    private void clearCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         console.clear();
     }
     
-    private void exitCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void exitCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         System.exit(0);
     }
     
-    private void helpCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         
         List<HelpMessage> helpMessages = commandInterpreter.getHelpMessages();
         
@@ -132,8 +133,8 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void commsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void commsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         
         console.println("");
         
@@ -185,13 +186,13 @@ public class LocalCommandInterpreter {
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNoOptions(cmd);
-        CommandProcessor.expectNoFlags(cmd);
-        CommandProcessor.expectMaxArgs(cmd, 1);
+    private void sshCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNoOptions();
+        reader.allowNoFlags();
         
         // Get the user
-        String user = CommandProcessor.expectOneOf(cmd, "user", 0, "lvuser", "admin");
+        String user = reader.readArgOneOf("user", "SSH user must be either 'lvuser' or 'admin'.", "lvuser", "admin");
+        reader.noMoreArgs();
         
         // Get host for ssh and generate command
         String host = DriverStationSocketHandler.getRoborioHost(system.getTeamNum());
@@ -212,8 +213,8 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void watchCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         
         while (!console.hasInputReady()) {
             synchronized (newLogDataLock) {

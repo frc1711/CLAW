@@ -3,7 +3,7 @@ package claw.internal.rct.local;
 import java.io.IOException;
 
 import claw.internal.rct.commands.Command;
-import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
+import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.network.low.ConsoleManager;
 import claw.internal.rct.network.low.DriverStationSocketHandler;
 import claw.internal.rct.network.low.InstructionMessage;
@@ -163,7 +163,7 @@ public class LocalSystem {
      * @throws NoResponseException      If no response was received from a command sent to remote
      * @throws IOException              If the command failed to send to remote
      */
-    public void processCommand (String line) throws Command.ParseException, IOException, BadArgumentsException {
+    public void processCommand (String line) throws Command.ParseException, IOException, BadCallException {
         // Attempt to process the command locally. If the command should be sent to remote,
         // then interpreter.processLine will return true
         if (!interpreter.processLine(console, line)) return;

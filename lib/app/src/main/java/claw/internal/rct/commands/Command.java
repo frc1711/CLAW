@@ -3,6 +3,7 @@ package claw.internal.rct.commands;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,13 +52,6 @@ public class Command {
     }
     
     /**
-     * Returns whether or not any flags are set.
-     */
-    public boolean hasAnyFlags () {
-        return flags.size() > 0;
-    }
-    
-    /**
      * Returns whether or not a given option is set. If the given option is provided, either as a key-value pair
      * or as a marker, this method will return true.
      */
@@ -77,11 +71,24 @@ public class Command {
         return options.get(option);
     }
     
-    /**
-     * Returns whether or not any options are set.
-     */
-    public boolean hasAnyOptions () {
-        return options.size() > 0;
+    public char[] getAllFlags () {
+        char[] chars = new char[flags.size()];
+        Iterator<Character> iterator = flags.iterator();
+        
+        for (int i = 0; i < chars.length; i ++)
+            chars[i] = iterator.next();
+        
+        return chars;
+    }
+    
+    public String[] getAllOptions () {
+        String[] optionNames = new String[options.size()];
+        Iterator<String> iterator = options.keySet().iterator();
+        
+        for (int i = 0; i < optionNames.length; i ++)
+            optionNames[i] = iterator.next();
+        
+        return optionNames;
     }
     
     /**

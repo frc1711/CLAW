@@ -7,8 +7,9 @@ import claw.internal.Registry;
 import claw.internal.rct.commands.Command;
 import claw.internal.rct.commands.CommandLineInterpreter;
 import claw.internal.rct.commands.CommandProcessor;
+import claw.internal.rct.commands.CommandReader;
 import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
-import claw.internal.rct.commands.CommandProcessor.BadArgumentsException;
+import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
 import claw.api.subsystems.SubsystemCLAW;
@@ -40,20 +41,22 @@ public class RemoteCommandInterpreter {
     }
     
     public void processLine (ConsoleManager console, String line)
-            throws Command.ParseException, BadArgumentsException, CommandNotRecognizedException {
+            throws Command.ParseException, BadCallException, CommandNotRecognizedException {
         interpreter.processLine(console, line);
     }
     
     
     
-    private void pingCommand (ConsoleManager console, Command cmd) {
+    private void pingCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
+        
         console.println("pong");
         String input = console.readInputLine();
         console.printlnSys("Read input line: " + input);
     }
     
-    private void restartCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNothing(cmd);
+    private void restartCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         
         console.println("Restarting...");
         console.flush();
@@ -61,14 +64,15 @@ public class RemoteCommandInterpreter {
         CLAWRobot.getInstance().restartCode();
     }
     
-    private void subsystemsCommand (ConsoleManager console, Command cmd) throws BadArgumentsException {
-        CommandProcessor.expectNoOptions(cmd);
-        CommandProcessor.expectNoFlags(cmd);
-        String firstArg = CommandProcessor.expectString(cmd, "operation", 0);
+    private void subsystemsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNoOptions();
+        reader.allowNoFlags();
+        
+        String operation = reader.readArgOneOf("operation", "Operation must be 'list' or 'get'.", "list", "get");
         
         // TODO: Migrate functionality to new status and config commands (status subsystem SubsystemName, config subsystem SubsystemName)
         
-        if (firstArg.equals("list")) {
+        if (operation.equals("list")) {
             
             List<String> subsystemNames = subsystemRegistry.getItemNames();
             if (subsystemNames.size() == 0) {
@@ -80,20 +84,23 @@ public class RemoteCommandInterpreter {
             }
             
         } else {
-            String subsystemName = CommandProcessor.expectOneOf(cmd, "subsystem name", 0, subsystemRegistry.getItemNames());
             
-            SubsystemCLAW subsystem = subsystemRegistry.getItem(subsystemName);
-            RCTSendableBuilder builder = new RCTSendableBuilder(console, subsystem);
-            subsystem.initSendable(builder);
+            // // String subsystemName = CommandProcessor.expectOneOf(cmd, "subsystem name", 0, subsystemRegistry.getItemNames());
             
-            String[] lines = builder.getFieldsDisplay();
-            for (String line : lines)
-                console.println(line);
+            // SubsystemCLAW subsystem = subsystemRegistry.getItem(subsystemName);
+            // RCTSendableBuilder builder = new RCTSendableBuilder(console, subsystem);
+            // subsystem.initSendable(builder);
+            
+            // String[] lines = builder.getFieldsDisplay();
+            // for (String line : lines)
+            //     console.println(line);
         }
         
     }
     
-    private void configCommand (ConsoleManager console, Command cmd) {
+    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
+        
         
         // TODO: Fix config command
         
@@ -109,7 +116,8 @@ public class RemoteCommandInterpreter {
         // console.println(fields.size() + " fields");
     }
     
-    private void testCommand (ConsoleManager console, Command cmd) {
+    private void testCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNone();
         int number = 0;
         
         console.println("");
