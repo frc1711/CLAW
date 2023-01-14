@@ -70,8 +70,11 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("log", "log",
-            "no help desc.",
+        addCommand("log", "log [--live]",
+            "Log will, by default, print logged data to the terminal when it is received from the robot.\n" +
+            "Live mode can be enabled using 'log --live' or 'log -l', where different logs are updated in their\n" +
+            "own lines in the terminal rather than all being printed to new lines. This can be useful for tracking\n" +
+            "several changing variables over time.",
             this::logCommand);
     }
     
@@ -214,14 +217,26 @@ public class LocalCommandInterpreter {
     }
     
     private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
+        reader.allowFlags('l');
+        reader.allowOptions("live");
+        
+        boolean liveLogging = reader.getFlag('l') || reader.getOptionMarker("live");
+        
+        LiveDataLines lines = new LiveDataLines();
         
         while (!console.hasInputReady()) {
             synchronized (newLogDataLock) {
                 if (hasNewLogData) {
                     hasNewLogData = false;
-                    for (LogData data : newLogData)
-                        printLogData(console, data);
+                    
+                    if (liveLogging) {
+                        lines.updateDisplay(console, newLogData);
+                    } else {
+                        for (LogData data : newLogData) {
+                            printLogDataEvent(console, data);
+                        }
+                    }
+                    
                     newLogData.clear();
                 }
             }
@@ -235,7 +250,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void printLogData (ConsoleManager console, LogData data) {
+    private static void printLogDataEvent (ConsoleManager console, LogData data) {
         String logNamePrint = "["+data.logDomain+"] ";
         String messagePrint = data.data;
         
@@ -245,6 +260,65 @@ public class LocalCommandInterpreter {
             console.printSys(logNamePrint);
             console.println(messagePrint);
         }
+    }
+    
+    private static class LiveDataLines {
+        
+        private final List<LogData> dataLines = new ArrayList<>();
+        
+        public LiveDataLines () { }
+        
+        private void receiveLogData (List<LogData> dataSet) {
+            for (LogData data : dataSet) {
+                boolean hasFoundLine = false;
+                
+                for (int i = 0; i < dataLines.size(); i ++) {
+                    if (data.logDomain.equals(dataLines.get(i).logDomain)) {
+                        dataLines.set(i, data);
+                        hasFoundLine = true;
+                    }
+                }
+                
+                if (!hasFoundLine)
+                    dataLines.add(data);
+            }
+        }
+        
+        public void updateDisplay (ConsoleManager console, List<LogData> dataSet) {
+            int numLines = dataLines.size();
+            
+            receiveLogData(dataSet);
+            
+            while (numLines > 0) {
+                console.moveUp(1);
+                console.clearLine();
+                numLines --;
+            }
+            
+            for (int i = 0; i < dataLines.size(); i ++) {
+                LogData data = dataLines.get(i);
+                
+                String domainMsg = data.logDomain + ": ";
+                String message = data.data.split("\n")[0]; // Prevent more than one line being printed
+                
+                boolean hasBeenCut = message.length() != data.data.length();
+                
+                if (message.length() > 60) {
+                    message = message.substring(0, 60);
+                    hasBeenCut = true;
+                }
+                
+                if (hasBeenCut) message += "...";
+                
+                if (data.isError) {
+                    console.printlnErr(domainMsg + message);
+                } else {
+                    console.printSys(domainMsg);
+                    console.println(message);
+                }
+            }
+        }
+        
     }
     
 }

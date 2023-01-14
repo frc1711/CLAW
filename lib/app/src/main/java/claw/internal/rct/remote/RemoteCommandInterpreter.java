@@ -39,7 +39,7 @@ public class RemoteCommandInterpreter {
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
         addCommand("watch",
-            "watch [ --all | log domain...]",
+            "watch [ --all | --none | log domain...]",
             "Use -a or --all to watch all logger domains. Use -n or --none to watch no logger domains.\n" +
             "Use 'watch [domain]...' to watch only a set of specific logger domains and all their subdomains.",
             this::watchCommand);
@@ -56,8 +56,8 @@ public class RemoteCommandInterpreter {
     
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowOptions("all");
-        reader.allowFlags('a');
+        reader.allowOptions("all", "none");
+        reader.allowFlags('a', 'n');
         
         // Watch all loggers
         if (reader.getFlag('a') || reader.getOptionMarker("all")) {

@@ -50,11 +50,11 @@ public class CommandReader {
     }
     
     public String readArgOneOf (String argName, String errorMessage, Collection<String> argOptions) throws BadCallException {
-        return expectOneOf(argName, errorMessage, argOptions);
+        return expectOneOf(readArgString(argName), errorMessage, argOptions);
     }
     
     public String readArgOneOf (String argName, String errorMessage, String... argOptions) throws BadCallException {
-        return expectOneOf(argName, errorMessage, argOptions);
+        return expectOneOf(readArgString(argName), errorMessage, argOptions);
     }
     
     public void noMoreArgs () throws BadCallException {
