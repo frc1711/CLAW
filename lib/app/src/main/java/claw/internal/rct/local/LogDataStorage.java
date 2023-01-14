@@ -12,8 +12,6 @@ import claw.internal.rct.network.messages.LogDataMessage.LogData;
 
 public class LogDataStorage {
     
-    // TODO: Connect a robot connection watcher to the log data storage
-    
     private final List<LogData> logData = new ArrayList<LogData>();
     
     private final Set<Consumer<LogData[]>> onReceiveNewData = new HashSet<Consumer<LogData[]>>();

@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import claw.api.CLAWLogger;
+import claw.api.logs.CLAWLogger;
 
 public class Config {
     

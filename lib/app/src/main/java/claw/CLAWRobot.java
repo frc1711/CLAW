@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import claw.internal.Config;
 import claw.internal.Registry;
 import claw.internal.Config.ConfigField;
-import claw.api.CLAWLogger;
+import claw.api.logs.CLAWLogger;
 import claw.internal.rct.remote.RCTServer;
 import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.wpilibj.RobotBase;

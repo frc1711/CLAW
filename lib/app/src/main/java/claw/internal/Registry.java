@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import claw.api.CLAWLogger;
+import claw.api.logs.CLAWLogger;
 
 /**
  * A registry class which stores named items and can be configured in name conflict handling.

@@ -70,7 +70,7 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("watch", "no usage",
+        addCommand("watch", "[watch usage]",
             "no help desc.",
             this::watchCommand);
     }
@@ -236,7 +236,7 @@ public class LocalCommandInterpreter {
     }
     
     private void printLogData (ConsoleManager console, LogData data) {
-        String logNamePrint = "["+data.logName+"] ";
+        String logNamePrint = "["+data.logDomain+"] ";
         String messagePrint = data.data;
         
         if (data.isError) {

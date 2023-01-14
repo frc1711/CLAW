@@ -16,6 +16,10 @@ public class CommandReader {
         this.cmd = cmd;
     }
     
+    public Command getCommand () {
+        return cmd;
+    }
+    
     // Reading arguments
     
     public boolean hasNextArg () {
@@ -81,8 +85,6 @@ public class CommandReader {
     }
     
     public void allowFlags (String allowedFlags) throws BadCallException {
-        allowFlags(allowedFlags.toCharArray());
-        
         char[] flagsGiven = cmd.getAllFlags();
         for (char flag : flagsGiven)
             if (allowedFlags.indexOf(flag, 0) == -1)

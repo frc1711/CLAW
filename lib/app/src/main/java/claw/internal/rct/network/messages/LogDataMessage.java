@@ -9,7 +9,7 @@ import claw.internal.rct.network.low.ResponseMessage;
  */
 public class LogDataMessage extends ResponseMessage {
     
-    public static final long serialVersionUID = 4L;
+    public static final long serialVersionUID = 5L;
     
     public final LogData[] logData;
     
@@ -26,19 +26,20 @@ public class LogDataMessage extends ResponseMessage {
      */
     public static class LogData implements Serializable {
         
-        public static final long serialVersionUID = 2L;
+        public static final long serialVersionUID = 3L;
         
-        public final String logName, data;
+        public final String logDomain, data;
         
         public final boolean isError;
         
         /**
          * Constructs a new {@link LogData} object.
-         * @param logName    The name of the log with which the data is associated.
-         * @param data          The log data.
+         * @param logDomain     The domain of the log with which the data is associated. This should be formatted
+         * like a java package (e.g. {@code "subsystems.swerve.frontLeft"})
+         * @param data          The log data to send.
          */
-        public LogData (String logName, String data, boolean isError) {
-            this.logName = logName;
+        public LogData (String logDomain, String data, boolean isError) {
+            this.logDomain = logDomain;
             this.data = data;
             this.isError = isError;
         }

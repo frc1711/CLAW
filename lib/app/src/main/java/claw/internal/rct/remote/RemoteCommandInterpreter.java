@@ -12,6 +12,8 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
+import claw.api.logs.CLAWLogger;
+import claw.api.logs.CLAWLogger.InvalidDomainPathException;
 import claw.api.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
@@ -34,6 +36,7 @@ public class RemoteCommandInterpreter {
         addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
+        addCommand("logwatch", "[logwatch usage]", "[logwatch help]", this::logWatchCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
@@ -46,6 +49,19 @@ public class RemoteCommandInterpreter {
     }
     
     
+    private void logWatchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        CLAWLogger.clearWatchingLoggerDomains();
+        
+        while (reader.hasNextArg()) {
+            String domain = reader.readArgString("logger domain");
+            
+            try {
+                CLAWLogger.addDomainPath(domain);
+            } catch (InvalidDomainPathException e) {
+                throw new BadCallException(e.getMessage());
+            }
+        }
+    }
     
     private void pingCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();

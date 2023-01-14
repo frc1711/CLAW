@@ -1,6 +1,6 @@
 package frc.robot.commands;
 
-import claw.api.CLAWLogger;
+import claw.api.logs.CLAWLogger;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
