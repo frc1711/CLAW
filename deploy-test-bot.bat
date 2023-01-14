@@ -1,3 +1,3 @@
 cd test-bot
-.\gradlew deploy
+call .\gradlew.bat deploy
 cd ..

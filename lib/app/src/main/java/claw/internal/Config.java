@@ -12,12 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import claw.api.logs.CLAWLogger;
+import claw.api.CLAWLogger;
+import claw.internal.Registry.NameConflictException;
 
 public class Config {
     
+    private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.config");
     private final File configFile;
-    private final CLAWLogger log;
     
     /**
      * The set of all field names used by {@link ConfigField}s.
@@ -29,23 +30,21 @@ public class Config {
      */
     private final Map<String, Serializable> entries;
     
-    public Config (CLAWLogger log, File configFile) {
+    public Config (File configFile) {
         this.configFile = configFile;
-        this.log = log;
-        
         fieldRegistry = new Registry<>("config field");
         
-        log.out("Reading CLAW configuration from "+configFile.getName());
+        LOG.out("Reading CLAW configuration from "+configFile.getName());
         
         ConfigSerial serial;
         try {
             serial = ConfigSerial.readFromFile(configFile);
         } catch (Exception e) {
             serial = new ConfigSerial();
-            log.err("Critical config error. Config entirely failed to load:\n" + e);
+            LOG.err("Critical config error. Config entirely failed to load:\n" + e);
         }
         
-        entries = serial.getDeserializedEntries(log);
+        entries = serial.getDeserializedEntries(LOG);
     }
     
     @SuppressWarnings("unchecked")
@@ -54,12 +53,12 @@ public class Config {
             try {
                 return (T)entries.get(name);
             } catch (ClassCastException e) {
-                log.out("Warning: Field '"+name+"' exists but is not the expected type (defaulted)");
+                LOG.out("Warning: Field '"+name+"' exists but is not the expected type (defaulted)");
                 entries.put(name, defaultValue);
                 return defaultValue;
             }
         } else {
-            log.out("Warning: Field '"+name+"' could not be found (defaulted)");
+            LOG.out("Warning: Field '"+name+"' could not be found (defaulted)");
             entries.put(name, defaultValue);
             return defaultValue;
         }
@@ -72,7 +71,11 @@ public class Config {
     @SuppressWarnings("unchecked")
     public <T extends Serializable> ConfigField<T> getField (String name) {
         ConfigField<T> field = new ConfigField<T>(name);
-        fieldRegistry.add(name, (ConfigField<Serializable>)field);
+        try {
+            fieldRegistry.add(name, (ConfigField<Serializable>)field);
+        } catch (NameConflictException e) {
+            throw new RuntimeException("Error: " + e.getMessage());
+        }
         return field;
     }
     
@@ -99,8 +102,8 @@ public class Config {
     }
     
     public void save () {
-        log.out("Saving CLAW configuration to "+configFile.getName());
-        ConfigSerial serial = ConfigSerial.fromObjectMap(entries, log);
+        LOG.out("Saving CLAW configuration to "+configFile.getName());
+        ConfigSerial serial = ConfigSerial.fromObjectMap(entries, LOG);
         
         try {
             serial.writeToFile(configFile);
@@ -110,7 +113,7 @@ public class Config {
     }
     
     private void logCriticalError (String message, Exception e) {
-        log.err("Critical config error. "+message+":\n" + e.getMessage());
+        LOG.err("Critical config error. "+message+":\n" + e.getMessage());
     }
     
     public Map<String, String> getFields () {

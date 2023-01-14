@@ -135,7 +135,7 @@ public class LocalSystem {
         if (status != lastConnectionStatus) {
             logDataStorage.acceptDataMessage(new LogDataMessage(new LogData[]{
                 new LogData(
-                    "#Connection",
+                    "$connection",
                     "Connection status changed to " + status.name(),
                     status != ConnectionStatus.OK
                 )

@@ -77,7 +77,7 @@ public class CommandReader {
         allowFlags(new char[0]);
     }
     
-    public void allowFlags (char[] allowedFlags) throws BadCallException {
+    public void allowFlags (char... allowedFlags) throws BadCallException {
         String allowedFlagsString = "";
         for (char c : allowedFlags)
             allowedFlagsString += c;
@@ -93,7 +93,7 @@ public class CommandReader {
     
     // Options
     
-    public boolean hasOptionMarker (String optionName) {
+    public boolean getOptionMarker (String optionName) {
         return cmd.isOptionSet(optionName) && cmd.getOptionValue(optionName) == null;
     }
     
@@ -127,7 +127,7 @@ public class CommandReader {
         allowOptions(new String[0]);
     }
     
-    public void allowOptions (String[] allowedOptions) throws BadCallException {
+    public void allowOptions (String... allowedOptions) throws BadCallException {
         allowOptions(List.of(allowedOptions));
     }
     

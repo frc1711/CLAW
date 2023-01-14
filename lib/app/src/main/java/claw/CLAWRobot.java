@@ -9,7 +9,9 @@ import java.util.function.Supplier;
 import claw.internal.Config;
 import claw.internal.Registry;
 import claw.internal.Config.ConfigField;
-import claw.api.logs.CLAWLogger;
+import claw.internal.Registry.NameConflictException;
+import claw.internal.logs.LogHandler;
+import claw.api.CLAWLogger;
 import claw.internal.rct.remote.RCTServer;
 import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -22,16 +24,14 @@ public class CLAWRobot {
     // Logs
     
     private static final CLAWLogger
-        COMMANDS_LOG = CLAWLogger.getSysLog("Commands"),
-        CONFIG_LOG = CLAWLogger.getSysLog("Config"),
-        ROBOT_LOG = CLAWLogger.getSysLog("Robot"),
-        SUBSYSTEM_REGISTRY_LOG = CLAWLogger.getSysLog("SubsystemRegistry"),
-        SERVER_LOG = CLAWLogger.getSysLog("Server");
+        SUBSYSTEM_LOG = CLAWLogger.getLogger("claw.subsystems"),
+        COMMANDS_LOG = CLAWLogger.getLogger("claw.commands"),
+        ROBOT_LOG = CLAWLogger.getLogger("claw.robot");
     
     // Config
     
     private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
-    private static final Config CONFIG = new Config(CONFIG_LOG, CONFIG_FILE);
+    private static final Config CONFIG = new Config(CONFIG_FILE);
     
     private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = CONFIG.getField("UNCAUGHT_EXCEPTION");
     
@@ -76,7 +76,7 @@ public class CLAWRobot {
     
     // CLAWRobot private methods
     
-    private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem", SUBSYSTEM_REGISTRY_LOG);
+    private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem");
     private final RobotProxy robotProxy;
     private RCTServer server;
     
@@ -99,7 +99,7 @@ public class CLAWRobot {
         // Start the RCT server in another thread (so that the server startup is non-blocking)
         new Thread(() -> {
             try {
-                server = new RCTServer(5800, SERVER_LOG, subsystemRegistry);
+                server = new RCTServer(5800, subsystemRegistry);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");
@@ -135,7 +135,7 @@ public class CLAWRobot {
      */
     private void robotPeriodic () {
         if (server != null)
-            CLAWLogger.sendData(server);
+            LogHandler.getInstance().sendData(server);
     }
     
     /**
@@ -145,7 +145,7 @@ public class CLAWRobot {
     private void onRobotProgramExit () {
         CONFIG.save();
         ROBOT_LOG.out("Exiting robot program");
-        CLAWLogger.sendData(server);
+        LogHandler.getInstance().sendData(server);
     }
     
     private void onCommandInitialize (Command command) {
@@ -169,7 +169,11 @@ public class CLAWRobot {
     // Public API
     
     public void addSubsystem (SubsystemCLAW subsystem) {
-        subsystemRegistry.add(subsystem.getName(), subsystem);
+        try {
+            subsystemRegistry.add(subsystem.getName(), subsystem);
+        } catch (NameConflictException e) {
+            SUBSYSTEM_LOG.out("Warning: " + e.getMessage());
+        }
     }
     
     public void restartCode () {

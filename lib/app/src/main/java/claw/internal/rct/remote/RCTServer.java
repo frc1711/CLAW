@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import claw.internal.Registry;
-import claw.api.logs.CLAWLogger;
+import claw.api.CLAWLogger;
 import claw.internal.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.internal.rct.network.low.InstructionMessage;
 import claw.internal.rct.network.low.ResponseMessage;
@@ -21,7 +21,7 @@ import claw.api.subsystems.SubsystemCLAW;
 
 public class RCTServer {
     
-    private final CLAWLogger log;
+    private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.server");
     
     private static final long
         COMMAND_KEEPALIVE_DURATION_MILLIS = 1000,
@@ -33,9 +33,7 @@ public class RCTServer {
     
     private CommandProcessHandler commandProcessHandler;
     
-    public RCTServer (int port, CLAWLogger log, Registry<SubsystemCLAW> subsystemRegistry) throws IOException {
-        this.log = log;
-        
+    public RCTServer (int port, Registry<SubsystemCLAW> subsystemRegistry) throws IOException {
         // Try to create a new server socket
         serverSocket = new RobotSocketHandler(port, this::receiveMessage, this::handleReceiverException);
         interpreter = new RemoteCommandInterpreter(subsystemRegistry);
@@ -146,7 +144,7 @@ public class RCTServer {
             String message = "Nonfatal RCT server exception:\n" + stringWriter.toString();
             
             System.err.println(message);
-            log.err(message);
+            LOG.err(message);
             
             serverSocket.getNewConnection();
         } catch (IOException fatalEx) {
@@ -157,7 +155,7 @@ public class RCTServer {
     private void handleFatalServerException (IOException e) {
         String message = "Fatal RCT server exception: " + e.getMessage();
         System.err.println(message);
-        log.err(message);
+        LOG.err(message);
     }
     
 }

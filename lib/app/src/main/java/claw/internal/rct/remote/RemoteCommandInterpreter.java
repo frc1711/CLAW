@@ -1,9 +1,12 @@
 package claw.internal.rct.remote;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import claw.CLAWRobot;
 import claw.internal.Registry;
+import claw.internal.logs.LogHandler;
+import claw.internal.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.internal.rct.commands.Command;
 import claw.internal.rct.commands.CommandLineInterpreter;
 import claw.internal.rct.commands.CommandProcessor;
@@ -12,8 +15,7 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
-import claw.api.logs.CLAWLogger;
-import claw.api.logs.CLAWLogger.InvalidDomainPathException;
+import claw.api.CLAWLogger;
 import claw.api.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
@@ -36,7 +38,11 @@ public class RemoteCommandInterpreter {
         addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
-        addCommand("logwatch", "[logwatch usage]", "[logwatch help]", this::logWatchCommand);
+        addCommand("watch",
+            "watch [ --all | log domain...]",
+            "Use -a or --all to watch all logger domains. Use -n or --none to watch no logger domains.\n" +
+            "Use 'watch [domain]...' to watch only a set of specific logger domains and all their subdomains.",
+            this::watchCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
@@ -49,18 +55,48 @@ public class RemoteCommandInterpreter {
     }
     
     
-    private void logWatchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        CLAWLogger.clearWatchingLoggerDomains();
+    private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowOptions("all");
+        reader.allowFlags('a');
         
+        // Watch all loggers
+        if (reader.getFlag('a') || reader.getOptionMarker("all")) {
+            LogHandler.getInstance().watchAllDomains();
+            return;
+        }
+        
+        // Watch no loggers
+        if (reader.getFlag('n') || reader.getOptionMarker("none")) {
+            LogHandler.getInstance().unsetWatchedDomains();
+            return;
+        }
+        
+        // Unset all previous logger domains
+        if (reader.hasNextArg())
+            LogHandler.getInstance().unsetWatchedDomains();
+        
+        // Continue until there are no more arguments
         while (reader.hasNextArg()) {
             String domain = reader.readArgString("logger domain");
             
             try {
-                CLAWLogger.addDomainPath(domain);
-            } catch (InvalidDomainPathException e) {
+                LogHandler.getInstance().watchDomain(domain);
+            } catch (InvalidLoggerDomainException e) {
                 throw new BadCallException(e.getMessage());
             }
         }
+        
+        // Get a sorted list of logger domains
+        List<String> domainsList = new ArrayList<>();
+        CLAWLogger.getUsedDomains().forEach(domainsList::add);
+        domainsList.sort(String::compareTo);
+        
+        // Print the list
+        domainsList.forEach(domain -> {
+            boolean watched = LogHandler.getInstance().isDomainWatched(domain);
+            char watchedChar = watched ? '#' : ' ';
+            console.println(watchedChar + " " + domain);
+        });
     }
     
     private void pingCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

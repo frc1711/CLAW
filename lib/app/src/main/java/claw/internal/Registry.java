@@ -5,31 +5,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import claw.api.logs.CLAWLogger;
 
 /**
- * A registry class which stores named items and can be configured in name conflict handling.
+ * A registry class which stores named items and throws a {@link NamedConflictException} when attempting to
+ * add an item whose name is already in the registry.
  */
 public class Registry <T> {
     
     private final Map<String, T> items = new HashMap<String, T>();
     
     private final String itemsType;
-    private final Optional<CLAWLogger> log;
-    
-    /**
-     * Creates a new registry which logs a warning to the given {@link CLAWLogger} when {@link #add(String, Object)}
-     * is called on an item whose name is already in the registry.
-     * @param itemsType A string to use to describe the type of item the registry stores (e.g. "device",
-     * "config field").
-     * @param log       The {@code CLAWLogger} to use for logging name conflict warnings.
-     */
-    public Registry (String itemsType, CLAWLogger log) {
-        this.itemsType = itemsType;
-        this.log = Optional.ofNullable(log);
-    }
     
     /**
      * Creates a new registry which throws a {@link NameConflictException} when {@link #add(String, Object)}
@@ -38,7 +23,7 @@ public class Registry <T> {
      * "config field").
      */
     public Registry (String itemsType) {
-        this(itemsType, null);
+        this.itemsType = itemsType;
     }
     
     /**
@@ -63,34 +48,15 @@ public class Registry <T> {
      * Add a named item to the registry.
      * @param name                      The item's name.
      * @param item                      The item.
-     * @throws NameConflictException    If an item in the registry already has the provided name,
-     * there is a name conflict. If the registry is configured to throw an exception when
-     * a name conflict arises, this runtime exception will be thrown.
-     * Otherwise, name conflicts will be logged as warnings to an {@link CLAWLogger} provided to the registry.
-     * In either case, if a name conflict occurs, the addition of the item to the registry will fail.
+     * @throws NameConflictException    If an item in the registry already has the provided name.
      */
     public void add (String name, T item) throws NameConflictException {
-        try {
-            
-            // Throw an exception if the item already exists in the registry
-            if (hasItem(name))
-                throw new NameConflictException(itemsType, name);
-            
-            // Add the item to the registry
-            items.put(name, item);
-            
-        } catch (NameConflictException e) {
-            
-            // If the log optional is not empty, then we should log the exception instead of throwing it
-            if (log.isPresent()) {
-                // Log the exception
-                log.get().out("Warning: " + e.getMessage());
-            } else {
-                // Otherwise, we should throw the name conflict exception
-                throw e;
-            }
-            
-        }
+        // Throw an exception if the item already exists in the registry
+        if (hasItem(name))
+            throw new NameConflictException(itemsType, name);
+        
+        // Add the item to the registry
+        items.put(name, item);
     }
     
     /**
@@ -104,7 +70,8 @@ public class Registry <T> {
     }
     
     /**
-     * Get all items in the registry.
+     * Get all items in the registry. This collection is backed by an internal
+     * {@code Map} and therefore must not be mutated.
      * @return A {@code Collection<T>} containing the items.
      */
     public Collection<T> getAllItems () {
@@ -120,11 +87,12 @@ public class Registry <T> {
     }
     
     /**
-     * A runtime exception which can be thrown by a {@link Registry} if an item
+     * An exception which can be thrown by a {@link Registry} if trying to add an item to the registry whose name already
+     * exists in the registry.
      */
-    public static class NameConflictException extends RuntimeException {
+    public static class NameConflictException extends Exception {
         public NameConflictException (String itemsType, String name) {
-            super(itemsType+" \""+name+"\" already exists in the "+itemsType+" registry");
+            super(itemsType+" \""+name+"\" already exists in the "+itemsType+" registry.");
         }
     }
     

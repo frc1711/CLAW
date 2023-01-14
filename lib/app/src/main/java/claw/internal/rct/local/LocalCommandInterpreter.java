@@ -70,9 +70,9 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("watch", "[watch usage]",
+        addCommand("log", "log",
             "no help desc.",
-            this::watchCommand);
+            this::logCommand);
     }
     
     /**
@@ -213,7 +213,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         
         while (!console.hasInputReady()) {
