@@ -2,7 +2,9 @@ package claw.internal.logs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import claw.internal.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.internal.rct.network.low.Waiter;
@@ -21,6 +23,7 @@ public class LogHandler {
         return instance;
     }
     
+    private final HashSet<String> registeredLogDomains = new HashSet<>();
     private final List<LogData> logDataBuffer = new ArrayList<LogData>();
     
     private final Thread dataSenderThread = new Thread(this::dataSenderThreadRunnable);
@@ -89,6 +92,29 @@ public class LogHandler {
         logAllDomains = true;
     }
     
+    /**
+     * Adds a logger domain to a list of registed domains, indicating that a logger exists with the given domain.
+     * @param domain The logger's domain (e.g. {@code "subsystems.swerve.frontLeft.drive"}).
+     */
+    public void registerDomain (String domain) {
+        registeredLogDomains.add(domain);
+    }
+    
+    /**
+     * Get a set of all registered logger domains. A registered logger domain is a logger domain belonging to an existing
+     * {@link claw.api.CLAWLogger}.
+     * @return The {@code Set<String>} of logger domains used by all existing {@code CLAWLogger}s.
+    */
+    @SuppressWarnings("unchecked")
+    public Set<String> getRegisteredDomains () {
+        return (HashSet<String>)registeredLogDomains.clone();
+    }
+    
+    /**
+     * Returns whether or not a 
+     * @param domain
+     * @return
+     */
     public boolean isDomainWatched (String domain) {
         return logAllDomains || rootLoggerDomain.doesDomainPathExist(domain);
     }

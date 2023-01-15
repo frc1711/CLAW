@@ -15,7 +15,6 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
-import claw.api.CLAWLogger;
 import claw.api.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
@@ -88,7 +87,7 @@ public class RemoteCommandInterpreter {
         
         // Get a sorted list of logger domains
         List<String> domainsList = new ArrayList<>();
-        CLAWLogger.getUsedDomains().forEach(domainsList::add);
+        LogHandler.getInstance().getRegisteredDomains().forEach(domainsList::add);
         domainsList.sort(String::compareTo);
         
         // Print the list
