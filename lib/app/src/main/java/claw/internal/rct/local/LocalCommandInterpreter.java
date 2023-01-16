@@ -220,18 +220,33 @@ public class LocalCommandInterpreter {
         reader.allowFlags('l');
         reader.allowOptions("live");
         
+        // Check whether or not to log data in "live" mode (where each stream has its own line which updates over time)
         boolean liveLogging = reader.getFlag('l') || reader.getOptionMarker("live");
         
+        // If in live logging mode, clear any log data currently waiting as only
+        // data sent from here on out should get a field
+        if (liveLogging) {
+            synchronized (newLogDataLock) {
+                newLogData.clear();
+            }
+        }
+        
+        // Get a live data lines object which is used for live logging mode (used later on if in live mode)
         LiveDataLines lines = new LiveDataLines();
         
+        // Repeat the logging loop until the user pressed a key
         while (!console.hasInputReady()) {
+            
+            // Synchronize with the newLogDataLock and only print data if there is new data
             synchronized (newLogDataLock) {
                 if (hasNewLogData) {
                     hasNewLogData = false;
                     
                     if (liveLogging) {
+                        // If in live logging mode, use the LiveDataLines object to update the display
                         lines.updateDisplay(console, newLogData);
                     } else {
+                        // Otherwise, print a new event line for each data received
                         for (LogData data : newLogData) {
                             printLogDataEvent(console, data);
                         }
