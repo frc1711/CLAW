@@ -58,31 +58,33 @@ public class RemoteCommandInterpreter {
         reader.allowOptions("all", "none");
         reader.allowFlags('a', 'n');
         
-        // Watch all loggers
         if (reader.getFlag('a') || reader.getOptionMarker("all")) {
-            LogHandler.getInstance().watchAllDomains();
-            return;
-        }
-        
-        // Watch no loggers
-        if (reader.getFlag('n') || reader.getOptionMarker("none")) {
-            LogHandler.getInstance().unsetWatchedDomains();
-            return;
-        }
-        
-        // Unset all previous logger domains
-        if (reader.hasNextArg())
-            LogHandler.getInstance().unsetWatchedDomains();
-        
-        // Continue until there are no more arguments
-        while (reader.hasNextArg()) {
-            String domain = reader.readArgString("logger domain");
             
-            try {
-                LogHandler.getInstance().watchDomain(domain);
-            } catch (InvalidLoggerDomainException e) {
-                throw new BadCallException(e.getMessage());
+            // Watch all loggers
+            LogHandler.getInstance().watchAllDomains();
+            
+        } else if (reader.getFlag('n') || reader.getOptionMarker("none")) {
+            
+            // Watch no loggers
+            LogHandler.getInstance().unsetWatchedDomains();
+            
+        } else {
+        
+            // Unset all previous logger domains
+            if (reader.hasNextArg())
+                LogHandler.getInstance().unsetWatchedDomains();
+            
+            // Continue until there are no more arguments
+            while (reader.hasNextArg()) {
+                String domain = reader.readArgString("logger domain");
+                
+                try {
+                    LogHandler.getInstance().watchDomain(domain);
+                } catch (InvalidLoggerDomainException e) {
+                    throw new BadCallException(e.getMessage());
+                }
             }
+            
         }
         
         // Get a sorted list of logger domains
