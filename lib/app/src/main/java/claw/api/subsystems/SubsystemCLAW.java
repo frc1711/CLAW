@@ -3,9 +3,8 @@ package claw.api.subsystems;
 import java.util.HashMap;
 import java.util.Map;
 
-import claw.CLAWRobot;
+import claw.internal.CLAWRuntime;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -18,7 +17,8 @@ public abstract class SubsystemCLAW extends SubsystemBase {
     
     public SubsystemCLAW () {
         super();
-        CLAWRobot.getInstance().addSubsystem(this);
+        
+        CLAWRuntime.getInstance().addSubsystem(this);
     }
     
     protected void addFunction (String fieldPrefix, ConfigurableFunction function) {

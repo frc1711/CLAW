@@ -3,7 +3,7 @@ package claw.internal.rct.remote;
 import java.util.ArrayList;
 import java.util.List;
 
-import claw.CLAWRobot;
+import claw.internal.CLAWRuntime;
 import claw.internal.Registry;
 import claw.internal.logs.LogHandler;
 import claw.internal.logs.LoggerDomain.InvalidLoggerDomainException;
@@ -114,7 +114,7 @@ public class RemoteCommandInterpreter {
         console.println("Restarting...");
         console.flush();
         
-        CLAWRobot.getInstance().restartCode();
+        CLAWRuntime.getInstance().restartCode();
     }
     
     private void subsystemsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
