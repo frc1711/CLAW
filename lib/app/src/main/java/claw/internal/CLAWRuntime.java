@@ -1,11 +1,11 @@
 package claw.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import claw.api.CLAWLogger;
+import claw.api.CLAWSettings;
 import claw.api.subsystems.SubsystemCLAW;
 import claw.internal.Registry.NameConflictException;
 import claw.internal.logs.LogHandler;
@@ -26,9 +26,6 @@ public class CLAWRuntime {
     
     // Config
     
-    private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
-    private static final Config CONFIG = new Config(CONFIG_FILE);
-    
     private static CLAWRuntime instance;
     
     public static void initialize () {
@@ -38,7 +35,7 @@ public class CLAWRuntime {
     
     public static CLAWRuntime getInstance () {
         if (instance == null)
-            throw new RuntimeException("CLAWRuntime was retrieved before it was initialized");
+            instance = new CLAWRuntime();
         return instance;
     }
     
@@ -50,11 +47,8 @@ public class CLAWRuntime {
     private final Registry<SubsystemCLAW> subsystemRegistry = new Registry<>("subsystem");
     
     private RCTServer server;
-    private boolean hasBeenStarted;
     
     private CLAWRuntime () {
-        if (hasBeenStarted) return;
-        hasBeenStarted = true;
         
         // Put a message into the console indicating that the CLAWRobot runtime has started
         System.out.println("\n -- CLAW is running -- \n");
@@ -78,6 +72,7 @@ public class CLAWRuntime {
                 e.printStackTrace();
             }
         }).start();
+        
     }
     
     
@@ -98,7 +93,7 @@ public class CLAWRuntime {
      * somehow quits). This method call is not necessary if {@link CLAWRuntime#restartCode()} is used.
      */
     public void onRobotProgramExit () {
-        CONFIG.save();
+        CLAWSettings.save();
         RUNTIME_LOG.out("Exiting robot program");
         LogHandler.getInstance().sendData(server);
     }

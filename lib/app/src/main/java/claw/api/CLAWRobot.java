@@ -3,14 +3,13 @@ package claw.api;
 import java.util.function.Supplier;
 
 import claw.internal.CLAWRuntime;
-import claw.internal.Config.ConfigField;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 public class CLAWRobot extends RobotBase {
     
     private static final CLAWLogger ROBOT_LOG = CLAWLogger.getLogger("claw.robot");
-    private static final ConfigField<String> UNCAUGHT_EXCEPTION_FIELD = null; // TODO: Replace Config with a singleton. = getField("UNCAUGHT_EXCEPTION");
+    private static final String UNCAUGHT_EXCEPTION_FIELD = "claw.uncaughtException";
     private static CLAWRobot robot;
     
     /**
@@ -61,8 +60,8 @@ public class CLAWRobot extends RobotBase {
         CLAWRuntime.initialize();
         
         // Send the last uncaught exception
-        String uncaughtException = UNCAUGHT_EXCEPTION_FIELD.getValue(null);
-        UNCAUGHT_EXCEPTION_FIELD.setValue(null);
+        String uncaughtException = CLAWSettings.getString(UNCAUGHT_EXCEPTION_FIELD, null);
+        CLAWSettings.setString(UNCAUGHT_EXCEPTION_FIELD, null);
         if (uncaughtException != null)
             ROBOT_LOG.err("Uncaught exception from last execution:\n" + uncaughtException);
     }
@@ -96,7 +95,7 @@ public class CLAWRobot extends RobotBase {
         System.err.println("Caught a fatal uncaught exception: " + e.getMessage());
         
         // Put the stack trace to the uncaught exception field
-        UNCAUGHT_EXCEPTION_FIELD.setValue(CLAWRuntime.getStackTrace(e));
+        CLAWSettings.setString(UNCAUGHT_EXCEPTION_FIELD, CLAWRuntime.getStackTrace(e));
     }
     
 }
