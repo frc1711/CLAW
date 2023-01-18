@@ -11,7 +11,6 @@ public class CLAWRobot extends RobotBase {
     
     private static final CLAWLogger ROBOT_LOG = CLAWLogger.getLogger("claw.robot");
     private static final Setting<String> UNCAUGHT_EXCEPTION = CLAWSettings.getStringSetting("claw.uncaughtException");
-    private static CLAWRobot robot;
     
     /**
      * Get a {@code Supplier<RobotBase>} that provides a {@link RobotBase} proxy which CLAW can use. This robot proxy
@@ -28,7 +27,7 @@ public class CLAWRobot extends RobotBase {
                 // When this supplier is called in RobotBase.startRobot, it will initialize the CLAWRobot instance
                 if (instance == null)
                     instance = new CLAWRobot(robotSupplier);
-                throw new RuntimeException("CLAWRobot cannot be initialized twice");
+                return instance;
             }
         };
     }
@@ -54,6 +53,8 @@ public class CLAWRobot extends RobotBase {
     
     // CLAWRobot private methods
     
+    private final TimedRobot userRobot;
+    
     private CLAWRobot (Supplier<TimedRobot> robotSupplier) {
         // Initialize the CLAWRuntime so that runtime methods can be called
         CLAWRuntime.initialize();
@@ -65,13 +66,17 @@ public class CLAWRobot extends RobotBase {
             UNCAUGHT_EXCEPTION.setValue(null);
             CLAWSettings.save();
         }
+        
+        // Get the user robot and add the runtime periodic
+        userRobot = robotSupplier.get();
+        userRobot.addPeriodic((CLAWRuntime.getInstance())::robotPeriodic, TimedRobot.kDefaultPeriod);
     }
     
     @Override
     public void startCompetition () {
         try {
             // Call the main robot's startCompetition method
-            robot.startCompetition();
+            userRobot.startCompetition();
             
             // Handle robot program exiting
             CLAWRuntime.getInstance().onRobotProgramExit();
@@ -84,7 +89,7 @@ public class CLAWRobot extends RobotBase {
     
     @Override
     public void endCompetition () {
-        robot.endCompetition();
+        userRobot.endCompetition();
     }
     
     public static void restartCode () {
