@@ -2,6 +2,7 @@ package claw.api;
 
 import java.util.function.Supplier;
 
+import claw.api.CLAWSettings.Setting;
 import claw.internal.CLAWRuntime;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -9,7 +10,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class CLAWRobot extends RobotBase {
     
     private static final CLAWLogger ROBOT_LOG = CLAWLogger.getLogger("claw.robot");
-    private static final String UNCAUGHT_EXCEPTION_FIELD = "claw.uncaughtException";
+    private static final Setting<String> UNCAUGHT_EXCEPTION = CLAWSettings.getStringSetting("claw.uncaughtException");
     private static CLAWRobot robot;
     
     /**
@@ -51,8 +52,6 @@ public class CLAWRobot extends RobotBase {
     
     
     
-    
-    
     // CLAWRobot private methods
     
     private CLAWRobot (Supplier<TimedRobot> robotSupplier) {
@@ -60,10 +59,12 @@ public class CLAWRobot extends RobotBase {
         CLAWRuntime.initialize();
         
         // Send the last uncaught exception
-        String uncaughtException = CLAWSettings.getString(UNCAUGHT_EXCEPTION_FIELD, null);
-        CLAWSettings.setString(UNCAUGHT_EXCEPTION_FIELD, null);
-        if (uncaughtException != null)
-            ROBOT_LOG.err("Uncaught exception from last execution:\n" + uncaughtException);
+        String uncaughtExceptionString = UNCAUGHT_EXCEPTION.getValue(null);
+        if (uncaughtExceptionString != null) {
+            ROBOT_LOG.err("Uncaught exception from last execution:\n" + uncaughtExceptionString);
+            UNCAUGHT_EXCEPTION.setValue(null);
+            CLAWSettings.save();
+        }
     }
     
     @Override
@@ -95,7 +96,7 @@ public class CLAWRobot extends RobotBase {
         System.err.println("Caught a fatal uncaught exception: " + e.getMessage());
         
         // Put the stack trace to the uncaught exception field
-        CLAWSettings.setString(UNCAUGHT_EXCEPTION_FIELD, CLAWRuntime.getStackTrace(e));
+        UNCAUGHT_EXCEPTION.setValue(CLAWRuntime.getStackTrace(e));
     }
     
 }
