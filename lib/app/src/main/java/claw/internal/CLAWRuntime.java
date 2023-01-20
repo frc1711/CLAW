@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import claw.api.CLAWLogger;
-import claw.api.CLAWSettings;
 import claw.api.subsystems.SubsystemCLAW;
 import claw.internal.Registry.NameConflictException;
 import claw.internal.logs.LogHandler;
@@ -81,21 +80,6 @@ public class CLAWRuntime {
     public void robotPeriodic () {
         if (server != null)
             LogHandler.getInstance().sendData(server);
-    }
-    
-    public void restartCode () {
-        onRobotProgramExit();
-        System.exit(0);
-    }
-    
-    /**
-     * This method should be called before the robot program exits (if you call System.exit() or if the robot program otherwise
-     * somehow quits). This method call is not necessary if {@link CLAWRuntime#restartCode()} is used.
-     */
-    public void onRobotProgramExit () {
-        CLAWSettings.save();
-        RUNTIME_LOG.out("Exiting robot program");
-        LogHandler.getInstance().sendData(server);
     }
     
     public void addSubsystem (SubsystemCLAW subsystem) {

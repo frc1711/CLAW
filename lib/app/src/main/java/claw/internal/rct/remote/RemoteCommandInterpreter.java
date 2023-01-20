@@ -3,7 +3,6 @@ package claw.internal.rct.remote;
 import java.util.ArrayList;
 import java.util.List;
 
-import claw.internal.CLAWRuntime;
 import claw.internal.Registry;
 import claw.internal.logs.LogHandler;
 import claw.internal.logs.LoggerDomain.InvalidLoggerDomainException;
@@ -34,7 +33,6 @@ public class RemoteCommandInterpreter {
         
         addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
-        addCommand("restart", "[restart usage]", "[restart help]", this::restartCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
         addCommand("watch",
@@ -106,15 +104,6 @@ public class RemoteCommandInterpreter {
         console.println("pong");
         String input = console.readInputLine();
         console.printlnSys("Read input line: " + input);
-    }
-    
-    private void restartCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
-        
-        console.println("Restarting...");
-        console.flush();
-        
-        CLAWRuntime.getInstance().restartCode();
     }
     
     private void subsystemsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

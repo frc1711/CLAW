@@ -36,6 +36,10 @@ public class CLAWLogger {
         this.domain = domain;
     }
     
+    public CLAWLogger sublog (String subdomain) {
+        return getLogger(domain + "." + subdomain);
+    }
+    
     public String getDomain () {
         return domain;
     }
