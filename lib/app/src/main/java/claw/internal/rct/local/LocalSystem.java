@@ -50,6 +50,7 @@ public class LocalSystem {
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
     private ConnectionStatus lastConnectionStatus = ConnectionStatus.NO_CONNECTION;
+    private IOException lastConnectionException = null;
     
     /**
      * Create a new {@link LocalSystem} with a socket connection opened with the roboRIO.
@@ -95,7 +96,23 @@ public class LocalSystem {
         } catch (IOException e) { }
         
         // Create a new socket
-        socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, this::handleSocketReceiverException);
+        try {
+            socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, this::handleSocketReceiverException);
+            lastConnectionException = null;
+        } catch (IOException exception) {
+            
+            // If there's an IOException (one that's different from the previous exception),
+            // then log it and throw it again so whatever is calling establishNewConnection can do its own handling
+            if (lastConnectionException == null || !lastConnectionException.getClass().equals(exception.getClass())) {
+                logDataStorage.acceptDataMessage(new LogDataMessage(new LogData[]{
+                    new LogData("$connection.exception", exception.toString(), true)
+                }));
+            }
+            
+            lastConnectionException = exception;
+            throw exception;
+            
+        }
     }
     
     /**
@@ -273,7 +290,9 @@ public class LocalSystem {
                     
                     // If an i/o exception has not been thrown then the connection was established successfully
                     requireNewConnection = false;
-                } catch (IOException e) { }
+                } catch (IOException e) {
+                    updateConnectionStatus(ConnectionStatus.NO_CONNECTION);
+                }
             }
             
             // Sleep the thread until we need to check again

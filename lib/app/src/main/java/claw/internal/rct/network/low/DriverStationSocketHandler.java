@@ -47,7 +47,10 @@ public class DriverStationSocketHandler {
      * @return          The hostname for connecting to the rorboRIO
      */
     public static String getRoborioHost (int teamNum) {
-        return "roboRIO-"+teamNum+"-frc.local";
+        int first = teamNum / 100;
+        int second = teamNum % 100;
+        
+        return "10."+first+"."+second+".2";
     }
     
     /**
