@@ -1,4 +1,4 @@
-package claw.api;
+package claw.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,21 +11,20 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import claw.internal.Registry;
-import claw.internal.Registry.NameConflictException;
+import claw.api.CLAWLogger;
 
-public class CLAWSettings {
+public class SettingsManager {
     
     private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.settings");
     
     // Singleton handling
     
-    private static CLAWSettings instance = null;
+    private static SettingsManager instance = null;
     
-    private static CLAWSettings getInstance () {
+    public static SettingsManager getInstance () {
         if (instance == null)
-            instance = new CLAWSettings();
+            instance = new SettingsManager();
         return instance;
     }
     
@@ -35,10 +34,9 @@ public class CLAWSettings {
      * The map of all values obtained from the config file, updated by fields during runtime.
      */
     private final Map<String, Serializable> entries;
-    private final Registry<Setting<?>> settingsRegistry = new Registry<Setting<?>>("setting");
     
-    private CLAWSettings () {
-        LOG.out("Reading CLAW configuration from "+CONFIG_FILE.getName());
+    private SettingsManager () {
+        LOG.out("Reading CLAW settings from "+CONFIG_FILE.getName());
         
         ConfigSerial serial;
         try {
@@ -52,7 +50,7 @@ public class CLAWSettings {
     }
     
     @SuppressWarnings("unchecked")
-    private <T extends Serializable> T getEntry (String name, T defaultValue) {
+    public <T extends Serializable> T getEntry (String name, T defaultValue) {
         try {
             if (entries.containsKey(name))
                 return (T)entries.get(name);
@@ -62,8 +60,17 @@ public class CLAWSettings {
         return defaultValue;
     }
     
-    private void setEntry (String name, Serializable newValue) {
+    public void setEntry (String name, Serializable newValue) {
         entries.put(name, newValue);
+    }
+    
+    public void save () {
+        ConfigSerial serial = ConfigSerial.fromObjectMap(getInstance().entries, LOG);
+        try {
+            serial.writeToFile(CONFIG_FILE);
+        } catch (Exception e) {
+            LOG.err("Critical exception in saving settings: " + e.getMessage());
+        }
     }
     
     /**
@@ -152,63 +159,6 @@ public class CLAWSettings {
             return objMap;
         }
         
-    }
-    
-    // Public API
-    
-    public static void save () {
-        ConfigSerial serial = ConfigSerial.fromObjectMap(getInstance().entries, LOG);
-        try {
-            serial.writeToFile(CONFIG_FILE);
-        } catch (Exception e) {
-            LOG.err("Critical exception in saving settings: " + e.getMessage());
-        }
-    }
-    
-    public static class Setting <T extends Serializable> {
-        
-        private final String name;
-        
-        private Setting (String name) {
-            this.name = name;
-        }
-        
-        public T getValue (T defaultValue) {
-            return getInstance().getEntry(name, defaultValue);
-        }
-        
-        public void setValue (T newValue) {
-            getInstance().setEntry(name, newValue);
-        }
-        
-    }
-    
-    private static <T extends Serializable> Setting<T> getSetting (String name) {
-        Setting<T> setting = new Setting<>(name);
-        
-        try {
-            getInstance().settingsRegistry.add(name, setting);
-        } catch (NameConflictException e) {
-            LOG.out("Warning: " + e.getMessage());
-        }
-        
-        return setting;
-    }
-    
-    public static Setting<String> getStringSetting (String name) {
-        return getSetting(name);
-    }
-    
-    public static Setting<Integer> getIntSetting (String name) {
-        return getSetting(name);
-    }
-    
-    public static Setting<Double> getDoubleSetting (String name) {
-        return getSetting(name);
-    }
-    
-    public static Setting<Boolean> getBooleanSetting (String name) {
-        return getSetting(name);
     }
     
 }
