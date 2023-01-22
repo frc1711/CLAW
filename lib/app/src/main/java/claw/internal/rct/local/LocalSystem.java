@@ -47,6 +47,8 @@ public class LocalSystem {
     private final Thread requireNewConnectionThread = new Thread(this::requireNewConnectionThreadRunnable);
     private boolean requireNewConnection = false;
     
+    private boolean useStaticRoboRIOAddress;
+    
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
     private ConnectionStatus lastConnectionStatus = ConnectionStatus.NO_CONNECTION;
@@ -61,12 +63,14 @@ public class LocalSystem {
      */
     public LocalSystem (
             int teamNum,
+            boolean useStaticAddress,
             int remotePort,
             LogDataStorage logDataStorage,
             ConsoleManager console) {
         
         // Instantiating final fields
         this.teamNum = teamNum;
+        this.useStaticRoboRIOAddress = useStaticAddress;
         this.remotePort = remotePort;
         this.logDataStorage = logDataStorage;
         this.console = console;
@@ -88,16 +92,22 @@ public class LocalSystem {
      * @param remotePort    The remote port to connect to.
      * @throws IOException  If an i/o error occurred while trying to open the socket.
      */
-    private void establishNewConnection () throws IOException {
+    public synchronized void establishNewConnection () throws IOException {
         // Close the current socket (if one exists)
         try {
-            throwIfNullSocket();
-            socket.close();
+            DriverStationSocketHandler s = throwIfNullSocket();
+            if (s != null) s.close();
         } catch (IOException e) { }
         
         // Create a new socket
         try {
-            socket = new DriverStationSocketHandler(teamNum, remotePort, this::receiveMessage, this::handleSocketReceiverException);
+            socket = new DriverStationSocketHandler(
+                teamNum,
+                useStaticRoboRIOAddress,
+                remotePort,
+                this::receiveMessage,
+                this::handleSocketReceiverException
+            );
             lastConnectionException = null;
         } catch (IOException exception) {
             
@@ -115,6 +125,14 @@ public class LocalSystem {
         }
     }
     
+    public void setUseStaticRoborioAddress (boolean useStaticAddress) {
+        useStaticRoboRIOAddress = useStaticAddress;
+    }
+    
+    public String getRoborioHost () {
+        return DriverStationSocketHandler.getRoborioHost(useStaticRoboRIOAddress, teamNum) + ":" + remotePort;
+    }
+    
     /**
      * Gets the team number passed in through the constructor.
      */
@@ -129,8 +147,8 @@ public class LocalSystem {
     public ConnectionStatus checkServerConnection () {
         // Attempt to send a connection check message to remote
         try {
-            throwIfNullSocket();
-            socket.sendInstructionMessage(new ConnectionCheckMessage());
+            DriverStationSocketHandler s = throwIfNullSocket();
+            s.sendInstructionMessage(new ConnectionCheckMessage());
         } catch (IOException e) {
             return updateConnectionStatus(ConnectionStatus.NO_CONNECTION);
         }
@@ -256,8 +274,8 @@ public class LocalSystem {
     private void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
         try {
             // Attempt to send the instruction message
-            throwIfNullSocket();
-            socket.sendInstructionMessage(message);
+            DriverStationSocketHandler s = throwIfNullSocket();
+            s.sendInstructionMessage(message);
         } catch (IOException e) {
             // If the call threw an exception, terminate the remote process handler with an exception
             remoteProcessHandler.terminate(e);
@@ -311,8 +329,10 @@ public class LocalSystem {
         }
     }
     
-    private void throwIfNullSocket () throws IOException {
-        if (socket == null) throw new NoSocketException();
+    private DriverStationSocketHandler throwIfNullSocket () throws IOException {
+        DriverStationSocketHandler s = socket;
+        if (s == null) throw new NoSocketException();
+        return s;
     }
     
     /**

@@ -17,6 +17,7 @@ public class DriverStationSocketHandler {
     /**
      * Constructs a new {@link DriverStationSocketHandler}, starting a new socket connection to remote.
      * @param teamNum           The team number to use for connecting to the roboRIO (1711 if you're on a cool team).
+     * @param useStaticIP       Whether to use a static IP instead of a dynamic address.
      * @param port              The remote port to connect to.
      * @param responseReader    A {@link ResponseMessage} {@code Consumer<T>} which accepts messages as they are received from remote.
      * @param excHandler        A {@code Consumer<IOException>} which accepts i/o exceptions that occur when receiving messages from remote.
@@ -24,6 +25,7 @@ public class DriverStationSocketHandler {
      */
     public DriverStationSocketHandler (
             int teamNum,
+            boolean useStaticAddress,
             int port,
             Consumer<ResponseMessage> responseReader,
             Consumer<IOException> excHandler)
@@ -31,7 +33,7 @@ public class DriverStationSocketHandler {
         
         Socket socket = null;
         try {
-            socket = new Socket(getRoborioHost(teamNum), port);
+            socket = new Socket(getRoborioHost(useStaticAddress, teamNum), port);
             socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
         } catch (IOException e) {
             if (socket != null) socket.close();
@@ -46,11 +48,15 @@ public class DriverStationSocketHandler {
      * @param teamNum   The team number associated with the roboRIO.
      * @return          The hostname for connecting to the rorboRIO
      */
-    public static String getRoborioHost (int teamNum) {
-        int first = teamNum / 100;
-        int second = teamNum % 100;
-        
-        return "10."+first+"."+second+".2";
+    public static String getRoborioHost (boolean useStaticAddress, int teamNum) {
+        if (useStaticAddress) {
+            int first = teamNum / 100;
+            int second = teamNum % 100;
+            
+            return "10."+first+"."+second+".2";
+        } else {
+            return "roboRIO-"+teamNum+"-FRC.local";
+        }
     }
     
     /**
