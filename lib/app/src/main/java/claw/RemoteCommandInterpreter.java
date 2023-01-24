@@ -21,10 +21,7 @@ public class RemoteCommandInterpreter {
     
     private final CommandLineInterpreter interpreter = new CommandLineInterpreter();
     
-    private final Registry<SubsystemCLAW> subsystemRegistry;
-    
-    public RemoteCommandInterpreter (Registry<SubsystemCLAW> subsystemRegistry) {
-        this.subsystemRegistry = subsystemRegistry;
+    public RemoteCommandInterpreter () {
         addCommands();
     }
     
@@ -34,7 +31,6 @@ public class RemoteCommandInterpreter {
         
         addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
-        addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
         addCommand("inspect", "inspect", "inspect", this::inspectCommand);
         addCommand("watch",
@@ -132,40 +128,6 @@ public class RemoteCommandInterpreter {
         console.println("pong");
         String input = console.readInputLine();
         console.printlnSys("Read input line: " + input);
-    }
-    
-    private void subsystemsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNoOptions();
-        reader.allowNoFlags();
-        
-        String operation = reader.readArgOneOf("operation", "Operation must be 'list' or 'get'.", "list", "get");
-        
-        // TODO: Migrate functionality to new status and config commands (status subsystem SubsystemName, config subsystem SubsystemName)
-        
-        if (operation.equals("list")) {
-            
-            List<String> subsystemNames = subsystemRegistry.getItemNames();
-            if (subsystemNames.size() == 0) {
-                console.println("No CLAW subsystems were found.");
-            } else {
-                for (String name : subsystemNames)
-                    console.println(name);
-                console.println("count: " + subsystemNames.size());
-            }
-            
-        } else {
-            
-            // // String subsystemName = CommandProcessor.expectOneOf(cmd, "subsystem name", 0, subsystemRegistry.getItemNames());
-            
-            // SubsystemCLAW subsystem = subsystemRegistry.getItem(subsystemName);
-            // RCTSendableBuilder builder = new RCTSendableBuilder(console, subsystem);
-            // subsystem.initSendable(builder);
-            
-            // String[] lines = builder.getFieldsDisplay();
-            // for (String line : lines)
-            //     console.println(line);
-        }
-        
     }
     
     private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

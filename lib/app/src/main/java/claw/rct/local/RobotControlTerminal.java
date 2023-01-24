@@ -101,7 +101,7 @@ public class RobotControlTerminal {
                 useStaticAddress = false;
             } else {
                 input = null;
-                console.print("Use 's' for static or 'd' for dynamic. ");
+                console.printSys("Use 's' for static or 'd' for dynamic. ");
             }
         }
         

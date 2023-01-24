@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import claw.api.CLAWRobot;
+import claw.CLAWRobot;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**

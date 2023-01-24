@@ -1,8 +1,8 @@
 package frc.robot.subsystems;
 
-import claw.api.liveunits.LiveUnit;
-import claw.api.liveunits.UnitBuilder;
-import claw.api.subsystems.SubsystemCLAW;
+import claw.LiveUnit;
+import claw.UnitBuilder;
+import claw.SubsystemCLAW;
 import frc.robot.util.CustomMotorController;
 
 public class TestSubsystem extends SubsystemCLAW {
