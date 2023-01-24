@@ -1,8 +1,12 @@
 package claw;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.Map.Entry;
 
+import claw.LiveUnit.Setting;
 import claw.logs.LogHandler;
 import claw.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.rct.commands.Command;
@@ -56,7 +60,7 @@ public class RemoteCommandInterpreter {
         reader.allowOptions("list");
         reader.allowFlags('l');
         
-        List<String> unitNames = UnitBuilder.getUnitNames();
+        Set<String> unitNames = UnitBuilder.getUnitNames();
         
         if (reader.getFlag('l') || reader.getOptionMarker("list")) {
             reader.noMoreArgs();
@@ -66,12 +70,34 @@ public class RemoteCommandInterpreter {
             
         } else {
             
+            // Get the LiveUnit
             String unitName = reader.readArgOneOf("unit name", "The given unit name did not match any existing unit.", unitNames);
             LiveUnit unit = UnitBuilder.getUnitByName(unitName);
             if (unit == null)
                 throw new BadCallException("The given unit '"+unitName+"' no longer exists.");
             
-            console.println("The unit "+unitName+" exists.");
+            // Print the unit's settings
+            HashMap<String, Setting<?>> settings = unit.getSettings();
+            if (settings.size() > 0) {
+                console.printlnSys("Settings");
+                for (Entry<String, Setting<?>> setting : settings.entrySet()) {
+                    console.println(setting.getKey() + " = " + setting.getValue().toString());
+                }
+            }
+            
+            // Repeatedly update the unit's live fields (until stopped by user input)
+            console.printlnSys("Live fields");
+            int numFields = 0;
+            while (!console.hasInputReady()) {
+                console.moveUp(numFields);
+                HashMap<String, String> fields = unit.getFields();
+                numFields = fields.size();
+                
+                for (Entry<String, String> field : fields.entrySet()) {
+                    console.clearLine();
+                    console.println(field.getKey() + " : " + field.getValue());
+                }
+            }
             
         }
     }

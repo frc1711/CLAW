@@ -3,10 +3,6 @@ package claw;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import claw.Registry.NameConflictException;
-
-// TODO: Add logger into the LiveUnit structure, add a varargs runnable list to the constructor (getComponent)
-// and simplify the config interface to use getStringSetting, getIntSetting, etc.
 public class LiveUnit {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.liveUnits");
@@ -14,27 +10,12 @@ public class LiveUnit {
     private final String name;
     
     private final HashMap<String, String> fields = new HashMap<>();
-    private final Registry<Setting<?>> settings = new Registry<>("setting");
+    private final HashMap<String, Setting<?>> settings = new HashMap<>();
     
-    LiveUnit (String name) {
-        this.name = name;
-    }
+    // Public methods
     
     public String getName () {
         return name;
-    }
-    
-    private <T extends Serializable> Setting<T> getSetting (String name) {
-        Setting<T> setting = new Setting<>(name);
-        
-        try {
-            settings.add(name, setting);
-        } catch (NameConflictException e) {
-            // TODO: Make this output a warning to the live unit's log rather than the more abstract claw.liveUnits
-            LOG.sublog("settings").out("Warning: " + e.getMessage());
-        }
-        
-        return setting;
     }
     
     public Setting<String> getStringSetting (String name) {
@@ -51,6 +32,26 @@ public class LiveUnit {
     
     public Setting<Boolean> getBooleanSetting (String name) {
         return getSetting(name);
+    }
+    
+    public void put (String fieldName, String value) {
+        fields.put(fieldName, value);
+    }
+    
+    public void put (String fieldName, double value) {
+        fields.put(fieldName, Double.toString(value));
+    }
+    
+    public void put (String fieldName, int value) {
+        fields.put(fieldName, Integer.toString(value));
+    }
+    
+    public void put (String fieldName, boolean value) {
+        fields.put(fieldName, Boolean.toString(value));
+    }
+    
+    public void put (String fieldName, Object value) {
+        fields.put(fieldName, value.toString());
     }
     
     public class Setting <T extends Serializable> {
@@ -75,29 +76,30 @@ public class LiveUnit {
         
     }
     
-    public void put (String fieldName, String value) {
-        fields.put(fieldName, value);
+    // Package-accessible methods
+    
+    LiveUnit (String name) {
+        this.name = name;
     }
     
-    public void put (String fieldName, double value) {
-        fields.put(fieldName, Double.toString(value));
+    HashMap<String, String> getFields () {
+        return fields;
     }
     
-    public void put (String fieldName, int value) {
-        fields.put(fieldName, Integer.toString(value));
+    HashMap<String, Setting<?>> getSettings () {
+        return settings;
     }
     
-    public void put (String fieldName, boolean value) {
-        fields.put(fieldName, Boolean.toString(value));
-    }
+    // Private methods
     
-    public void put (String fieldName, Object value) {
-        fields.put(fieldName, value.toString());
-    }
-    
-    @SuppressWarnings("unchecked")
-    public HashMap<String, String> getFields () {
-        return (HashMap<String, String>)fields.clone();
+    private <T extends Serializable> Setting<T> getSetting (String name) {
+        Setting<T> setting = new Setting<>(name);
+        
+        // TODO: Make this output a warning to the live unit's log rather than the more abstract claw.liveUnits
+        if (settings.containsKey(name))
+            LOG.sublog("settings").out("Warning: The setting '"+name+"' already exists for the live unit '"+name+"'.");
+        settings.put(name, setting);
+        return setting;
     }
     
 }

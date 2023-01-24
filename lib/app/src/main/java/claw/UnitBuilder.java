@@ -1,19 +1,18 @@
 package claw;
 
-import java.util.List;
-
-import claw.Registry.NameConflictException;
+import java.util.HashMap;
+import java.util.Set;
 
 public class UnitBuilder {
     
-    private static final Registry<LiveUnit> units = new Registry<>("unit");
+    private static final HashMap<String, LiveUnit> units = new HashMap<>();
     
-    public static List<String> getUnitNames () {
-        return units.getItemNames();
+    static Set<String> getUnitNames () {
+        return units.keySet();
     }
     
     public static LiveUnit getUnitByName (String name) {
-        return units.getItem(name);
+        return units.get(name);
     }
     
     private boolean isFinalized = false;
@@ -21,14 +20,12 @@ public class UnitBuilder {
     public LiveUnit withName (String name) {
         throwIfFinalized();
         
-        LiveUnit unit = new LiveUnit(name);
-        try {
-            units.add(name, unit);
-        } catch (NameConflictException e) {
-            throw new RuntimeException(e);
-        }
+        if (units.containsKey(name))
+            throw new RuntimeException("The LiveUnit '"+name+"' cannot be created more than once.");
         
         isFinalized = true;
+        LiveUnit unit = new LiveUnit(name);
+        units.put(name, unit);
         return unit;
     }
     

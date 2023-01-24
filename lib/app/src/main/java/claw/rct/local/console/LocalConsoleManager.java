@@ -80,7 +80,8 @@ public class LocalConsoleManager implements ConsoleManager {
     
     @Override
     public void moveUp (int lines) {
-        out.print(Ansi.ansi().cursorUpLine(lines));
+        if (lines != 0)
+            out.print(Ansi.ansi().cursorUpLine(lines));
     }
     
     @Override
