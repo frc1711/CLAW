@@ -14,6 +14,8 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
+import claw.api.liveunits.LiveUnit;
+import claw.api.liveunits.UnitBuilder;
 import claw.api.subsystems.SubsystemCLAW;
 
 public class RemoteCommandInterpreter {
@@ -35,6 +37,7 @@ public class RemoteCommandInterpreter {
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("subsystems", "[subsystems usage]", "[subsystems help]", this::subsystemsCommand);
         addCommand("config", "config", "config", this::configCommand);
+        addCommand("inspect", "inspect", "inspect", this::inspectCommand);
         addCommand("watch",
             "watch [ --all | --none | log domain...]",
             "Use -a or --all to watch all logger domains. Use -n or --none to watch no logger domains.\n" +
@@ -51,6 +54,32 @@ public class RemoteCommandInterpreter {
         interpreter.processLine(console, line);
     }
     
+    
+    
+    
+    private void inspectCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowOptions("list");
+        reader.allowFlags('l');
+        
+        List<String> unitNames = UnitBuilder.getUnitNames();
+        
+        if (reader.getFlag('l') || reader.getOptionMarker("list")) {
+            reader.noMoreArgs();
+            
+            for (String unitName : unitNames)
+                console.println(unitName);
+            
+        } else {
+            
+            String unitName = reader.readArgOneOf("unit name", "The given unit name did not match any existing unit.", unitNames);
+            LiveUnit unit = UnitBuilder.getUnitByName(unitName);
+            if (unit == null)
+                throw new BadCallException("The given unit '"+unitName+"' no longer exists.");
+            
+            console.println("The unit "+unitName+" exists.");
+            
+        }
+    }
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowOptions("all", "none");

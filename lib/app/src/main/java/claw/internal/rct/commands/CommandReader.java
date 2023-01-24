@@ -6,6 +6,7 @@ import java.util.List;
 
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 
+// TODO: Allowing option markers vs. allowing key-value options
 public class CommandReader {
     
     private final Command cmd;
