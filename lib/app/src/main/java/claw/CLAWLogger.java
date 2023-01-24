@@ -1,8 +1,8 @@
 package claw;
 
-import claw.internal.logs.LogHandler;
-import claw.internal.logs.LoggerDomain;
-import claw.internal.rct.network.messages.LogDataMessage.LogData;
+import claw.logs.LogHandler;
+import claw.logs.LoggerDomain;
+import claw.rct.network.messages.LogDataMessage.LogData;
 
 public class CLAWLogger {
     

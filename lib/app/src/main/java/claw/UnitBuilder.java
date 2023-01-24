@@ -2,8 +2,7 @@ package claw;
 
 import java.util.List;
 
-import claw.internal.Registry;
-import claw.internal.Registry.NameConflictException;
+import claw.Registry.NameConflictException;
 
 public class UnitBuilder {
     

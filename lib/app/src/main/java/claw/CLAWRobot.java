@@ -2,7 +2,6 @@ package claw;
 
 import java.util.function.Supplier;
 
-import claw.internal.CLAWRuntime;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 

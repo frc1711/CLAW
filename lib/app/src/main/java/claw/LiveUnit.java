@@ -3,9 +3,7 @@ package claw;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import claw.internal.Registry;
-import claw.internal.SettingsManager;
-import claw.internal.Registry.NameConflictException;
+import claw.Registry.NameConflictException;
 
 // TODO: Add logger into the LiveUnit structure, add a varargs runnable list to the constructor (getComponent)
 // and simplify the config interface to use getStringSetting, getIntSetting, etc.
