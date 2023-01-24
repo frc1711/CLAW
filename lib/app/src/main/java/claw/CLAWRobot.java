@@ -1,4 +1,4 @@
-package claw.api;
+package claw;
 
 import java.util.function.Supplier;
 

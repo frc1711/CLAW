@@ -102,7 +102,7 @@ public class LogHandler {
     
     /**
      * Get a set of all registered logger domains. A registered logger domain is a logger domain belonging to an existing
-     * {@link claw.api.CLAWLogger}.
+     * {@link claw.CLAWLogger}.
      * @return The {@code Set<String>} of logger domains used by all existing {@code CLAWLogger}s.
     */
     @SuppressWarnings("unchecked")

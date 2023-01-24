@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import claw.CLAWLogger;
+import claw.SubsystemCLAW;
 import claw.internal.Registry;
-import claw.api.CLAWLogger;
 import claw.internal.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.internal.rct.network.low.InstructionMessage;
 import claw.internal.rct.network.low.ResponseMessage;
@@ -17,7 +18,6 @@ import claw.internal.rct.network.messages.commands.CommandInputMessage;
 import claw.internal.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.internal.rct.network.messages.commands.StartCommandMessage;
 import claw.internal.rct.remote.CommandProcessHandler.TerminatedProcessException;
-import claw.api.subsystems.SubsystemCLAW;
 
 public class RCTServer {
     

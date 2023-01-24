@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import claw.api.CLAWLogger;
+import claw.CLAWLogger;
 
 public class SettingsManager {
     

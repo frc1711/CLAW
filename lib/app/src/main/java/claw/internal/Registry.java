@@ -10,6 +10,7 @@ import java.util.Map;
  * A registry class which stores named items and throws a {@link NamedConflictException} when attempting to
  * add an item whose name is already in the registry.
  */
+// TODO: Remove the Registry class
 public class Registry <T> {
     
     private final Map<String, T> items = new HashMap<String, T>();

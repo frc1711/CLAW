@@ -1,4 +1,4 @@
-package claw.api;
+package claw;
 
 import claw.internal.logs.LogHandler;
 import claw.internal.logs.LoggerDomain;

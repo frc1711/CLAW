@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import claw.api.CLAWLogger;
-import claw.api.subsystems.SubsystemCLAW;
+import claw.CLAWLogger;
+import claw.SubsystemCLAW;
 import claw.internal.Registry.NameConflictException;
 import claw.internal.logs.LogHandler;
 import claw.internal.rct.remote.RCTServer;

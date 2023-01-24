@@ -1,9 +1,8 @@
-package claw.api.liveunits;
+package claw;
 
 import java.io.Serializable;
 import java.util.HashMap;
 
-import claw.api.CLAWLogger;
 import claw.internal.Registry;
 import claw.internal.SettingsManager;
 import claw.internal.Registry.NameConflictException;

@@ -14,9 +14,9 @@ import claw.internal.rct.commands.CommandLineInterpreter.CommandNotRecognizedExc
 import claw.internal.rct.commands.CommandProcessor.BadCallException;
 import claw.internal.rct.commands.CommandProcessor.CommandFunction;
 import claw.internal.rct.network.low.ConsoleManager;
-import claw.api.liveunits.LiveUnit;
-import claw.api.liveunits.UnitBuilder;
-import claw.api.subsystems.SubsystemCLAW;
+import claw.LiveUnit;
+import claw.SubsystemCLAW;
+import claw.UnitBuilder;
 
 public class RemoteCommandInterpreter {
     
