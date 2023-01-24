@@ -3,34 +3,28 @@ package claw;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.function.Supplier;
 
 import claw.logs.LogHandler;
 import claw.rct.remote.RCTServer;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRobot {
     
-    /**
-     * Get a {@code Supplier<RobotBase>} that provides a {@link RobotBase} proxy which CLAW can use. This robot proxy
-     * will also start all necessary CLAW processes. This method should only be used in {@code Main.java} as a wrapper
-     * around {@code Robot::new}.
-     * @param robotSupplier A {@code Supplier<TimedRobot>} which can be used to get a new robot object.
-     * @return              The {@code Supplier<RobotBase>} containing the CLAW robot proxy.
-     */
-    public static Supplier<RobotBase> fromRobot (Supplier<TimedRobot> robotSupplier) {
-        return new Supplier<RobotBase>(){
-            @Override
-            public RobotBase get () {
-                TimedRobot robot = robotSupplier.get();
-                initializeRuntime();
-                robot.addPeriodic(CLAWRobot::robotPeriodic, TimedRobot.kDefaultPeriod);
-                return robot;
-            }
-        };
+    public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
+        
+        initializeRuntime();
+        robot.addPeriodic(CLAWRobot::robotPeriodic, TimedRobot.kDefaultPeriod);
+        
+        try {
+            robotStartCompetition.run();
+        } catch (Throwable exception) {
+            handleFatalUncaughtException(exception);
+            onRobotCodeFinish();
+            throw exception;
+        }
+        
     }
     
     private static final CLAWLogger
@@ -71,6 +65,11 @@ public class CLAWRobot {
     }
     
     
+    private static void onRobotCodeFinish () {
+        if (server != null)
+            LogHandler.getInstance().sendData(server);
+    }
+    
     private static void robotPeriodic () {
         if (server != null)
             LogHandler.getInstance().sendData(server);
@@ -98,6 +97,11 @@ public class CLAWRobot {
         
         // Put to the logger
         RUNTIME_LOG.err("Uncaught exception in a thread '"+thread.getName()+"':\n"+getStackTrace(exception));
+    }
+    
+    private static void handleFatalUncaughtException (Throwable exception) {
+        // Put to the logger
+        RUNTIME_LOG.err("Fatal uncaught exception in robot code:\n"+getStackTrace(exception));
     }
     
     private static String getStackTrace (Throwable e) {

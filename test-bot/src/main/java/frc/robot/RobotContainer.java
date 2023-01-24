@@ -21,6 +21,6 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand () {
-        return null;
+        throw new RuntimeException("This is a sample runtime exception");
     }
 }
