@@ -53,6 +53,10 @@ dependencies {
     // Used by other dependencies
     implementation "edu.wpi.first.ntcore:ntcore-java:2023.1.1"
     
+    // Add edu.wpi.first.wpimath
+    // Used by other dependencies
+    implementation "edu.wpi.first.wpimath:wpimath-java:2023.1.1"
+    
     
     // Add org.fusesource.jansi
     // Used for console ANSI processing for driverstation-side RCT
