@@ -17,6 +17,7 @@ import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.network.low.ConsoleManager;
+import claw.testing.SystemsCheck;
 
 /**
  * This class is meant for CLAW's internal use only.
@@ -36,6 +37,7 @@ public class RemoteCommandInterpreter {
         addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("config", "config", "config", this::configCommand);
+        addCommand("syscheck", "syscheck", "syscheck", this::syscheckCommand);
         addCommand("inspect", "inspect", "inspect", this::inspectCommand);
         addCommand("watch",
             "watch [ --all | --none | log domain...]",
@@ -172,6 +174,19 @@ public class RemoteCommandInterpreter {
         // }
         
         // console.println(fields.size() + " fields");
+    }
+    
+    private void syscheckCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        List<SystemsCheck> checks = SystemsCheck.getAllSystemsChecks();
+        
+        for (SystemsCheck check : checks) {
+            console.println(check.getSystemName());
+            console.flush();
+            
+            check.run(console);
+            console.println("Testing testing 123");
+        }
+        
     }
     
     private void testCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
