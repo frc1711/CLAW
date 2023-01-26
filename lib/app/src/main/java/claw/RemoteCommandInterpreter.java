@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import claw.LiveUnit.Setting;
 import claw.logs.LogHandler;
 import claw.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.rct.commands.Command;
@@ -78,17 +77,7 @@ public class RemoteCommandInterpreter {
             if (unit == null)
                 throw new BadCallException("The given unit '"+unitName+"' no longer exists.");
             
-            // Print the unit's settings
-            HashMap<String, Setting<?>> settings = unit.getSettings();
-            if (settings.size() > 0) {
-                console.printlnSys("Settings");
-                for (Entry<String, Setting<?>> setting : settings.entrySet()) {
-                    console.println(setting.getKey() + " = " + setting.getValue().toString());
-                }
-            }
-            
             // Repeatedly update the unit's live fields (until stopped by user input)
-            console.printlnSys("Live fields");
             int numFields = 0;
             while (!console.hasInputReady()) {
                 console.moveUp(numFields);

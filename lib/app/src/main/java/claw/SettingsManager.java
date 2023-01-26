@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class SettingsManager {
@@ -20,7 +21,7 @@ public class SettingsManager {
     
     private static SettingsManager instance = null;
     
-    public static SettingsManager getInstance () {
+    private static SettingsManager getInstance () {
         if (instance == null)
             instance = new SettingsManager();
         return instance;
@@ -29,10 +30,18 @@ public class SettingsManager {
     // Low-level settings serialization
     
     /**
-     * The map of all values obtained from the config file, updated by fields during runtime.
+     * The map of all values obtained from the config file
      */
     private final Map<String, Serializable> entries;
     
+    /**
+     * A set of all the names of {@link Setting}s created
+     */
+    private final HashSet<String> instantiatedSettingsNames = new HashSet<>();
+    
+    /**
+     * Instantiates a new SettingsManager, reading the settings from a file on the roboRIO.
+     */
     private SettingsManager () {
         LOG.out("Reading CLAW settings from "+CONFIG_FILE.getName());
         
@@ -48,7 +57,7 @@ public class SettingsManager {
     }
     
     @SuppressWarnings("unchecked")
-    public <T extends Serializable> T getEntry (String name, T defaultValue) {
+    private <T extends Serializable> T getEntry (String name, T defaultValue) {
         try {
             if (entries.containsKey(name))
                 return (T)entries.get(name);
@@ -58,16 +67,54 @@ public class SettingsManager {
         return defaultValue;
     }
     
-    public void setEntry (String name, Serializable newValue) {
+    private void setEntry (String name, Serializable newValue) {
         entries.put(name, newValue);
     }
     
-    public void save () {
+    public class Setting <T extends Serializable> {
+        
+        private final String name;
+        
+        private Setting (String name) {
+            this.name = name;
+        }
+        
+        public String getName () {
+            return name;
+        }
+        
+        public T getValue (T defaultValue) {
+            return getEntry(name, defaultValue);
+        }
+        
+        public void setValue (T value) {
+            setEntry(name, value);
+        }
+        
+    }
+    
+    public static <T extends Serializable> Setting<T> getSetting (String name) {
+        // Log a warning if this setting has already been instantiated
+        if (getInstance().instantiatedSettingsNames.contains(name))
+            LOG.out("Warning: The setting '"+name+"' was instantiated more than once.");
+        getInstance().instantiatedSettingsNames.add(name);
+        
+        return getInstance().new Setting<>(name);
+    }
+    
+    /**
+     * Attempts to save the current state of the settings, returning a boolean indicating whether or
+     * not saving was successful.
+     * @return {@code true} if saving was successful, {@code false} otherwise.
+     */
+    public static boolean save () {
         ConfigSerial serial = ConfigSerial.fromObjectMap(getInstance().entries, LOG);
         try {
             serial.writeToFile(CONFIG_FILE);
+            return true;
         } catch (Exception e) {
             LOG.err("Critical exception in saving settings: " + e.getMessage());
+            return false;
         }
     }
     
