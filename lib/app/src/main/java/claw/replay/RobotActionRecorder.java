@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import claw.SettingsManager;
 import claw.SettingsManager.Setting;
+import claw.replay.action.RobotAction;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
@@ -46,6 +47,15 @@ public class RobotActionRecorder {
      */
     public static void setRecordingEnabled (boolean enabled) {
         recordingEnabled = enabled;
+    }
+    
+    /**
+     * Check whether or not recording is currently enabled. If recording is disabled, then actions added via {@link #addAction(RobotAction)}
+     * will be ignored.
+     * @return
+     */
+    public static boolean isRecording () {
+        return recordingEnabled;
     }
     
     /**

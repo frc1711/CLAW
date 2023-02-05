@@ -1,4 +1,4 @@
-package claw.replay;
+package claw.replay.action;
 
 import java.io.Serializable;
 
