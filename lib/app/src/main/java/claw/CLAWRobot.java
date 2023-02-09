@@ -5,12 +5,15 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import claw.logs.LogHandler;
+import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.remote.RCTServer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRobot {
+    
+    private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
         
@@ -25,6 +28,10 @@ public class CLAWRobot {
             throw exception;
         }
         
+    }
+    
+    public static CommandLineInterpreter getExtensibleCommandInterpreter () {
+        return EXTENSIBLE_COMMAND_INTERPRETER;
     }
     
     private static final CLAWLogger
