@@ -1,4 +1,4 @@
-package claw.replay.action;
+package claw.replay.timed;
 
 import java.io.Serializable;
 
@@ -14,7 +14,7 @@ public class TimedDataPoint <T extends DataPoint<T>> implements Serializable {
         this.data = data;
     }
     
-    public T interpolate (TimedDataPoint<T> next, long time) {
+    public DataPoint<T> interpolateWithTime (TimedDataPoint<T> next, long time) {
         long timeInterval = next.timeMillis - timeMillis;
         double p = (time - timeMillis) / (double)timeInterval;
         return data.interpolate(next.data, p);

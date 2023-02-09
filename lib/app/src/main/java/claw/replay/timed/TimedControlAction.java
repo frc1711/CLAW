@@ -1,16 +1,18 @@
-package claw.replay.action;
+package claw.replay.timed;
 
 import java.util.Set;
 
+import claw.replay.RobotActionRecord;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
-public abstract class TimedControlAction <T extends DataPoint<T>> implements RobotAction {
+public abstract class TimedControlAction <T extends DataPoint<T>> implements RobotActionRecord {
     
     private final TimedDataPoint<T>[] dataPoints;
     
     public TimedControlAction (TimedDataPoint<T>[] dataPoints) {
         this.dataPoints = dataPoints;
+        
     }
     
     public abstract void moveToState (DataPoint<T> desiredState);
@@ -46,7 +48,7 @@ public abstract class TimedControlAction <T extends DataPoint<T>> implements Rob
                 return nextDataPoint.data;
             } else {
                 TimedDataPoint<T> lastDataPoint = dataPoints[nextDataPointIndex - 1];
-                return lastDataPoint.interpolate(nextDataPoint, getTime());
+                return lastDataPoint.interpolateWithTime(nextDataPoint, getTime());
             }
         }
         

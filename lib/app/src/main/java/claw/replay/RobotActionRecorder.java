@@ -1,113 +1,41 @@
 package claw.replay;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import claw.SettingsManager;
 import claw.SettingsManager.Setting;
-import claw.replay.action.RobotAction;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
-/**
- * A thread-safe class used internally by CLAW to record {@link RobotAction}s for autonomous replay.
- */
-public class RobotActionRecorder {
+public abstract class RobotActionRecorder {
     
-    private static final Setting<HashMap<String, ActionsReplaySerial>> REPLAYABLE_COMMANDS = SettingsManager.getSetting("REPLAYABLE_COMMANDS");
-    private static final ArrayList<RobotAction> actionsList = new ArrayList<RobotAction>();
+    private static final Setting<HashMap<String, RobotActionRecord>> REPLAYABLE_RECORDINGS = SettingsManager.getSetting("REPLAYABLE_RECORDINGS");
     
-    private static boolean recordingEnabled = false;
+    private boolean recordingEnabled = false;
     
-    /**
-     * Adds a {@link RobotAction} to the internal actions buffer. This does nothing if action recording is not enabled.
-     * @param action
-     */
-    public static void addAction (RobotAction action) {
-        if (!recordingEnabled) return;
-        
-        synchronized (actionsList) {
-            actionsList.add(action);
-        }
+    protected abstract void resetRecordingState ();
+    protected abstract RobotActionRecord getRecordingState ();
+    
+    public void stopRecording () {
+        recordingEnabled = false;
     }
     
-    /**
-     * Clears the internal actions buffer.
-     */
-    public static void resetActionsBuffer () {
-        synchronized (actionsList) {
-            actionsList.clear();
-        }
+    public void startRecording () {
+        resetRecordingState();
+        recordingEnabled = true;
     }
     
-    /**
-     * Sets whether or not actions should be recorded. If recording is disabled, then actions added via {@link #addAction(RobotAction)}
-     * will be ignored.
-     * @param enabled
-     */
-    public static void setRecordingEnabled (boolean enabled) {
-        recordingEnabled = enabled;
-    }
-    
-    /**
-     * Check whether or not recording is currently enabled. If recording is disabled, then actions added via {@link #addAction(RobotAction)}
-     * will be ignored.
-     * @return
-     */
-    public static boolean isRecording () {
-        return recordingEnabled;
-    }
-    
-    /**
-     * Add all the {@link RobotAction}s in the actions buffer to a new {@link ActionsReplaySerial} with a given name
-     * and description. This method will also clear the actions buffer.
-     * @param name
-     * @param description
-     * @return
-     */
-    public static ActionsReplaySerial getReplaySerial (String name, String description) {
-        RobotAction[] actionsArray;
-        synchronized (actionsList) {
-            actionsArray = new RobotAction[actionsList.size()];
-            actionsList.toArray(actionsArray);
-        }
-        
-        resetActionsBuffer();
-        
-        return new ActionsReplaySerial(name, description, actionsArray);
-    }
-    
-    /**
-     * Saves a given {@link ActionsReplaySerial} to settings so that it can be replayed later.
-     * This will overwrite an existing saved {@code ActionsReplaySerial} if it has the same name.
-     * @param serial
-     */
-    public static void saveReplaySerial (ActionsReplaySerial serial) {
-        REPLAYABLE_COMMANDS.getValue(new HashMap<>()).put(serial.name, serial);
+    public void saveRecordingAs (String name) {
+        stopRecording();
+        REPLAYABLE_RECORDINGS.getValue(new HashMap<>()).put(name, getRecordingState());
         SettingsManager.save(); // TODO: Saving individual fields rather than the whole settings configuration
     }
     
     /**
-     * Represents a list of {@link RobotAction}s to be completed sequentially. This class is used
-     * for saving actions to the roboRIO so they can be used later as autonomous commands.
+     * Check whether or not recording is currently enabled. If recording is disabled, then the internal recording state should
+     * not be updated.
+     * @return
      */
-    public static record ActionsReplaySerial (String name, String description, RobotAction[] actions) {
-        
-        /**
-         * Convert this {@link ActionsReplaySerial} into a command which can be executed autonomously.
-         * The command simply executes each of its actions sequentially.
-         * @return The autonomous replay {@link Command}.
-         */
-        public Command toReplayCommand () {
-            // Create an array containing all the commands to be executed
-            Command[] commands = new Command[actions.length];
-            for (int i = 0; i < commands.length; i ++)
-                commands[i] = actions[i].toReplayCommand();
-            
-            // Turn the array of commands into one command which executes them sequentially
-            return new SequentialCommandGroup(commands);
-        }
-        
+    public boolean isRecording () {
+        return recordingEnabled;
     }
     
 }
