@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.rct.network.low.Waiter;
 import claw.rct.network.low.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.LogDataMessage;
@@ -23,27 +22,26 @@ public class LogHandler {
         return instance;
     }
     
-    private final HashSet<String> registeredLogDomains = new HashSet<>();
+    private final HashSet<String> registeredLogNames = new HashSet<>();
     private final List<LogData> logDataBuffer = new ArrayList<LogData>();
     
     private final Thread dataSenderThread = new Thread(this::dataSenderThreadRunnable);
     private final Waiter<RCTServer> dataSenderThreadServerWaiter = new Waiter<RCTServer>();
     
+    private final HashSet<String> watchingLogNames = new HashSet<>();
     private boolean isClosed = false;
-    
-    private final LoggerDomain rootLoggerDomain = new LoggerDomain();
-    private boolean logAllDomains = true;
+    private boolean watchAllLogs = true;
     
     private LogHandler () {
         dataSenderThread.start();
     }
     
     /**
-     * Prepares to send some given {@link LogData} if its logger domain is currently being watched.
+     * Prepares to send some given {@link LogData} if its log is currently being watched.
      * @param data The {@code LogData} to prepare to send.
      */
     public void addData (LogData data) {
-        if (isDomainWatched(data.logDomain)) {
+        if (isWatchingLog(data.logName)) {
             synchronized (logDataBuffer) {
                 logDataBuffer.add(data);
             }
@@ -59,64 +57,37 @@ public class LogHandler {
         dataSenderThreadServerWaiter.receive(server);
     }
     
-    /**
-     * Set a logger domain string (like {@code "subsystems.swerve.frontLeft.drive"}, for example) as
-     * being watched. Logs from watched domains will be sent to the driverstation, while unwatched domains will
-     * be ignored.
-     * This should be called only in response to feedback from the driverstation.
-     * @param domain The logger domain string. Only alphabetic characters and periods are allowed.
-     * This string should follow the conventions for java package naming.
-     * @throws InvalidLoggerDomainException If the logger domain string is invalid (not alphabetic or
-     * a term is empty).
-     */
-    public void watchDomain (String domain) throws InvalidLoggerDomainException {
-        rootLoggerDomain.addDomainPath(domain);
+    public void watchLogName (String name) {
+        synchronized (watchingLogNames) {
+            watchingLogNames.add(name);
+        }
     }
     
-    /**
-     * Unset all logger domains being watched so that no log domains are sent to the driverstation.
-     * Logs from watched domains will be sent to the driverstation, while
-     * unwatched domains will be ignored.
-     * This should be called only in response to feedback from the driverstation.
-     */
-    public void unsetWatchedDomains () {
-        logAllDomains = false;
-        rootLoggerDomain.clearSubdomains();
+    public void stopWatchingLogs () {
+        watchAllLogs = false;
+        synchronized (watchingLogNames) {
+            watchingLogNames.clear();
+        }
     }
     
-    /**
-     * Set all logger domains to be watched so that all log domains are sent to the driverstation.
-     * This should be called only in response to feedback from the driverstation.
-     */
-    public void watchAllDomains () {
-        logAllDomains = true;
+    public void watchAllLogs () {
+        watchAllLogs = true;
     }
     
-    /**
-     * Adds a logger domain to a list of registed domains, indicating that a logger exists with the given domain.
-     * @param domain The logger's domain (e.g. {@code "subsystems.swerve.frontLeft.drive"}).
-     */
-    public void registerDomain (String domain) {
-        registeredLogDomains.add(domain);
+    public void registerLogName (String name) {
+        registeredLogNames.add(name);
     }
     
-    /**
-     * Get a set of all registered logger domains. A registered logger domain is a logger domain belonging to an existing
-     * {@link claw.CLAWLogger}.
-     * @return The {@code Set<String>} of logger domains used by all existing {@code CLAWLogger}s.
-    */
     @SuppressWarnings("unchecked")
-    public Set<String> getRegisteredDomains () {
-        return (HashSet<String>)registeredLogDomains.clone();
+    public Set<String> getRegisteredLogNames () {
+        return (HashSet<String>)registeredLogNames.clone();
     }
     
-    /**
-     * Returns whether or not a 
-     * @param domain
-     * @return
-     */
-    public boolean isDomainWatched (String domain) {
-        return logAllDomains || rootLoggerDomain.doesDomainPathExist(domain);
+    public boolean isWatchingLog (String logName) {
+        if (watchAllLogs) return true;
+        synchronized (watchingLogNames) {
+            return watchingLogNames.contains(logName);
+        }
     }
     
     /**

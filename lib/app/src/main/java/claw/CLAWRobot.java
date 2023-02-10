@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.remote.RCTServer;

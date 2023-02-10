@@ -1,6 +1,6 @@
 package frc.robot.commands;
 
-import claw.CLAWLogger;
+import claw.logs.CLAWLogger;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 

@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import claw.logs.CLAWLogger;
+
 public class SettingsManager {
     
     private static final File CONFIG_FILE = new File("/home/lvuser/claw-config.ser");

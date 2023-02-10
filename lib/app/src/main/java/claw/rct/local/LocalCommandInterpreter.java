@@ -291,7 +291,7 @@ public class LocalCommandInterpreter {
     }
     
     private static void printLogDataEvent (ConsoleManager console, LogData data) {
-        String logNamePrint = "["+data.logDomain+"] ";
+        String logNamePrint = "["+data.logName+"] ";
         String messagePrint = data.data;
         
         if (data.isError) {
@@ -313,7 +313,7 @@ public class LocalCommandInterpreter {
                 boolean hasFoundLine = false;
                 
                 for (int i = 0; i < dataLines.size(); i ++) {
-                    if (data.logDomain.equals(dataLines.get(i).logDomain)) {
+                    if (data.logName.equals(dataLines.get(i).logName)) {
                         dataLines.set(i, data);
                         hasFoundLine = true;
                     }
@@ -338,7 +338,7 @@ public class LocalCommandInterpreter {
             for (int i = 0; i < dataLines.size(); i ++) {
                 LogData data = dataLines.get(i);
                 
-                String domainMsg = data.logDomain + ": ";
+                String nameMsg = data.logName + ": ";
                 String message = data.data.split("\n")[0]; // Prevent more than one line being printed
                 
                 boolean hasBeenCut = message.length() != data.data.length();
@@ -351,9 +351,9 @@ public class LocalCommandInterpreter {
                 if (hasBeenCut) message += "...";
                 
                 if (data.isError) {
-                    console.printlnErr(domainMsg + message);
+                    console.printlnErr(nameMsg + message);
                 } else {
-                    console.printSys(domainMsg);
+                    console.printSys(nameMsg);
                     console.println(message);
                 }
             }

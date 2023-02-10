@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import claw.logs.LogHandler;
-import claw.logs.LoggerDomain.InvalidLoggerDomainException;
 import claw.rct.commands.Command;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -33,9 +32,9 @@ public class RemoteCommandInterpreter {
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("config", "config", "config", this::configCommand);
         addCommand("watch",
-            "watch [ --all | --none | log domain...]",
-            "Use -a or --all to watch all logger domains. Use -n or --none to watch no logger domains.\n" +
-            "Use 'watch [domain]...' to watch only a set of specific logger domains and all their subdomains.",
+            "watch [ --all | --none | log name...]",
+            "Use -a or --all to watch all logs. Use -n or --none to watch no logs.\n" +
+            "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand);
     }
     
@@ -58,43 +57,38 @@ public class RemoteCommandInterpreter {
         
         if (reader.getFlag('a') || reader.getOptionMarker("all")) {
             
-            // Watch all loggers
-            LogHandler.getInstance().watchAllDomains();
+            // Watch all logs
+            LogHandler.getInstance().watchAllLogs();
             
         } else if (reader.getFlag('n') || reader.getOptionMarker("none")) {
             
-            // Watch no loggers
-            LogHandler.getInstance().unsetWatchedDomains();
+            // Watch no logs
+            LogHandler.getInstance().stopWatchingLogs();
             
         } else {
         
-            // Unset all previous logger domains
+            // Unset all previous log names
             if (reader.hasNextArg())
-                LogHandler.getInstance().unsetWatchedDomains();
+                LogHandler.getInstance().stopWatchingLogs();
             
             // Continue until there are no more arguments
             while (reader.hasNextArg()) {
-                String domain = reader.readArgString("logger domain");
-                
-                try {
-                    LogHandler.getInstance().watchDomain(domain);
-                } catch (InvalidLoggerDomainException e) {
-                    throw new BadCallException(e.getMessage());
-                }
+                String logName = reader.readArgString("logger name");
+                LogHandler.getInstance().watchLogName(logName);
             }
             
         }
         
-        // Get a sorted list of logger domains
-        List<String> domainsList = new ArrayList<>();
-        LogHandler.getInstance().getRegisteredDomains().forEach(domainsList::add);
-        domainsList.sort(String::compareTo);
+        // Get a sorted list of log names
+        List<String> logNamesList = new ArrayList<>();
+        LogHandler.getInstance().getRegisteredLogNames().forEach(logNamesList::add);
+        logNamesList.sort(String::compareTo);
         
         // Print the list
-        domainsList.forEach(domain -> {
-            boolean watched = LogHandler.getInstance().isDomainWatched(domain);
+        logNamesList.forEach(logName -> {
+            boolean watched = LogHandler.getInstance().isWatchingLog(logName);
             char watchedChar = watched ? '#' : ' ';
-            console.println(watchedChar + " " + domain);
+            console.println(watchedChar + " " + logName);
         });
     }
     
