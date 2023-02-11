@@ -14,6 +14,8 @@ import claw.rct.remote.RCTServer;
 
 public class LogHandler {
     
+    private static final int MAX_BUFFER_LENGTH = 250;
+    
     private static LogHandler instance = null;
     
     public static LogHandler getInstance () {
@@ -43,6 +45,8 @@ public class LogHandler {
     public void addData (LogData data) {
         if (isWatchingLog(data.logName)) {
             synchronized (logDataBuffer) {
+                if (logDataBuffer.size() >= MAX_BUFFER_LENGTH)
+                    logDataBuffer.remove(0);
                 logDataBuffer.add(data);
             }
         }
