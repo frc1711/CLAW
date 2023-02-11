@@ -1,10 +1,11 @@
-package claw;
+package claw.rct.remote;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import claw.CLAWRobot;
 import claw.logs.LogHandler;
-import claw.rct.commands.Command;
+import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
@@ -43,7 +44,7 @@ public class RemoteCommandInterpreter {
     }
     
     public void processLine (ConsoleManager console, String line)
-            throws Command.ParseException, BadCallException, CommandNotRecognizedException {
+            throws RCTCommand.ParseException, BadCallException, CommandNotRecognizedException {
         try {
             interpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {

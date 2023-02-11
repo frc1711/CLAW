@@ -13,7 +13,7 @@ import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 /**
  * A command obtained through user input which can processed by a {@link CommandLineInterpreter}.
  */
-public class Command {
+public class RCTCommand {
     
     private final String command;
     private final String[] args;
@@ -96,7 +96,7 @@ public class Command {
      * throw an exception if the command is not properly formatted. Read the javadocs for
      * {@link ParseException} to read the rules for command line formatting.
      */
-    public Command (String commandText) throws ParseException {
+    public RCTCommand (String commandText) throws ParseException {
         // Trims leading and trailing whitespace, and ensures the command is not empty
         commandText = commandText.strip();
         if (commandText.equals("")) throw new ParseException("No command given");

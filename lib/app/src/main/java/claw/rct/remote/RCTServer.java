@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import claw.logs.CLAWLogger;
-import claw.RemoteCommandInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;

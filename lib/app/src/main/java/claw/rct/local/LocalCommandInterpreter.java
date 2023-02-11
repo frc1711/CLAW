@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import claw.rct.commands.Command;
+import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
@@ -90,7 +90,7 @@ public class LocalCommandInterpreter {
      * @throws Command.ParseException
      * @throws BadCallException
      */
-    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadCallException {
+    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException {
         try {
             commandInterpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {
