@@ -2,12 +2,12 @@ package claw.replay;
 
 import java.util.HashMap;
 
-import claw.SettingsManager;
-import claw.SettingsManager.Setting;
+import claw.Setting;
 
 public abstract class RobotActionRecorder {
     
-    private static final Setting<HashMap<String, RobotActionRecord>> REPLAYABLE_RECORDINGS = SettingsManager.getSetting("REPLAYABLE_RECORDINGS");
+    private static final Setting<HashMap<String, RobotActionRecord>>
+        REPLAYABLE_RECORDINGS = new Setting<>("claw.replayable_recordings", HashMap::new);
     
     private boolean recordingEnabled = false;
     
@@ -25,8 +25,8 @@ public abstract class RobotActionRecorder {
     
     public void saveRecordingAs (String name) {
         stopRecording();
-        REPLAYABLE_RECORDINGS.getValue(new HashMap<>()).put(name, getRecordingState());
-        SettingsManager.save(); // TODO: Saving individual fields rather than the whole settings configuration
+        REPLAYABLE_RECORDINGS.get().put(name, getRecordingState());
+        REPLAYABLE_RECORDINGS.save();
     }
     
     /**
