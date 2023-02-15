@@ -3,15 +3,21 @@ package claw.rct.remote;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 
 import claw.logs.CLAWLogger;
+import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
+import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
+import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
 import claw.rct.network.low.RobotSocketHandler;
+import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
 import claw.rct.network.messages.LogDataMessage;
+import claw.rct.network.messages.RequestCommandsListingMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
@@ -27,14 +33,16 @@ public class RCTServer {
     
     private final RobotSocketHandler serverSocket;
     private final RemoteCommandInterpreter interpreter;
+    private final CommandLineInterpreter extensibleInterpreter;
     private boolean successfullyStarted = false;
     
     private CommandProcessHandler commandProcessHandler;
     
-    public RCTServer (int port) throws IOException {
+    public RCTServer (int port, CommandLineInterpreter extensibleInterpreter) throws IOException {
         // Try to create a new server socket
         serverSocket = new RobotSocketHandler(port, this::receiveMessage, this::handleReceiverException);
         interpreter = new RemoteCommandInterpreter();
+        this.extensibleInterpreter = extensibleInterpreter;
     }
     
     public void start () throws IOException {
@@ -54,22 +62,33 @@ public class RCTServer {
     
     private void receiveMessage (InstructionMessage msg) {
         try {
-            Class<?> msgClass = msg.getClass();
+            if (msg instanceof RequestCommandsListingMessage)
+                receiveRequestCommandsListingMessage((RequestCommandsListingMessage)msg);
             
-            if (msgClass == ConnectionCheckMessage.class)
+            if (msg instanceof ConnectionCheckMessage)
                 receiveConnectionCheckMessage((ConnectionCheckMessage)msg);
             
-            if (msgClass == StartCommandMessage.class)
+            if (msg instanceof StartCommandMessage)
                 receiveStartCommandMessage((StartCommandMessage)msg);
             
-            if (msgClass == CommandInputMessage.class)
+            if (msg instanceof CommandInputMessage)
                 receiveCommandInputMessage((CommandInputMessage)msg);
             
-            if (msgClass == ProcessKeepaliveLocal.class)
+            if (msg instanceof ProcessKeepaliveLocal)
                 receiveKeepaliveMessage((ProcessKeepaliveLocal)msg);
         } catch (IOException e) {
             handleNonFatalServerException(e);
         }
+    }
+    
+    private void receiveRequestCommandsListingMessage (RequestCommandsListingMessage msg) throws IOException {
+        // Get all help messages from both interpreters
+        ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
+        interpreter.getHelpMessages().forEach(helpMessages::add);
+        extensibleInterpreter.getHelpMessages().forEach(helpMessages::add);
+        
+        // Turn the arraylist into an array and send the response
+        serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
     }
     
     private void receiveConnectionCheckMessage (ConnectionCheckMessage msg) throws IOException {
@@ -91,8 +110,12 @@ public class RCTServer {
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
         Thread commandProcessorThread = new Thread(() -> {
             try {
-                // Attempt to run the process via the command interpreter
-                interpreter.processLine(commandProcessHandler, msg.command);
+                try {
+                    // Attempt to run the process via the command interpreter
+                    interpreter.processLine(commandProcessHandler, msg.command);
+                } catch (CommandNotRecognizedException e) {
+                    extensibleInterpreter.processLine(commandProcessHandler, msg.command);
+                }
             } catch (CommandLineException e) {
                 e.writeToConsole(commandProcessHandler);
             } catch (TerminatedProcessException e) { } // If the process was terminated (a runtime exception), exit silently

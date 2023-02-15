@@ -3,13 +3,10 @@ package claw.rct.remote;
 import java.util.ArrayList;
 import java.util.List;
 
-import claw.CLAWRobot;
 import claw.logs.LogHandler;
-import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
-import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.network.low.ConsoleManager;
@@ -17,7 +14,7 @@ import claw.rct.network.low.ConsoleManager;
 /**
  * This class is meant for CLAW's internal use only.
  */
-public class RemoteCommandInterpreter {
+public class RemoteCommandInterpreter extends CommandLineInterpreter {
     
     private final CommandLineInterpreter interpreter = new CommandLineInterpreter();
     
@@ -41,15 +38,6 @@ public class RemoteCommandInterpreter {
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
         interpreter.addCommandProcessor(new CommandProcessor(command, usage, helpDescription, function));
-    }
-    
-    public void processLine (ConsoleManager console, String line)
-            throws RCTCommand.ParseException, BadCallException, CommandNotRecognizedException {
-        try {
-            interpreter.processLine(console, line);
-        } catch (CommandNotRecognizedException e) {
-            CLAWRobot.getExtensibleCommandInterpreter().processLine(console, line);
-        }
     }
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

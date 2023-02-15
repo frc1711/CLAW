@@ -62,7 +62,7 @@ public class CLAWRobot {
         // Start RCT server thread
         new Thread(() -> {
             try {
-                server = new RCTServer(5800);
+                server = new RCTServer(5800, EXTENSIBLE_COMMAND_INTERPRETER);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");

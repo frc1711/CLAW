@@ -156,8 +156,8 @@ public class LocalCommandInterpreter {
         console.println("All the following commands run on the local command interpreter, meaning they");
         console.println("are executed on the driverstation and not the roboRIO (with few exceptions).\n");
         for (HelpMessage helpMessage : helpMessages) {
-            console.printlnSys(helpMessage.usage);
-            console.println("  " + helpMessage.helpDescription + "\n");
+            console.printlnSys(helpMessage.usage());
+            console.println("  " + helpMessage.helpDescription() + "\n");
         }
     }
     

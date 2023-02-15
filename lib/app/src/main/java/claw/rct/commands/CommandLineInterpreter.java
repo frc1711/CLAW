@@ -71,7 +71,7 @@ public class CommandLineInterpreter {
         commandProcessors.values().forEach(processor -> helpMessages.add(processor.helpMessage));
         
         // Sort the list alphabetically and return it
-        helpMessages.sort((a, b) -> a.getCommand().compareTo(b.getCommand()));
+        helpMessages.sort((a, b) -> a.command().compareTo(b.command()));
         return helpMessages;
     }
     
