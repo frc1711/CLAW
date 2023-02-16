@@ -17,6 +17,8 @@ import claw.logs.CLAWLogger;
  */
 public class Setting <T extends Serializable> {
     
+    // TODO: Clearing unused settings
+    
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.settings");
     private static final String BASE_CONFIG_DIRECTORY = "/home/lvuser/config-settings";
     

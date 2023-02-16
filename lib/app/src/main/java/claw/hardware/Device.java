@@ -2,6 +2,7 @@ package claw.hardware;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -88,11 +89,39 @@ public class Device <T> {
     /**
      * Get all instantiated devices' names. This may or may not differ from the
      * set of device names associated with a saved ID.
-     * @return  The set of all instantiated {@link Device}s' names.
+     * @return  The {@code Set<String>} of all instantiated {@link Device}s' names.
+     * @see #getAllSavedDeviceIDs()
      */
     @SuppressWarnings("unchecked")
     public static Set<String> getAllDeviceNames () {
-        return (Set<String>)allDeviceNames.clone();
+        synchronized (allDeviceNames) {
+            return (Set<String>)allDeviceNames.clone();
+        }
+    }
+    
+    /**
+     * Get a map of device names onto device IDs representing what is currently saved to the roboRIO. The
+     * device names may or may not differ from the set of names belonging to devices which have actually
+     * been instantiated.
+     * @return  A {@code Map<String, Integer>} read from the roboRIO, mapping device names onto
+     * saved device IDs.
+     * @see #getAllDeviceNames()
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Integer> getAllSavedDeviceIDs () {
+        synchronized (DEVICE_MAP_LOCK) {
+            return (Map<String, Integer>)DEVICE_NAMES_TO_IDS.get().clone();
+        }
+    }
+    
+    /**
+     * Clear all device names and IDs saved to the roboRIO.
+     */
+    public static void clearAllSavedIDs () {
+        synchronized (DEVICE_MAP_LOCK) {
+            DEVICE_NAMES_TO_IDS.get().clear();
+            DEVICE_NAMES_TO_IDS.save();
+        }
     }
     
     /**
@@ -100,34 +129,35 @@ public class Device <T> {
      * device ID will be persistent between program instances (i.e. if you restart your robot code or turn the robot off,
      * the device ID will still be saved with the given value). Notably, the change in ID will not take effect on any existing
      * {@link Device} instances. In order for devices IDs to be refreshed according to their saved values, use {@link #reinitialize()}.
+     * If {@code id} is {@code Optional.empty()}, then the device's saved ID will be cleared.
      * @param deviceName    The device's unique name.
-     * @param id            The new device ID.
+     * @param id            An {@link Optional} containing The new device ID. If the optional is empty, the device's saved ID will be cleared.
      * @return              {@code true} if the ID was successfully saved, {@code false} otherwise.
      */
-    public static boolean setDeviceID (String deviceName, int id) {
+    public static boolean saveDeviceID (String deviceName, Optional<Integer> id) {
         synchronized (DEVICE_MAP_LOCK) {
-            DEVICE_NAMES_TO_IDS.get().put(deviceName, id);
+            
+            if (id.isPresent()) {
+                // If an ID was supplied, save the new value
+                DEVICE_NAMES_TO_IDS.get().put(deviceName, id.get());
+            } else {
+                // If no ID was supplied, clear the entry
+                DEVICE_NAMES_TO_IDS.get().remove(deviceName);
+            }
+            
             return DEVICE_NAMES_TO_IDS.save();
         }
     }
     
     /**
-     * Get the device ID from the settings
+     * Get the saved ID for a particular device's name.
+     * @param deviceName    The device name to retrieve the ID for.
+     * @return              The device's saved ID, if it could be found.
      */
-    private int getId () {
+    public static Optional<Integer> getDeviceId (String deviceName) {
         synchronized (DEVICE_MAP_LOCK) {
-            // Retrieve the boxed Integer ID from the settings
-            Integer id = DEVICE_NAMES_TO_IDS.get().get(deviceName);
-            
-            // Return the ID
-            if (id != null) {
-                // If the ID was found in the settings, return it
-                return id.intValue();
-            } else {
-                // If the ID was not found in the settings, return 0 and log a warning
-                LOG.out("Warning: No device ID was found for device name '"+deviceName+"'");
-                return 0;
-            }
+            // Retrieve the boxed Integer ID from the settings, and convert to an optional
+            return Optional.ofNullable(DEVICE_NAMES_TO_IDS.get().get(deviceName));
         }
     }
     
@@ -135,7 +165,14 @@ public class Device <T> {
      * Initialize a new device according to the ID in settings
      */
     private T initializeDevice () {
-        return initializer.initializeDevice(getId());
+        Optional<Integer> id = getDeviceId(deviceName);
+        
+        // If the ID was not found in the settings, log a warning
+        if (id.isEmpty())
+            LOG.out("Warning: No device ID was found for device name '"+deviceName+"', defaulting to 0");
+        
+        // Return the device initialized with the given ID
+        return initializer.initializeDevice(id.orElse(0));
     }
     
     /**

@@ -2,7 +2,10 @@ package claw.rct.remote;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
+import claw.hardware.Device;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -26,6 +29,12 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         
         // TODO: Standardize the help command/description and create a new message class so that a listing of commands can be sent from remote, so nonexistent commands can be caught even if there is no connection to remote
         
+        addCommand("device",
+            "device list, device set NAME ID, device rm [ NAME | --all | -a ]",
+            "Use 'device list' to list all devices. Use 'device set NAME ID' to set\n" +
+            "the ID for a device NAME. Use 'device rm NAME' to clear a device with a given\n" +
+            "name from the save file, or 'device rm --all' to clear all saved device IDs.",
+            this::deviceCommand);
         addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
         addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("config", "config", "config", this::configCommand);
@@ -87,6 +96,90 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         console.println("pong");
         String input = console.readInputLine();
         console.printlnSys("Read input line: " + input);
+    }
+    
+    private void deviceCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        String operation = reader.readArgOneOf("operation", "The given operation is invalid. Use 'list', 'set' or 'rm'.", "list", "set", "rm");
+        
+        if (operation.equals("list")) {
+            reader.noMoreArgs();
+            reader.allowNoOptions();
+            reader.allowNoFlags();
+            
+            int idColumn = 30;
+            
+            // Get all instantiated devices' names and sort them alphabetically
+            Set<String> deviceNames = Device.getAllDeviceNames();
+            ArrayList<String> deviceNamesList = new ArrayList<>(deviceNames);
+            deviceNamesList.sort(String::compareTo);
+            
+            // Loop through all devices and list their saved IDs
+            for (String deviceName : deviceNamesList) {
+                // The device name and spacing before the ID
+                String prefix = deviceName + " : ";
+                String space = " ".repeat(Math.min(idColumn - prefix.length(), 0));
+                
+                // String representation of the saved device ID
+                Optional<Integer> id = Device.getDeviceId(deviceName);
+                String idString = id.isPresent() ? id.get().toString() : "No saved ID";
+                
+                // Printing a line for the device
+                console.println(prefix + space + idString);
+            }
+            
+            // Get the set of all device names which have a saved ID but aren't instantiated
+            Set<String> unusedSavedDeviceNames = Device.getAllSavedDeviceIDs().keySet();
+            unusedSavedDeviceNames.removeIf(deviceNames::contains);
+            
+            // List any unused device IDs saved to the roboRIO
+            if (unusedSavedDeviceNames.size() > 0) {
+                console.printlnSys("\nThe following device names and IDs are saved to the roboRIO but");
+                console.printlnSys("have no matching (instantiated) devices in the robot code.");
+                console.printlnSys("Unused device settings can be cleared with 'device rm NAME'.");
+                console.printlnSys("Note that this may happen if you're incorrectly instantiating devices.");
+                console.printlnSys("All devices should be instantiated as soon as the robot program starts.");
+                
+                for (String deviceName : unusedSavedDeviceNames)
+                    console.println(deviceName);
+            }
+            
+        } else if (operation.equals("set")) {
+            
+            // Read the device name and ID to save
+            String deviceName = reader.readArgString("device name");
+            int newID = reader.readArgInt("new ID");
+            reader.noMoreArgs();
+            reader.allowNoOptions();
+            reader.allowNoFlags();
+            
+            // Save the device name and ID
+            boolean success = Device.saveDeviceID(deviceName, Optional.of(newID));
+            if (success)
+                console.println("Saved successfully.");
+            else
+                console.printlnErr("Error saving new device ID.");
+            
+        } else if (operation.equals("rm")) {
+            
+            // Check if all device IDs should be removed
+            reader.allowFlags('a');
+            reader.allowOptions("all");
+            boolean removeAll = reader.getFlag('a') || reader.getOptionMarker("all");
+            
+            if (removeAll) {
+                // Clear all saved IDs
+                reader.noMoreArgs();
+                Device.clearAllSavedIDs();
+            } else {
+                // Get the device name to clear the ID from
+                String deviceName = reader.readArgString("device name");
+                reader.noMoreArgs();
+                
+                // Clear the device ID from the save
+                Device.saveDeviceID(deviceName, Optional.empty());
+            }
+            
+        }
     }
     
     private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
