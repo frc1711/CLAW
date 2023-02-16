@@ -10,12 +10,12 @@ import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
 import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
 import claw.rct.network.low.RobotSocketHandler;
 import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
+import claw.rct.network.messages.InstructionMessageHandler;
 import claw.rct.network.messages.LogDataMessage;
 import claw.rct.network.messages.RequestCommandsListingMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
@@ -23,7 +23,7 @@ import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
 import claw.rct.remote.CommandProcessHandler.TerminatedProcessException;
 
-public class RCTServer {
+public class RCTServer implements InstructionMessageHandler {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.server");
     
@@ -60,42 +60,32 @@ public class RCTServer {
         serverSocket.sendResponseMessage(message);
     }
     
-    private void receiveMessage (InstructionMessage msg) {
+    @Override
+    public void receiveRequestCommandsListingMessage (RequestCommandsListingMessage msg) {
         try {
-            if (msg instanceof RequestCommandsListingMessage)
-                receiveRequestCommandsListingMessage((RequestCommandsListingMessage)msg);
+            // Get all help messages from both interpreters
+            ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
+            interpreter.getHelpMessages().forEach(helpMessages::add);
+            extensibleInterpreter.getHelpMessages().forEach(helpMessages::add);
             
-            if (msg instanceof ConnectionCheckMessage)
-                receiveConnectionCheckMessage((ConnectionCheckMessage)msg);
-            
-            if (msg instanceof StartCommandMessage)
-                receiveStartCommandMessage((StartCommandMessage)msg);
-            
-            if (msg instanceof CommandInputMessage)
-                receiveCommandInputMessage((CommandInputMessage)msg);
-            
-            if (msg instanceof ProcessKeepaliveLocal)
-                receiveKeepaliveMessage((ProcessKeepaliveLocal)msg);
+            // Turn the arraylist into an array and send the response
+            serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
         } catch (IOException e) {
             handleNonFatalServerException(e);
         }
     }
     
-    private void receiveRequestCommandsListingMessage (RequestCommandsListingMessage msg) throws IOException {
-        // Get all help messages from both interpreters
-        ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
-        interpreter.getHelpMessages().forEach(helpMessages::add);
-        extensibleInterpreter.getHelpMessages().forEach(helpMessages::add);
-        
-        // Turn the arraylist into an array and send the response
-        serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
+    @Override
+    public void receiveConnectionCheckMessage (ConnectionCheckMessage msg) {
+        try {
+            serverSocket.sendResponseMessage(new ConnectionResponseMessage());
+        } catch (IOException e) {
+            handleNonFatalServerException(e);
+        }
     }
     
-    private void receiveConnectionCheckMessage (ConnectionCheckMessage msg) throws IOException {
-        serverSocket.sendResponseMessage(new ConnectionResponseMessage());
-    }
-    
-    private void receiveStartCommandMessage (StartCommandMessage msg) {
+    @Override
+    public void receiveStartCommandMessage (StartCommandMessage msg) {
         // Terminate the previous command process handler if one existed
         if (commandProcessHandler != null)
             commandProcessHandler.terminate(false);
@@ -133,7 +123,7 @@ public class RCTServer {
         
     }
     
-    private void sendResponseMessageForProcess (ResponseMessage msg) {
+    public void sendResponseMessageForProcess (ResponseMessage msg) {
         try {
             serverSocket.sendResponseMessage(msg);
         } catch (IOException e) {
@@ -141,12 +131,14 @@ public class RCTServer {
         }
     }
     
-    private void receiveKeepaliveMessage (ProcessKeepaliveLocal msg) {
+    @Override
+    public void receiveKeepaliveMessage (ProcessKeepaliveLocal msg) {
         if (commandProcessHandler != null)
             commandProcessHandler.receiveKeepaliveMessage(msg);
     }
     
-    private void receiveCommandInputMessage (CommandInputMessage msg) throws IOException {
+    @Override
+    public void receiveCommandInputMessage (CommandInputMessage msg) {
         if (commandProcessHandler != null)
             commandProcessHandler.receiveCommandInputMessage(msg);
     }

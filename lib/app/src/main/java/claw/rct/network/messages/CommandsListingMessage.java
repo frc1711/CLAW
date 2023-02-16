@@ -10,6 +10,7 @@ public class CommandsListingMessage extends ResponseMessage {
     public final HelpMessage[] helpMessages;
     
     public CommandsListingMessage (HelpMessage[] helpMessages) {
+        // TODO: Consider migrating this to networktables because of its one-time-use
         this.helpMessages = helpMessages;
     }
     
