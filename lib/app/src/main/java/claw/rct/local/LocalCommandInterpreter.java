@@ -150,11 +150,15 @@ public class LocalCommandInterpreter {
     private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         
-        List<HelpMessage> helpMessages = commandInterpreter.getHelpMessages();
+        // Combine local help messages and remote into one list
+        List<HelpMessage> helpMessages = new ArrayList<HelpMessage>(commandInterpreter.getHelpMessages());
+        List<HelpMessage> remoteMessages = Arrays.asList(system.getRemoteHelpMessages());
+        helpMessages.addAll(remoteMessages);
         
-        console.printlnSys("\n==== Local Command Interpreter Help ====");
-        console.println("All the following commands run on the local command interpreter, meaning they");
-        console.println("are executed on the driverstation and not the roboRIO (with few exceptions).\n");
+        // Sort alphabetically by command
+        helpMessages.sort((a, b) -> a.command().compareTo(b.command()));
+        
+        // Print each help message
         for (HelpMessage helpMessage : helpMessages) {
             console.printlnSys(helpMessage.usage());
             console.println("  " + helpMessage.helpDescription() + "\n");

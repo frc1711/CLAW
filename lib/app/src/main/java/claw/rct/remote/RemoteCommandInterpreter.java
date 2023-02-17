@@ -19,8 +19,6 @@ import claw.rct.network.low.ConsoleManager;
  */
 public class RemoteCommandInterpreter extends CommandLineInterpreter {
     
-    private final CommandLineInterpreter interpreter = new CommandLineInterpreter();
-    
     public RemoteCommandInterpreter () {
         addCommands();
     }
@@ -46,7 +44,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
-        interpreter.addCommandProcessor(new CommandProcessor(command, usage, helpDescription, function));
+        addCommandProcessor(new CommandProcessor(command, usage, helpDescription, function));
     }
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

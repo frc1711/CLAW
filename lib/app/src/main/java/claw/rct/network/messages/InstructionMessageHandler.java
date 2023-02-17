@@ -8,9 +8,6 @@ import claw.rct.network.messages.commands.StartCommandMessage;
 public interface InstructionMessageHandler {
     
     public default void receiveMessage (InstructionMessage msg) {
-        if (msg instanceof RequestCommandsListingMessage)
-            receiveRequestCommandsListingMessage((RequestCommandsListingMessage)msg);
-        
         if (msg instanceof ConnectionCheckMessage)
             receiveConnectionCheckMessage((ConnectionCheckMessage)msg);
         
@@ -24,7 +21,6 @@ public interface InstructionMessageHandler {
             receiveKeepaliveMessage((ProcessKeepaliveLocal)msg);
     }
     
-    public void receiveRequestCommandsListingMessage (RequestCommandsListingMessage msg);
     public void receiveConnectionCheckMessage (ConnectionCheckMessage msg);
     public void receiveStartCommandMessage (StartCommandMessage msg);
     public void receiveCommandInputMessage (CommandInputMessage msg);

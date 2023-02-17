@@ -1,9 +1,11 @@
 package claw.rct.local;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandProcessor.BadCallException;
+import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 import claw.rct.network.low.InstructionMessage;
@@ -50,6 +52,9 @@ public class LocalSystem implements ResponseMessageHandler {
     private boolean requireNewConnection = false;
     
     private boolean useStaticRoboRIOAddress;
+    
+    private Optional<HelpMessage[]> remoteHelpMessages = Optional.empty();
+    private final Object remoteHelpMessagesLock = new Object();
     
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
@@ -259,7 +264,17 @@ public class LocalSystem implements ResponseMessageHandler {
     
     @Override
     public void receiveCommandsListingMessage (CommandsListingMessage msg) {
-        // TODO: Receive commands listing (and requesting periodically)
+        synchronized (remoteHelpMessagesLock) {
+            // Set the remote help messages field
+            remoteHelpMessages = Optional.of(msg.helpMessages);
+        }
+    }
+    
+    public HelpMessage[] getRemoteHelpMessages () {
+        synchronized (remoteHelpMessagesLock) {
+            // Return a copy of the remote help messages
+            return remoteHelpMessages.orElse(new HelpMessage[0]).clone();
+        }
     }
     
     public void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {

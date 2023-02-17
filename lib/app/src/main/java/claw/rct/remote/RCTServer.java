@@ -17,7 +17,6 @@ import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
 import claw.rct.network.messages.InstructionMessageHandler;
 import claw.rct.network.messages.LogDataMessage;
-import claw.rct.network.messages.RequestCommandsListingMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
@@ -45,12 +44,24 @@ public class RCTServer implements InstructionMessageHandler {
         this.extensibleInterpreter = extensibleInterpreter;
     }
     
+    private void waitForConnection () throws IOException {
+        // Establish a new connection
+        serverSocket.getNewConnection();
+        
+        // Try to send a commands listing message
+        try {
+            sendCommandsListingMessage();
+        } catch (IOException e) {
+            handleNonFatalServerException(e);
+        }
+    }
+    
     public void start () throws IOException {
         // Do nothing if the server has already successfully started
         if (successfullyStarted) return;
         
         // Try to get a new connection
-        serverSocket.getNewConnection();
+        waitForConnection();
         
         // If an exception has not yet been thrown, the server has started successfully
         successfullyStarted = true;
@@ -60,19 +71,14 @@ public class RCTServer implements InstructionMessageHandler {
         serverSocket.sendResponseMessage(message);
     }
     
-    @Override
-    public void receiveRequestCommandsListingMessage (RequestCommandsListingMessage msg) {
-        try {
-            // Get all help messages from both interpreters
-            ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
-            interpreter.getHelpMessages().forEach(helpMessages::add);
-            extensibleInterpreter.getHelpMessages().forEach(helpMessages::add);
-            
-            // Turn the arraylist into an array and send the response
-            serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
-        } catch (IOException e) {
-            handleNonFatalServerException(e);
-        }
+    private void sendCommandsListingMessage () throws IOException {
+        // Get all help messages from both interpreters
+        ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
+        helpMessages.addAll(interpreter.getHelpMessages());
+        helpMessages.addAll(extensibleInterpreter.getHelpMessages());
+        
+        // Turn the arraylist into an array and send the response
+        serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
     }
     
     @Override
@@ -159,7 +165,7 @@ public class RCTServer implements InstructionMessageHandler {
             System.err.println(message);
             LOG.err(message);
             
-            serverSocket.getNewConnection();
+            waitForConnection();
         } catch (IOException fatalEx) {
             handleFatalServerException(fatalEx);
         }
