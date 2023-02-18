@@ -33,7 +33,6 @@ public class LocalCommandInterpreter {
      */
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
-    private boolean hasNewLogData = false;
     private List<LogData> newLogData = new ArrayList<LogData>();
     private final Object newLogDataLock = new Object();
     
@@ -73,11 +72,8 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("log", "log [--live]",
-            "Log will, by default, print logged data to the terminal when it is received from the robot. " +
-            "Live mode can be enabled using 'log --live' or 'log -l', where different logs are updated in their " +
-            "own lines in the terminal rather than all being printed to new lines. This can be useful for tracking " +
-            "several changing variables over time.",
+        addCommand("log", "log",
+            "Print data with CLAWLoggers to the terminal when it is received from the robot.",
             this::logCommand);
     }
     
@@ -246,40 +242,14 @@ public class LocalCommandInterpreter {
     }
     
     private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowFlags('l');
-        reader.allowOptions("live");
-        
-        // Check whether or not to log data in "live" mode (where each stream has its own line which updates over time)
-        boolean liveLogging = reader.getFlag('l') || reader.getOptionMarker("live");
-        
-        // If in live logging mode, clear any log data currently waiting as only
-        // data sent from here on out should get a field
-        if (liveLogging) {
-            synchronized (newLogDataLock) {
-                newLogData.clear();
-            }
-        }
-        
-        // Get a live data lines object which is used for live logging mode (used later on if in live mode)
-        LiveDataLines lines = new LiveDataLines();
-        
         // Repeat the logging loop until the user pressed a key
         while (!console.hasInputReady()) {
             
             // Synchronize with the newLogDataLock and only print data if there is new data
             synchronized (newLogDataLock) {
-                if (hasNewLogData) {
-                    hasNewLogData = false;
-                    
-                    if (liveLogging) {
-                        // If in live logging mode, use the LiveDataLines object to update the display
-                        lines.updateDisplay(console, newLogData);
-                    } else {
-                        // Otherwise, print a new event line for each data received
-                        for (LogData data : newLogData) {
-                            printLogDataEvent(console, data);
-                        }
-                    }
+                if (newLogData.size() > 0) {
+                    for (LogData data : newLogData)
+                        printLogDataEvent(console, data);
                     
                     newLogData.clear();
                 }
@@ -290,7 +260,6 @@ public class LocalCommandInterpreter {
     private void receiveLogDataListener (LogData[] data) {
         synchronized (newLogDataLock) {
             newLogData.addAll(Arrays.asList(data));
-            hasNewLogData = true;
         }
     }
     
@@ -299,70 +268,12 @@ public class LocalCommandInterpreter {
         String messagePrint = data.data;
         
         if (data.isError) {
-            console.printlnErr(logNamePrint + messagePrint);
+            console.printlnErr(logNamePrint);
+            console.printlnErr(ConsoleManager.formatMessage(messagePrint, 2));
         } else {
-            console.printSys(logNamePrint);
-            console.println(messagePrint);
+            console.printlnSys(logNamePrint);
+            console.println(ConsoleManager.formatMessage(messagePrint, 2));
         }
-    }
-    
-    private static class LiveDataLines {
-        
-        private final List<LogData> dataLines = new ArrayList<>();
-        
-        public LiveDataLines () { }
-        
-        private void receiveLogData (List<LogData> dataSet) {
-            for (LogData data : dataSet) {
-                boolean hasFoundLine = false;
-                
-                for (int i = 0; i < dataLines.size(); i ++) {
-                    if (data.logName.equals(dataLines.get(i).logName)) {
-                        dataLines.set(i, data);
-                        hasFoundLine = true;
-                    }
-                }
-                
-                if (!hasFoundLine)
-                    dataLines.add(data);
-            }
-        }
-        
-        public void updateDisplay (ConsoleManager console, List<LogData> dataSet) {
-            int numLines = dataLines.size();
-            
-            receiveLogData(dataSet);
-            
-            while (numLines > 0) {
-                console.moveUp(1);
-                console.clearLine();
-                numLines --;
-            }
-            
-            for (int i = 0; i < dataLines.size(); i ++) {
-                LogData data = dataLines.get(i);
-                
-                String nameMsg = data.logName + ": ";
-                String message = data.data.split("\n")[0]; // Prevent more than one line being printed
-                
-                boolean hasBeenCut = message.length() != data.data.length();
-                
-                if (message.length() > 60) {
-                    message = message.substring(0, 60);
-                    hasBeenCut = true;
-                }
-                
-                if (hasBeenCut) message += "...";
-                
-                if (data.isError) {
-                    console.printlnErr(nameMsg + message);
-                } else {
-                    console.printSys(nameMsg);
-                    console.println(message);
-                }
-            }
-        }
-        
     }
     
 }
