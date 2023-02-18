@@ -1,9 +1,82 @@
 package claw.rct.network.low;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * An interface for managing input from and output to the driverstation console.
  */
 public interface ConsoleManager {
+    
+    public static final int MAX_COLS_PER_LINE = 100;
+    
+    /**
+     * Break a long message apart into many lines which fit in the console.
+     * @param message           The message to be broken apart into lines.
+     * @return                  The formatted message.
+     */
+    public static String formatMessage (String message) {
+        return formatMessage(message, 0);
+    }
+    
+    /**
+     * Break a long message apart into many lines which fit in the console, and apply an indent to the beginning of each
+     * new outputted line.
+     * @param message           The message to be broken apart and indented.
+     * @param indent            The number of spaces to indent each line with.
+     * @return                  The formatted message.
+     */
+    public static String formatMessage (String message, int indent) {
+        ArrayList<String> inputLines = new ArrayList<>(Arrays.asList(message.split("\n")));
+        ArrayList<String> outputLines = new ArrayList<>();
+        
+        int maxColsAfterIndex = MAX_COLS_PER_LINE - indent;
+        
+        for (String inputLine : inputLines) {
+            while (inputLine.length() > 0) {
+                // Determine the length to cut out from the input line
+                int nextLineMaxLength = Math.min(inputLine.length(), maxColsAfterIndex);
+                
+                // Get the line to add to the ouputLines
+                String outputLine = inputLine.substring(0, nextLineMaxLength);
+                
+                // Word breaking:
+                // Check if this line will have to be broken apart again after this cut (i.e. there will be another line following outputLine)
+                if (inputLine.length() > nextLineMaxLength) {
+                    
+                    // Check that there is a word continuously between the end of outputLine and the following line
+                    if (
+                        !Character.isWhitespace(inputLine.charAt(nextLineMaxLength-1)) &&
+                        !Character.isWhitespace(inputLine.charAt(nextLineMaxLength))
+                    ) {
+                        // There is a word running continuously from outputLine into the next, so try to apply a word break
+                        // Also, add a space to the end so the space is removed from the beginning of the next line
+                        outputLine = applyWordBreak(outputLine) + " ";
+                    }
+                }
+                
+                // Remove the outputLine's content from the beginning of the inputLine
+                inputLine = inputLine.substring(outputLine.length());
+                
+                // Add the line to outputLines and apply the indent
+                outputLines.add(" ".repeat(indent) + outputLine);
+            }
+        }
+        
+        return String.join("\n", outputLines);
+    }
+    
+    private static String applyWordBreak (String inputLine) {
+        // Break apart the line into words
+        ArrayList<String> words = new ArrayList<>(Arrays.asList(inputLine.split(" ")));
+        
+        // Remove the last word if there is more than one word
+        if (words.size() > 1)
+            words.remove(words.size()-1);
+        
+        // Return the words joined together with spaces
+        return String.join(" ", words);
+    }
     
     /**
      * Read a single line of input from the console.

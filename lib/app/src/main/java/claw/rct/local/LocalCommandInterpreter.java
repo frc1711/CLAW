@@ -74,9 +74,9 @@ public class LocalCommandInterpreter {
             this::sshCommand);
         
         addCommand("log", "log [--live]",
-            "Log will, by default, print logged data to the terminal when it is received from the robot.\n" +
-            "Live mode can be enabled using 'log --live' or 'log -l', where different logs are updated in their\n" +
-            "own lines in the terminal rather than all being printed to new lines. This can be useful for tracking\n" +
+            "Log will, by default, print logged data to the terminal when it is received from the robot. " +
+            "Live mode can be enabled using 'log --live' or 'log -l', where different logs are updated in their " +
+            "own lines in the terminal rather than all being printed to new lines. This can be useful for tracking " +
             "several changing variables over time.",
             this::logCommand);
     }
@@ -161,7 +161,7 @@ public class LocalCommandInterpreter {
         // Print each help message
         for (HelpMessage helpMessage : helpMessages) {
             console.printlnSys(helpMessage.usage());
-            console.println("  " + helpMessage.helpDescription() + "\n");
+            console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2) + "\n");
         }
     }
     

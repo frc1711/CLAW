@@ -24,21 +24,16 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
     }
     
     private void addCommands () {
-        
-        // TODO: Standardize the help command/description and create a new message class so that a listing of commands can be sent from remote, so nonexistent commands can be caught even if there is no connection to remote
-        
         addCommand("device",
             "device list, device set NAME ID, device rm [ NAME | --all | -a ]",
-            "Use 'device list' to list all devices. Use 'device set NAME ID' to set\n" +
-            "the ID for a device NAME. Use 'device rm NAME' to clear a device with a given\n" +
+            "Use 'device list' to list all devices. Use 'device set NAME ID' to set " +
+            "the ID for a device NAME. Use 'device rm NAME' to clear a device with a given " +
             "name from the save file, or 'device rm --all' to clear all saved device IDs.",
             this::deviceCommand);
-        addCommand("ping", "[ping usage]", "[ping help]", this::pingCommand);
-        addCommand("test", "[test usage]", "[test help]", this::testCommand);
         addCommand("config", "config", "config", this::configCommand);
         addCommand("watch",
             "watch [ --all | --none | log name...]",
-            "Use -a or --all to watch all logs. Use -n or --none to watch no logs.\n" +
+            "Use -a or --all to watch all logs. Use -n or --none to watch no logs. " +
             "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand);
     }
@@ -88,14 +83,6 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         });
     }
     
-    private void pingCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
-        
-        console.println("pong");
-        String input = console.readInputLine();
-        console.printlnSys("Read input line: " + input);
-    }
-    
     private void deviceCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         String operation = reader.readArgOneOf("operation", "The given operation is invalid. Use 'list', 'set' or 'rm'.", "list", "set", "rm");
         
@@ -131,11 +118,13 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             
             // List any unused device IDs saved to the roboRIO
             if (unusedSavedDeviceNames.size() > 0) {
-                console.printlnSys("\nThe following device names and IDs are saved to the roboRIO but");
-                console.printlnSys("have no matching (instantiated) devices in the robot code.");
-                console.printlnSys("Unused device settings can be cleared with 'device rm NAME'.");
-                console.printlnSys("Note that this may happen if you're incorrectly instantiating devices.");
-                console.printlnSys("All devices should be instantiated as soon as the robot program starts.");
+                console.printlnSys(
+                    "\nThe following device names and IDs are saved to the roboRIO but " +
+                    "have no matching (instantiated) devices in the robot code. " +
+                    "Unused device settings can be cleared with 'device rm NAME'. " +
+                    "Note that this may happen if you're incorrectly instantiating devices. " +
+                    "All devices should be instantiated as soon as the robot program starts."
+                );
                 
                 for (String deviceName : unusedSavedDeviceNames)
                     console.println(deviceName);
@@ -196,18 +185,6 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         // }
         
         // console.println(fields.size() + " fields");
-    }
-    
-    private void testCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
-        int number = 0;
-        
-        console.println("");
-        while (!console.hasInputReady()) {
-            console.moveUp(1);
-            number ++;
-            console.printlnSys(""+number);
-        }
     }
     
 }
