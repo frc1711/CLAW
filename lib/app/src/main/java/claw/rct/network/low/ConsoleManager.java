@@ -33,6 +33,9 @@ public interface ConsoleManager {
         int maxColsAfterIndex = MAX_COLS_PER_LINE - indent;
         
         for (String inputLine : inputLines) {
+            if (inputLine.length() == 0)
+                outputLines.add("");
+            
             while (inputLine.length() > 0) {
                 // Determine the length to cut out from the input line
                 int nextLineMaxLength = Math.min(inputLine.length(), maxColsAfterIndex);

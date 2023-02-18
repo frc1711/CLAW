@@ -98,6 +98,11 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             ArrayList<String> deviceNamesList = new ArrayList<>(deviceNames);
             deviceNamesList.sort(String::compareTo);
             
+            // Message if there are no devices
+            if (deviceNamesList.size() == 0) {
+                console.println("No instantiated devices.");
+            }
+            
             // Loop through all devices and list their saved IDs
             for (String deviceName : deviceNamesList) {
                 // The device name and spacing before the ID
@@ -118,13 +123,13 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             
             // List any unused device IDs saved to the roboRIO
             if (unusedSavedDeviceNames.size() > 0) {
-                console.printlnSys(
+                console.printlnSys(ConsoleManager.formatMessage(
                     "\nThe following device names and IDs are saved to the roboRIO but " +
                     "have no matching (instantiated) devices in the robot code. " +
                     "Unused device settings can be cleared with 'device rm NAME'. " +
                     "Note that this may happen if you're incorrectly instantiating devices. " +
                     "All devices should be instantiated as soon as the robot program starts."
-                );
+                ));
                 
                 for (String deviceName : unusedSavedDeviceNames)
                     console.println(deviceName);
