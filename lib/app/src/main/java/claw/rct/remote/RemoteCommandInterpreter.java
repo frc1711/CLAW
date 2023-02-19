@@ -15,6 +15,7 @@ import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.network.low.ConsoleManager;
+import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * This class is meant for CLAW's internal use only.
@@ -27,12 +28,14 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
     
     private void addCommands () {
         addCommand("device",
-            "device list, device set NAME ID, device rm [ NAME | --all | -a ]",
-            "Use 'device list' to list all devices. Use 'device set NAME ID' to set " +
-            "the ID for a device NAME. Use 'device rm NAME' to clear a device with a given " +
-            "name from the save file, or 'device rm --all' to clear all saved device IDs.",
+            "device [ list | set | rm | update ]",
+            "device list : List all devices and their IDs.\n" +
+            "device set NAME ID : Save a new ID for a particular device NAME.\n" +
+            "device rm [ NAME | --all | -a ] : Clear a saved ID for a particular device NAME, " +
+                "or clear all saved IDs with '-a' or '--all'.\n" +
+            "device update : Update all devices on the robot to use their saved IDs according to 'device list'. " +
+                "This may only be done when the robot is disabled.",
             this::deviceCommand);
-        addCommand("config", "config", "config", this::configCommand);
         addCommand("watch",
             "watch [ --all | --none | log name...]",
             "Use -a or --all to watch all logs. Use -n or --none to watch no logs. " +
@@ -86,14 +89,18 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
     }
     
     private void deviceCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        String operation = reader.readArgOneOf("operation", "The given operation is invalid. Use 'list', 'set' or 'rm'.", "list", "set", "rm");
+        String operation = reader.readArgOneOf(
+            "operation",
+            "The given operation is invalid. Use 'list', 'set', 'rm', or 'update'.",
+            "list", "set", "rm", "update"
+        );
         
         if (operation.equals("list")) {
             reader.noMoreArgs();
             reader.allowNoOptions();
             reader.allowNoFlags();
             
-            int idColumn = 30;
+            int idColumn = 45;
             
             // Get all instantiated devices' names and sort them alphabetically
             Set<String> deviceNames = Device.getAllDeviceNames();
@@ -149,10 +156,11 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             
             // Save the device name and ID
             boolean success = Device.saveDeviceID(deviceName, Optional.of(newID));
-            if (success)
-                console.println("Saved successfully.");
-            else
-                console.printlnErr("Error saving new device ID.");
+            if (success) {
+                console.println("Saved successfully: set device ID.");
+            } else {
+                console.printlnErr("Error saving: failed to set device ID.");
+            }
             
         } else if (operation.equals("rm")) {
             
@@ -164,35 +172,50 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             if (removeAll) {
                 // Clear all saved IDs
                 reader.noMoreArgs();
-                Device.clearAllSavedIDs();
+                if (Device.clearAllSavedIDs()) {
+                    console.println("Saved successfully: cleared all saved device IDs.");
+                } else {
+                    console.printlnErr("Error saving: failed to clear all device IDs.");
+                }
             } else {
                 // Get the device name to clear the ID from
-                String deviceName = reader.readArgString("device name");
+                Set<String> savedDeviceNames = Device.getAllSavedDeviceIDs().keySet();
+                String deviceName = reader.readArgOneOf(
+                    "device name",
+                    "Expected the name of a device name associated with a saved ID.",
+                    savedDeviceNames
+                );
+                
                 reader.noMoreArgs();
                 
                 // Clear the device ID from the save
-                Device.saveDeviceID(deviceName, Optional.empty());
+                if (Device.saveDeviceID(deviceName, Optional.empty())) {
+                    console.println("Saved successfully: cleared device ID.");
+                } else {
+                    console.printlnErr("Error saving: failed to clear device ID.");
+                }
             }
             
-        }
-    }
-    
-    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
-        
-        
-        // TODO: Fix config command
-        
-        // Map<String, String> fields = Config.getInstance().getFields();
-        // for (Entry<String, String> field : fields.entrySet()) {
-        //     String limitKey = field.getKey();
-        //     if (limitKey.length() > 25)
-        //         limitKey = limitKey.substring(0, 25) + "...";
+        } else if (operation.equals("update")) {
             
-        //     console.println(limitKey + " : " + " ".repeat(30 - limitKey.length()) + field.getValue());
-        // }
-        
-        // console.println(fields.size() + " fields");
+            reader.noMoreArgs();
+            reader.allowNoOptions();
+            reader.allowNoFlags();
+            
+            // Ensure the robot is disabled
+            if (DriverStation.isEnabled()) {
+                console.printlnErr(ConsoleManager.formatMessage(
+                    "The robot must be disabled before reinitializing devices. " +
+                    "Reinitializing a device while enabled could cause damage to " +
+                    "the robot or unexpected behavior."
+                ));
+                return;
+            }
+            
+            Device.reinitializeAllDevices();
+            console.println("Devices have been reinitialized with their saved IDs.");
+            
+        }
     }
     
 }

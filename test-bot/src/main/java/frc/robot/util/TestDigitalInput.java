@@ -7,7 +7,7 @@ public class TestDigitalInput extends DigitalInput {
     private boolean lastValue = false;
     
     public TestDigitalInput (int id) {
-        super(0);
+        super(id);
     }
     
     @Override

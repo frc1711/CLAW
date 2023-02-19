@@ -14,7 +14,13 @@ public class TestSubsystem extends SubsystemBase {
     );
     
     private final Device<TestDigitalInput> armUpperLimitSwitch = new Device<>(
-        "CAN.LIMIT_SWITCH.TEST_SYSTEM.GRABBER",
+        "DIO.LIMIT_SWITCH.TEST_SYSTEM.UPPER_ARM",
+        id -> new TestDigitalInput(id),
+        digitalInput -> digitalInput.close()
+    );
+    
+    private final Device<TestDigitalInput> armLowerLimitSwitch = new Device<>(
+        "DIO.LIMIT_SWITCH.TEST_SYSTEM.LOWER_ARM",
         id -> new TestDigitalInput(id),
         digitalInput -> digitalInput.close()
     );

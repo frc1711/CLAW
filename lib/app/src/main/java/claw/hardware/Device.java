@@ -1,7 +1,6 @@
 package claw.hardware;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -24,17 +23,12 @@ public class Device <T> {
     /**
      * A map of unique device names onto their set IDs, which is saved to the roboRIO so that the IDs are persistent.
      */
-    private static final Setting<HashMap<String, Integer>> DEVICE_NAMES_TO_IDS = new Setting<>("claw.devices", HashMap::new);
+    private static final Setting<HashMap<String, Integer>> SAVED_DEVICE_NAMES_TO_IDS = new Setting<>("claw.devices", HashMap::new);
     
     /**
-     * A lock for the {@code DEVICE_NAMES_TO_IDS} so that the hashmap is not used by more than one thread at once.
+     * A map of existing device names onto devices.
      */
-    private static final Object DEVICE_MAP_LOCK = new Object();
-    
-    /**
-     * A set of existing device names.
-     */
-    private static final HashSet<String> allDeviceNames = new HashSet<>();
+    private static final HashMap<String, Device<?>> NAMES_TO_DEVICES = new HashMap<>();
     
     private final String deviceName;
     private final DeviceInitializer<T> initializer;
@@ -70,14 +64,14 @@ public class Device <T> {
      */
     public Device (String deviceName, DeviceInitializer<T> initializer, DeviceFinalizer<T> finalizer) {
         
-        // Handle the allDeviceNames set
-        synchronized (allDeviceNames) {
+        // Handle the NAMES_TO_DEVICES set
+        synchronized (NAMES_TO_DEVICES) {
             // Throw an exception if a device already has the provided name
-            if (allDeviceNames.contains(deviceName))
+            if (NAMES_TO_DEVICES.containsKey(deviceName))
                 throw new IllegalArgumentException("A device has already been instantiated with the name '"+deviceName+"'");
             
             // Add the device name to the set
-            allDeviceNames.add(deviceName);
+            NAMES_TO_DEVICES.put(deviceName, this);
         }
         
         // Set instance fields
@@ -94,8 +88,8 @@ public class Device <T> {
      */
     @SuppressWarnings("unchecked")
     public static Set<String> getAllDeviceNames () {
-        synchronized (allDeviceNames) {
-            return (Set<String>)allDeviceNames.clone();
+        synchronized (NAMES_TO_DEVICES) {
+            return ((HashMap<String, Device<?>>)NAMES_TO_DEVICES.clone()).keySet();
         }
     }
     
@@ -109,18 +103,19 @@ public class Device <T> {
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Integer> getAllSavedDeviceIDs () {
-        synchronized (DEVICE_MAP_LOCK) {
-            return (Map<String, Integer>)DEVICE_NAMES_TO_IDS.get().clone();
+        synchronized (SAVED_DEVICE_NAMES_TO_IDS) {
+            return (Map<String, Integer>)SAVED_DEVICE_NAMES_TO_IDS.get().clone();
         }
     }
     
     /**
      * Clear all device names and IDs saved to the roboRIO.
+     * @return {@code true} if the save was successful, {@code false} otherwise.
      */
-    public static void clearAllSavedIDs () {
-        synchronized (DEVICE_MAP_LOCK) {
-            DEVICE_NAMES_TO_IDS.get().clear();
-            DEVICE_NAMES_TO_IDS.save();
+    public static boolean clearAllSavedIDs () {
+        synchronized (SAVED_DEVICE_NAMES_TO_IDS) {
+            SAVED_DEVICE_NAMES_TO_IDS.get().clear();
+            return SAVED_DEVICE_NAMES_TO_IDS.save();
         }
     }
     
@@ -135,17 +130,17 @@ public class Device <T> {
      * @return              {@code true} if the ID was successfully saved, {@code false} otherwise.
      */
     public static boolean saveDeviceID (String deviceName, Optional<Integer> id) {
-        synchronized (DEVICE_MAP_LOCK) {
+        synchronized (SAVED_DEVICE_NAMES_TO_IDS) {
             
             if (id.isPresent()) {
                 // If an ID was supplied, save the new value
-                DEVICE_NAMES_TO_IDS.get().put(deviceName, id.get());
+                SAVED_DEVICE_NAMES_TO_IDS.get().put(deviceName, id.get());
             } else {
                 // If no ID was supplied, clear the entry
-                DEVICE_NAMES_TO_IDS.get().remove(deviceName);
+                SAVED_DEVICE_NAMES_TO_IDS.get().remove(deviceName);
             }
             
-            return DEVICE_NAMES_TO_IDS.save();
+            return SAVED_DEVICE_NAMES_TO_IDS.save();
         }
     }
     
@@ -155,9 +150,22 @@ public class Device <T> {
      * @return              The device's saved ID, if it could be found.
      */
     public static Optional<Integer> getDeviceId (String deviceName) {
-        synchronized (DEVICE_MAP_LOCK) {
+        synchronized (SAVED_DEVICE_NAMES_TO_IDS) {
             // Retrieve the boxed Integer ID from the settings, and convert to an optional
-            return Optional.ofNullable(DEVICE_NAMES_TO_IDS.get().get(deviceName));
+            return Optional.ofNullable(SAVED_DEVICE_NAMES_TO_IDS.get().get(deviceName));
+        }
+    }
+    
+    /**
+     * Call {@link #reinitialize()} on all existing devices. Note that this could cause damage
+     * to the robot if called while devices are being operated. Ensure the robot is disabled before
+     * calling this method.
+     */
+    public static void reinitializeAllDevices () {
+        synchronized (NAMES_TO_DEVICES) {
+            for (Device<?> device : NAMES_TO_DEVICES.values()) {
+                device.reinitialize();
+            }
         }
     }
     
