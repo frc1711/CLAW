@@ -1,7 +1,9 @@
 package claw.rct.remote;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -107,7 +109,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             for (String deviceName : deviceNamesList) {
                 // The device name and spacing before the ID
                 String prefix = deviceName + " : ";
-                String space = " ".repeat(Math.min(idColumn - prefix.length(), 0));
+                String space = " ".repeat(Math.max(idColumn - prefix.length(), 0));
                 
                 // String representation of the saved device ID
                 Optional<Integer> id = Device.getDeviceId(deviceName);
@@ -118,7 +120,8 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             }
             
             // Get the set of all device names which have a saved ID but aren't instantiated
-            Set<String> unusedSavedDeviceNames = Device.getAllSavedDeviceIDs().keySet();
+            Map<String, Integer> savedDeviceNamesToIDs = Device.getAllSavedDeviceIDs();
+            Set<String> unusedSavedDeviceNames = new HashSet<>(savedDeviceNamesToIDs.keySet());
             unusedSavedDeviceNames.removeIf(deviceNames::contains);
             
             // List any unused device IDs saved to the roboRIO
@@ -132,7 +135,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
                 ));
                 
                 for (String deviceName : unusedSavedDeviceNames)
-                    console.println(deviceName);
+                    console.println(deviceName + " ("+savedDeviceNamesToIDs.get(deviceName)+")");
             }
             
         } else if (operation.equals("set")) {

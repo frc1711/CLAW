@@ -6,11 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.function.Supplier;
 
 import claw.logs.CLAWLogger;
+import edu.wpi.first.wpilibj.Filesystem;
 
 /**
  * A thread-safe class which handles saving and reading a serializable value from the roboRIO filesystem.
@@ -20,7 +23,12 @@ public class Setting <T extends Serializable> {
     // TODO: Clearing unused settings
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.settings");
-    private static final String BASE_CONFIG_DIRECTORY = "/home/lvuser/config-settings";
+    
+    private static final File BASE_CONFIG_DIRECTORY = new File(
+        Filesystem.getOperatingDirectory().getAbsolutePath() + File.separator + "config-settings"
+    );
+    
+    private static final Object BASE_CONFIG_DIRECTORY_LOCK = new Object();
     
     /**
      * A set of all the names of settings created
@@ -35,7 +43,13 @@ public class Setting <T extends Serializable> {
     }
     
     private static File getFileForSetting (String name) {
-        return new File(BASE_CONFIG_DIRECTORY + "/" + name + ".ser");
+        if (!BASE_CONFIG_DIRECTORY.exists()) {
+            synchronized (BASE_CONFIG_DIRECTORY_LOCK) {
+                BASE_CONFIG_DIRECTORY.mkdir();
+            }
+        }
+        
+        return new File(BASE_CONFIG_DIRECTORY.getAbsolutePath() + File.separator + name + ".ser");
     }
     
     private static Object readFromFile (File file) throws IOException, ClassNotFoundException {
@@ -162,7 +176,9 @@ public class Setting <T extends Serializable> {
             return true;
         } catch (IOException e) {
             // Log an error if the value could not be saved
-            LOG.err("Failed to save value to setting '"+name+"'");
+            StringWriter stackTrace = new StringWriter();
+            e.printStackTrace(new PrintWriter(stackTrace));
+            LOG.err("Failed to save value to setting '"+name+"':\n" + stackTrace.toString());
             return false;
         }
     }
