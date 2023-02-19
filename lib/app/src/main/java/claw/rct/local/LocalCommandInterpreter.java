@@ -3,7 +3,9 @@ package claw.rct.local;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandLineInterpreter;
@@ -56,8 +58,8 @@ public class LocalCommandInterpreter {
             "Exits the robot control terminal immediately.",
             this::exitCommand);
         
-        addCommand("help", "help [location]",
-            "Displays a help message for the given location, either local (driverstation) or remote (roboRIO).",
+        addCommand("help", "help | help [command]",
+            "Displays a help message explaining how to use all the commands, or one particular provided command.",
             this::helpCommand);
         
         addCommand("comms", "comms",
@@ -144,7 +146,8 @@ public class LocalCommandInterpreter {
     }
     
     private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
+        reader.allowNoOptions();
+        reader.allowNoFlags();
         
         // Combine local help messages and remote into one list
         List<HelpMessage> helpMessages = new ArrayList<HelpMessage>(commandInterpreter.getHelpMessages());
@@ -154,10 +157,41 @@ public class LocalCommandInterpreter {
         // Sort alphabetically by command
         helpMessages.sort((a, b) -> a.command().compareTo(b.command()));
         
-        // Print each help message
-        for (HelpMessage helpMessage : helpMessages) {
+        // Get the command which should be displayed in particular (if one was provided)
+        Optional<String> command = Optional.empty();
+        if (reader.hasNextArg()) {
+            // Create a set containing all command name options
+            HashSet<String> commandNames = new HashSet<>();
+            helpMessages.forEach(message -> commandNames.add(message.command()));
+            
+            // Get the command name
+            command = Optional.of(reader.readArgOneOf(
+                "command name",
+                "Expected the name of an existing command.",
+                commandNames
+            ));
+        }
+        
+        reader.noMoreArgs();
+        
+        // Print each help message, or the particular message
+        console.println("");
+        if (command.isPresent()) {
+            HelpMessage helpMessage = null;
+            for (HelpMessage msg : helpMessages) {
+                if (msg.command().equals(command.get())) {
+                    helpMessage = msg;
+                    break;
+                }
+            }
+            
             console.printlnSys(helpMessage.usage());
-            console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2) + "\n");
+            console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2)+"\n");
+        } else {
+            for (HelpMessage helpMessage : helpMessages) {
+                console.printlnSys(helpMessage.usage());
+                console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2)+"\n");
+            }
         }
     }
     
