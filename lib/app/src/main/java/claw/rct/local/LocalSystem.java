@@ -1,18 +1,22 @@
 package claw.rct.local;
 
 import java.io.IOException;
+import java.util.Optional;
 
-import claw.rct.commands.Command;
+import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandProcessor.BadCallException;
+import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
 import claw.rct.network.low.Waiter;
 import claw.rct.network.low.Waiter.NoValueReceivedException;
+import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
 import claw.rct.network.messages.LogDataMessage;
+import claw.rct.network.messages.ResponseMessageHandler;
 import claw.rct.network.messages.LogDataMessage.LogData;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveRemote;
@@ -22,7 +26,7 @@ import claw.rct.network.messages.commands.ProcessKeepaliveRemote;
  * Some functionality includes processing commands and controlling the messages sent to remote,
  * testing the status of the connection, and establishing new connections.
  */
-public class LocalSystem {
+public class LocalSystem implements ResponseMessageHandler {
     
     private final static long
         RESPONSE_TIMEOUT_MILLIS = 2000,
@@ -48,6 +52,9 @@ public class LocalSystem {
     private boolean requireNewConnection = false;
     
     private boolean useStaticRoboRIOAddress;
+    
+    private Optional<HelpMessage[]> remoteHelpMessages = Optional.empty();
+    private final Object remoteHelpMessagesLock = new Object();
     
     // Server connection testing
     private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
@@ -198,7 +205,7 @@ public class LocalSystem {
      * @throws NoResponseException      If no response was received from a command sent to remote
      * @throws IOException              If the command failed to send to remote
      */
-    public void processCommand (String line) throws Command.ParseException, IOException, BadCallException {
+    public void processCommand (String line) throws RCTCommand.ParseException, IOException, BadCallException {
         // Attempt to process the command locally. If the command should be sent to remote,
         // then interpreter.processLine will return true
         if (!interpreter.processLine(console, line)) return;
@@ -221,36 +228,18 @@ public class LocalSystem {
     }
     
     /**
-     * Receives a generalized {@link ResponseMessage}, and delegates responsibility
-     * based on the message's subclass. This method will run on a receiver thread.
-     */
-    private void receiveMessage (ResponseMessage msg) {
-        Class<?> msgClass = msg.getClass();
-        
-        if (msgClass == ConnectionResponseMessage.class)
-            receiveConnectionResponseMessage((ConnectionResponseMessage)msg);
-        
-        if (msgClass == ProcessKeepaliveRemote.class)
-            receiveProcessKeepaliveMessage((ProcessKeepaliveRemote)msg);
-        
-        if (msgClass == CommandOutputMessage.class)
-            receiveCommandOutputMessage((CommandOutputMessage)msg);
-        
-        if (msgClass == LogDataMessage.class)
-            receiveLogDataMessage((LogDataMessage)msg);
-    }
-    
-    /**
      * Receives a connection response message, notifying the connectionResponseWaiter
      * so that the response can be processed.
      * This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
-    private void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
+    @Override
+    public void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
         connectionResponseWaiter.receive(msg);
     }
     
-    private void receiveProcessKeepaliveMessage (ProcessKeepaliveRemote msg) {
+    @Override
+    public void receiveProcessKeepaliveMessage (ProcessKeepaliveRemote msg) {
         if (remoteProcessHandler != null)
             remoteProcessHandler.receiveKeepalive(msg);
     }
@@ -260,18 +249,35 @@ public class LocalSystem {
      * data storage to be processed. This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
-    private void receiveLogDataMessage (LogDataMessage msg) {
+    @Override
+    public void receiveLogDataMessage (LogDataMessage msg) {
         logDataStorage.acceptDataMessage(msg);
     }
     
     // COMMAND INTERPRETATION
     
-    private void receiveCommandOutputMessage (CommandOutputMessage msg) {
+    @Override
+    public void receiveCommandOutputMessage (CommandOutputMessage msg) {
         if (remoteProcessHandler != null)
             remoteProcessHandler.receiveCommandOutputMessage(msg);
     }
     
-    private void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
+    @Override
+    public void receiveCommandsListingMessage (CommandsListingMessage msg) {
+        synchronized (remoteHelpMessagesLock) {
+            // Set the remote help messages field
+            remoteHelpMessages = Optional.of(msg.helpMessages);
+        }
+    }
+    
+    public HelpMessage[] getRemoteHelpMessages () {
+        synchronized (remoteHelpMessagesLock) {
+            // Return a copy of the remote help messages
+            return remoteHelpMessages.orElse(new HelpMessage[0]).clone();
+        }
+    }
+    
+    public void remoteProcessHandlerSendInstructionMessage (InstructionMessage message) {
         try {
             // Attempt to send the instruction message
             DriverStationSocketHandler s = throwIfNullSocket();

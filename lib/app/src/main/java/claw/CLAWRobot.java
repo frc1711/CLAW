@@ -4,13 +4,17 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
+import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.remote.RCTServer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRobot {
+    
+    private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
         
@@ -25,6 +29,10 @@ public class CLAWRobot {
             throw exception;
         }
         
+    }
+    
+    public static CommandLineInterpreter getExtensibleCommandInterpreter () {
+        return EXTENSIBLE_COMMAND_INTERPRETER;
     }
     
     private static final CLAWLogger
@@ -54,7 +62,7 @@ public class CLAWRobot {
         // Start RCT server thread
         new Thread(() -> {
             try {
-                server = new RCTServer(5800);
+                server = new RCTServer(5800, EXTENSIBLE_COMMAND_INTERPRETER);
                 server.start();
             } catch (IOException e) {
                 System.err.println("Failed to start RCT server.");

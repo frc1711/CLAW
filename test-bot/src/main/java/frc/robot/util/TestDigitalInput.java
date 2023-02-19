@@ -6,13 +6,13 @@ public class TestDigitalInput extends DigitalInput {
     
     private boolean lastValue = false;
     
-    public TestDigitalInput () {
-        super(0);
+    public TestDigitalInput (int id) {
+        super(id);
     }
     
     @Override
     public boolean get () {
-        if (Math.random() > 0.95) lastValue = !lastValue;
+        if (Math.random() > 0.98) lastValue = !lastValue;
         return lastValue;
     }
     

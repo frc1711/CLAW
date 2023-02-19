@@ -9,15 +9,15 @@ import claw.rct.commands.CommandProcessor.BadCallException;
 // TODO: Allowing option markers vs. allowing key-value options
 public class CommandReader {
     
-    private final Command cmd;
+    private final RCTCommand cmd;
     
     private int nextArgIndex = 0;
     
-    public CommandReader (Command cmd) {
+    public CommandReader (RCTCommand cmd) {
         this.cmd = cmd;
     }
     
-    public Command getCommand () {
+    public RCTCommand getCommand () {
         return cmd;
     }
     

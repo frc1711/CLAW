@@ -1,14 +1,10 @@
 package frc.robot.commands;
 
-import claw.CLAWLogger;
-import claw.LiveUnit;
-import claw.UnitBuilder;
+import claw.logs.CLAWLogger;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 
 public class TestCommand extends CommandBase {
-    
-    private static final LiveUnit UNIT = new UnitBuilder().withName("TestCommand");
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("commands.testcommand");
     private final TestSubsystem subsystem;
@@ -23,8 +19,6 @@ public class TestCommand extends CommandBase {
     public void initialize () {
         LOG.out("Initializing TestCommand");
         subsystem.stop();
-        
-        UNIT.put("running", true);
     }
     
     @Override
@@ -36,8 +30,6 @@ public class TestCommand extends CommandBase {
     public void end (boolean interrupted) {
         LOG.out("Ending TestCommand");
         subsystem.stop();
-        
-        UNIT.put("running", false);
     }
     
     @Override

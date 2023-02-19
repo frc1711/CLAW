@@ -2,7 +2,7 @@ package claw.rct.local;
 
 import java.io.IOException;
 
-import claw.rct.commands.Command.ParseException;
+import claw.rct.commands.RCTCommand.ParseException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.local.console.LocalConsoleManager;

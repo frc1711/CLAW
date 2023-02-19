@@ -3,22 +3,26 @@ package claw.rct.remote;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 
-import claw.CLAWLogger;
-import claw.RemoteCommandInterpreter;
+import claw.logs.CLAWLogger;
+import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
-import claw.rct.network.low.InstructionMessage;
+import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
+import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.ResponseMessage;
 import claw.rct.network.low.RobotSocketHandler;
+import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
+import claw.rct.network.messages.InstructionMessageHandler;
 import claw.rct.network.messages.LogDataMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
 import claw.rct.remote.CommandProcessHandler.TerminatedProcessException;
 
-public class RCTServer {
+public class RCTServer implements InstructionMessageHandler {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("claw.server");
     
@@ -28,14 +32,28 @@ public class RCTServer {
     
     private final RobotSocketHandler serverSocket;
     private final RemoteCommandInterpreter interpreter;
+    private final CommandLineInterpreter extensibleInterpreter;
     private boolean successfullyStarted = false;
     
     private CommandProcessHandler commandProcessHandler;
     
-    public RCTServer (int port) throws IOException {
+    public RCTServer (int port, CommandLineInterpreter extensibleInterpreter) throws IOException {
         // Try to create a new server socket
         serverSocket = new RobotSocketHandler(port, this::receiveMessage, this::handleReceiverException);
         interpreter = new RemoteCommandInterpreter();
+        this.extensibleInterpreter = extensibleInterpreter;
+    }
+    
+    private void waitForConnection () throws IOException {
+        // Establish a new connection
+        serverSocket.getNewConnection();
+        
+        // Try to send a commands listing message
+        try {
+            sendCommandsListingMessage();
+        } catch (IOException e) {
+            handleNonFatalServerException(e);
+        }
     }
     
     public void start () throws IOException {
@@ -43,7 +61,7 @@ public class RCTServer {
         if (successfullyStarted) return;
         
         // Try to get a new connection
-        serverSocket.getNewConnection();
+        waitForConnection();
         
         // If an exception has not yet been thrown, the server has started successfully
         successfullyStarted = true;
@@ -53,31 +71,27 @@ public class RCTServer {
         serverSocket.sendResponseMessage(message);
     }
     
-    private void receiveMessage (InstructionMessage msg) {
+    private void sendCommandsListingMessage () throws IOException {
+        // Get all help messages from both interpreters
+        ArrayList<HelpMessage> helpMessages = new ArrayList<HelpMessage>();
+        helpMessages.addAll(interpreter.getHelpMessages());
+        helpMessages.addAll(extensibleInterpreter.getHelpMessages());
+        
+        // Turn the arraylist into an array and send the response
+        serverSocket.sendResponseMessage(new CommandsListingMessage(helpMessages.toArray(new HelpMessage[0])));
+    }
+    
+    @Override
+    public void receiveConnectionCheckMessage (ConnectionCheckMessage msg) {
         try {
-            Class<?> msgClass = msg.getClass();
-            
-            if (msgClass == ConnectionCheckMessage.class)
-                receiveConnectionCheckMessage((ConnectionCheckMessage)msg);
-            
-            if (msgClass == StartCommandMessage.class)
-                receiveStartCommandMessage((StartCommandMessage)msg);
-            
-            if (msgClass == CommandInputMessage.class)
-                receiveCommandInputMessage((CommandInputMessage)msg);
-            
-            if (msgClass == ProcessKeepaliveLocal.class)
-                receiveKeepaliveMessage((ProcessKeepaliveLocal)msg);
+            serverSocket.sendResponseMessage(new ConnectionResponseMessage());
         } catch (IOException e) {
             handleNonFatalServerException(e);
         }
     }
     
-    private void receiveConnectionCheckMessage (ConnectionCheckMessage msg) throws IOException {
-        serverSocket.sendResponseMessage(new ConnectionResponseMessage());
-    }
-    
-    private void receiveStartCommandMessage (StartCommandMessage msg) {
+    @Override
+    public void receiveStartCommandMessage (StartCommandMessage msg) {
         // Terminate the previous command process handler if one existed
         if (commandProcessHandler != null)
             commandProcessHandler.terminate(false);
@@ -92,8 +106,12 @@ public class RCTServer {
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
         Thread commandProcessorThread = new Thread(() -> {
             try {
-                // Attempt to run the process via the command interpreter
-                interpreter.processLine(commandProcessHandler, msg.command);
+                try {
+                    // Attempt to run the process via the command interpreter
+                    interpreter.processLine(commandProcessHandler, msg.command);
+                } catch (CommandNotRecognizedException e) {
+                    extensibleInterpreter.processLine(commandProcessHandler, msg.command);
+                }
             } catch (CommandLineException e) {
                 e.writeToConsole(commandProcessHandler);
             } catch (TerminatedProcessException e) { } // If the process was terminated (a runtime exception), exit silently
@@ -111,7 +129,7 @@ public class RCTServer {
         
     }
     
-    private void sendResponseMessageForProcess (ResponseMessage msg) {
+    public void sendResponseMessageForProcess (ResponseMessage msg) {
         try {
             serverSocket.sendResponseMessage(msg);
         } catch (IOException e) {
@@ -119,12 +137,14 @@ public class RCTServer {
         }
     }
     
-    private void receiveKeepaliveMessage (ProcessKeepaliveLocal msg) {
+    @Override
+    public void receiveKeepaliveMessage (ProcessKeepaliveLocal msg) {
         if (commandProcessHandler != null)
             commandProcessHandler.receiveKeepaliveMessage(msg);
     }
     
-    private void receiveCommandInputMessage (CommandInputMessage msg) throws IOException {
+    @Override
+    public void receiveCommandInputMessage (CommandInputMessage msg) {
         if (commandProcessHandler != null)
             commandProcessHandler.receiveCommandInputMessage(msg);
     }
@@ -145,7 +165,7 @@ public class RCTServer {
             System.err.println(message);
             LOG.err(message);
             
-            serverSocket.getNewConnection();
+            waitForConnection();
         } catch (IOException fatalEx) {
             handleFatalServerException(fatalEx);
         }

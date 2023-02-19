@@ -37,9 +37,9 @@ public class CommandLineInterpreter {
      * @throws CommandNotRecognizedException    An exception thrown if the command is not recognized by this interpreter.
      */
     public void processLine (ConsoleManager console, String line)
-            throws Command.ParseException, CommandNotRecognizedException, BadCallException {
+            throws RCTCommand.ParseException, CommandNotRecognizedException, BadCallException {
         // Attempt to parse the command and get the command name
-        Command commandObj = new Command(line);
+        RCTCommand commandObj = new RCTCommand(line);
         String commandName = commandObj.getCommand().toUpperCase();
         
         // Send the command to its processor if the command name exists in the commandProcessors hashmap,
@@ -71,7 +71,7 @@ public class CommandLineInterpreter {
         commandProcessors.values().forEach(processor -> helpMessages.add(processor.helpMessage));
         
         // Sort the list alphabetically and return it
-        helpMessages.sort((a, b) -> a.getCommand().compareTo(b.getCommand()));
+        helpMessages.sort((a, b) -> a.command().compareTo(b.command()));
         return helpMessages;
     }
     

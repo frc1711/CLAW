@@ -1,5 +1,7 @@
 package claw.rct.commands;
 
+import java.io.Serializable;
+
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.network.low.ConsoleManager;
 
@@ -18,27 +20,14 @@ public class CommandProcessor {
      */
     public CommandProcessor (String command, String usage, String helpDescription, CommandFunction function) {
         this.command = command;
-        this.helpMessage = new HelpMessage(usage, helpDescription);
+        this.helpMessage = new HelpMessage(command, usage, helpDescription);
         this.function = function;
     }
     
     /**
      * A help message for a particular {@link CommandProcessor}.
      */
-    public class HelpMessage {
-        
-        public final String usage, helpDescription;
-        
-        private HelpMessage (String usage, String helpDescription) {
-            this.usage = usage;
-            this.helpDescription = helpDescription;
-        }
-        
-        public String getCommand () {
-            return command;
-        }
-        
-    }
+    public static record HelpMessage (String command, String usage, String helpDescription) implements Serializable { }
     
     /**
      * A functional interface which processes a command, possibly throwing a {@link BadCallException}.

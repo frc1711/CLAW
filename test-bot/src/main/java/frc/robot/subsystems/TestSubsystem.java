@@ -1,36 +1,39 @@
 package frc.robot.subsystems;
 
-import claw.LiveUnit;
-import claw.UnitBuilder;
-import claw.testing.DigitalInputCheck;
-import claw.testing.SystemsCheck;
-import claw.SubsystemCLAW;
+import claw.hardware.Device;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.CustomMotorController;
 import frc.robot.util.TestDigitalInput;
 
-public class TestSubsystem extends SubsystemCLAW {
+public class TestSubsystem extends SubsystemBase {
     
-    private static final LiveUnit UNIT = new UnitBuilder().withName("TestSubsystem");
+    private final Device<CustomMotorController> armMotor = new Device<>(
+        "CAN.MOTOR_CONTROLLER.TEST_SYSTEM.ARM",
+        id -> new CustomMotorController(id),
+        motor -> motor.stopMotor()
+    );
     
-    private final CustomMotorController motor = new CustomMotorController(0);
+    private final Device<TestDigitalInput> armUpperLimitSwitch = new Device<>(
+        "DIO.LIMIT_SWITCH.TEST_SYSTEM.UPPER_ARM",
+        id -> new TestDigitalInput(id),
+        digitalInput -> digitalInput.close()
+    );
     
-    private int count = 0;
-    
-    public TestSubsystem () {
-        SystemsCheck.addSystemsCheck(new DigitalInputCheck(getName(), "true means true, false means false", new TestDigitalInput()));
-    }
+    private final Device<TestDigitalInput> armLowerLimitSwitch = new Device<>(
+        "DIO.LIMIT_SWITCH.TEST_SYSTEM.LOWER_ARM",
+        id -> new TestDigitalInput(id),
+        digitalInput -> digitalInput.close()
+    );
     
     public void set (double speed) {
-        motor.set(speed);
-        UNIT.put("speed", speed);
+        if (armUpperLimitSwitch.get().get())
+            armMotor.get().stopMotor();
+        else
+            armMotor.get().set(speed);
     }
     
     public void stop () {
-        motor.stopMotor();
-        UNIT.put("speed", 0);
-        
-        count ++;
-        UNIT.put("count", count);
+        armMotor.get().stopMotor();
     }
     
 }

@@ -3,9 +3,11 @@ package claw.rct.local;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
-import claw.rct.commands.Command;
+import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
@@ -33,7 +35,6 @@ public class LocalCommandInterpreter {
      */
     private final CommandLineInterpreter commandInterpreter = new CommandLineInterpreter();
     
-    private boolean hasNewLogData = false;
     private List<LogData> newLogData = new ArrayList<LogData>();
     private final Object newLogDataLock = new Object();
     
@@ -57,8 +58,8 @@ public class LocalCommandInterpreter {
             "Exits the robot control terminal immediately.",
             this::exitCommand);
         
-        addCommand("help", "help [location]",
-            "Displays a help message for the given location, either local (driverstation) or remote (roboRIO).",
+        addCommand("help", "help | help [command]",
+            "Displays a help message explaining how to use all the commands, or one particular provided command.",
             this::helpCommand);
         
         addCommand("comms", "comms",
@@ -73,11 +74,8 @@ public class LocalCommandInterpreter {
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
         
-        addCommand("log", "log [--live]",
-            "Log will, by default, print logged data to the terminal when it is received from the robot.\n" +
-            "Live mode can be enabled using 'log --live' or 'log -l', where different logs are updated in their\n" +
-            "own lines in the terminal rather than all being printed to new lines. This can be useful for tracking\n" +
-            "several changing variables over time.",
+        addCommand("log", "log",
+            "Print data with CLAWLoggers to the terminal when it is received from the robot.",
             this::logCommand);
     }
     
@@ -90,7 +88,7 @@ public class LocalCommandInterpreter {
      * @throws Command.ParseException
      * @throws BadCallException
      */
-    public boolean processLine (ConsoleManager console, String line) throws Command.ParseException, BadCallException {
+    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException {
         try {
             commandInterpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {
@@ -148,16 +146,52 @@ public class LocalCommandInterpreter {
     }
     
     private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
+        reader.allowNoOptions();
+        reader.allowNoFlags();
         
-        List<HelpMessage> helpMessages = commandInterpreter.getHelpMessages();
+        // Combine local help messages and remote into one list
+        List<HelpMessage> helpMessages = new ArrayList<HelpMessage>(commandInterpreter.getHelpMessages());
+        List<HelpMessage> remoteMessages = Arrays.asList(system.getRemoteHelpMessages());
+        helpMessages.addAll(remoteMessages);
         
-        console.printlnSys("\n==== Local Command Interpreter Help ====");
-        console.println("All the following commands run on the local command interpreter, meaning they");
-        console.println("are executed on the driverstation and not the roboRIO (with few exceptions).\n");
-        for (HelpMessage helpMessage : helpMessages) {
-            console.printlnSys(helpMessage.usage);
-            console.println("  " + helpMessage.helpDescription + "\n");
+        // Sort alphabetically by command
+        helpMessages.sort((a, b) -> a.command().compareTo(b.command()));
+        
+        // Get the command which should be displayed in particular (if one was provided)
+        Optional<String> command = Optional.empty();
+        if (reader.hasNextArg()) {
+            // Create a set containing all command name options
+            HashSet<String> commandNames = new HashSet<>();
+            helpMessages.forEach(message -> commandNames.add(message.command()));
+            
+            // Get the command name
+            command = Optional.of(reader.readArgOneOf(
+                "command name",
+                "Expected the name of an existing command.",
+                commandNames
+            ));
+        }
+        
+        reader.noMoreArgs();
+        
+        // Print each help message, or the particular message
+        console.println("");
+        if (command.isPresent()) {
+            HelpMessage helpMessage = null;
+            for (HelpMessage msg : helpMessages) {
+                if (msg.command().equals(command.get())) {
+                    helpMessage = msg;
+                    break;
+                }
+            }
+            
+            console.printlnSys(helpMessage.usage());
+            console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2)+"\n");
+        } else {
+            for (HelpMessage helpMessage : helpMessages) {
+                console.printlnSys(helpMessage.usage());
+                console.println(ConsoleManager.formatMessage(helpMessage.helpDescription(), 2)+"\n");
+            }
         }
     }
     
@@ -242,40 +276,14 @@ public class LocalCommandInterpreter {
     }
     
     private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowFlags('l');
-        reader.allowOptions("live");
-        
-        // Check whether or not to log data in "live" mode (where each stream has its own line which updates over time)
-        boolean liveLogging = reader.getFlag('l') || reader.getOptionMarker("live");
-        
-        // If in live logging mode, clear any log data currently waiting as only
-        // data sent from here on out should get a field
-        if (liveLogging) {
-            synchronized (newLogDataLock) {
-                newLogData.clear();
-            }
-        }
-        
-        // Get a live data lines object which is used for live logging mode (used later on if in live mode)
-        LiveDataLines lines = new LiveDataLines();
-        
         // Repeat the logging loop until the user pressed a key
         while (!console.hasInputReady()) {
             
             // Synchronize with the newLogDataLock and only print data if there is new data
             synchronized (newLogDataLock) {
-                if (hasNewLogData) {
-                    hasNewLogData = false;
-                    
-                    if (liveLogging) {
-                        // If in live logging mode, use the LiveDataLines object to update the display
-                        lines.updateDisplay(console, newLogData);
-                    } else {
-                        // Otherwise, print a new event line for each data received
-                        for (LogData data : newLogData) {
-                            printLogDataEvent(console, data);
-                        }
-                    }
+                if (newLogData.size() > 0) {
+                    for (LogData data : newLogData)
+                        printLogDataEvent(console, data);
                     
                     newLogData.clear();
                 }
@@ -286,79 +294,20 @@ public class LocalCommandInterpreter {
     private void receiveLogDataListener (LogData[] data) {
         synchronized (newLogDataLock) {
             newLogData.addAll(Arrays.asList(data));
-            hasNewLogData = true;
         }
     }
     
     private static void printLogDataEvent (ConsoleManager console, LogData data) {
-        String logNamePrint = "["+data.logDomain+"] ";
+        String logNamePrint = "["+data.logName+"] ";
         String messagePrint = data.data;
         
         if (data.isError) {
-            console.printlnErr(logNamePrint + messagePrint);
+            console.printlnErr(logNamePrint);
+            console.printlnErr(ConsoleManager.formatMessage(messagePrint, 2));
         } else {
-            console.printSys(logNamePrint);
-            console.println(messagePrint);
+            console.printlnSys(logNamePrint);
+            console.println(ConsoleManager.formatMessage(messagePrint, 2));
         }
-    }
-    
-    private static class LiveDataLines {
-        
-        private final List<LogData> dataLines = new ArrayList<>();
-        
-        public LiveDataLines () { }
-        
-        private void receiveLogData (List<LogData> dataSet) {
-            for (LogData data : dataSet) {
-                boolean hasFoundLine = false;
-                
-                for (int i = 0; i < dataLines.size(); i ++) {
-                    if (data.logDomain.equals(dataLines.get(i).logDomain)) {
-                        dataLines.set(i, data);
-                        hasFoundLine = true;
-                    }
-                }
-                
-                if (!hasFoundLine)
-                    dataLines.add(data);
-            }
-        }
-        
-        public void updateDisplay (ConsoleManager console, List<LogData> dataSet) {
-            int numLines = dataLines.size();
-            
-            receiveLogData(dataSet);
-            
-            while (numLines > 0) {
-                console.moveUp(1);
-                console.clearLine();
-                numLines --;
-            }
-            
-            for (int i = 0; i < dataLines.size(); i ++) {
-                LogData data = dataLines.get(i);
-                
-                String domainMsg = data.logDomain + ": ";
-                String message = data.data.split("\n")[0]; // Prevent more than one line being printed
-                
-                boolean hasBeenCut = message.length() != data.data.length();
-                
-                if (message.length() > 60) {
-                    message = message.substring(0, 60);
-                    hasBeenCut = true;
-                }
-                
-                if (hasBeenCut) message += "...";
-                
-                if (data.isError) {
-                    console.printlnErr(domainMsg + message);
-                } else {
-                    console.printSys(domainMsg);
-                    console.println(message);
-                }
-            }
-        }
-        
     }
     
 }
