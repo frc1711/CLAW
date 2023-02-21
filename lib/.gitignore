@@ -5,6 +5,6 @@
 /app/build/*
 
 !/app/build/distributions
-!/app/build/libs
+!/app/build/maven-repo
 
 /app/bin/*

@@ -8,8 +8,31 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
+    id 'maven-publish'
     id 'application'
     id 'java'
+}
+
+// maven-publish configuration
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'org.frc.raptors1711'
+            artifactId = 'raptors-claw'
+            version = '1.1'
+            from components.java
+            pom {
+                name = 'Common Library Extension to WPILib'
+                description = 'An extension to WPILibJ with a focus on testing and debugging.'
+            }
+        }
+    }
+    
+    repositories {
+        maven {
+            url = layout.buildDir.dir('maven-repo')
+        }
+    }
 }
 
 distZip {
