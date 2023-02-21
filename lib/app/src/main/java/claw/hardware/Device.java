@@ -12,7 +12,7 @@ import claw.logs.CLAWLogger;
  * A thread-safe wrapper around any hardware components which are connected to the roboRIO on a certain port or with a given ID.
  * The core functionality of the {@code Device} wrapper is initializing a device given an ID. IDs will be read from CLAW settings,
  * so they can be set via the Robot Control Terminal.
- * <br></br>
+ * <br />
  * Examples of good components to use with this device wrapper could be resources connected to the roboRIO via CAN, DIO, or PWM (e.g.
  * motor controllers, limit switches, CANCoders, or anything else which has some sort of integer ID).
  */

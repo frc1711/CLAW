@@ -19,7 +19,7 @@ public abstract class Message implements Serializable {
      * Gets the serialized form of this message.
      * @return The {@code byte[]} serialized data.
      * 
-     * @see {@link Message#readMessage(InputStream)}
+     * @see #readMessage(InputStream)
      */
     public byte[] getData () {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
@@ -43,7 +43,7 @@ public abstract class Message implements Serializable {
      * @throws IOException  If the input stream threw an i/o exception or if there was an issue deserializing
      * a {@code Message} object from the input stream.
      * 
-     * @see {@link Message#getData()}
+     * @see Message#getData()
      */
     public static Message readMessage (InputStream inputStream) throws IOException {
         try {
