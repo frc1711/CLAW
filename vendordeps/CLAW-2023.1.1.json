@@ -3,7 +3,7 @@
     "name": "CLAW",
     "version": "2023.1.1",
     "uuid": "14b8ad04-24df-11ea-978f-2e728ce88127",
-    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/feature/vendor-library-json/vendordeps/CLAW-2023-latest.json",
+    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/feature/vendor-library-json/vendordeps/CLAW-2023-1.1.json",
     "mavenUrls": [
         "https://raw.githubusercontent.com/frc1711/CLAW/feature/vendor-library-json/lib/app/build/maven-repo"
     ],
