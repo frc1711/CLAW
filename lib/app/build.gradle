@@ -44,11 +44,8 @@ publishing {
 }
 
 distZip {
+    // Used for zipping the driverstation client app
     archiveName "driverstation-rct-client.zip"
-}
-
-jar {
-    archiveName "claw.jar"
 }
 
 repositories {
@@ -105,6 +102,6 @@ dependencies {
 }
 
 application {
-    // Define the main class for the application.
+    // Define the main class for the driverstation RCT client application:
     mainClass = 'claw.rct.local.LocalMain'
 }
