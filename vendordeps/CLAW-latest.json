@@ -1,0 +1,19 @@
+{
+    "fileName": "CLAW-latest.json",
+    "name": "CLAW",
+    "version": "2023.1.1",
+    "uuid": "4a8056b1-634c-4dec-8ac5-48c5875fb386",
+    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/master/vendordeps/RAPTORS-CLAW.json",
+    "mavenUrls": [
+        "https://raw.githubusercontent.com/frc1711/CLAW/master/lib/app/build/maven-repo"
+    ],
+    "javaDependencies": [
+        {
+            "groupId": "org.frc.raptors1711",
+            "artifactId": "raptors-claw",
+            "version": "0" 
+        }
+    ],
+    "jniDependencies": [],
+    "cppDependencies": []
+}
