@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.frc.raptors1711</groupId>
   <artifactId>raptors-claw</artifactId>
-  <version>1.1</version>
+  <version>0</version>
   <name>Common Library Extension to WPILib</name>
   <description>An extension to WPILibJ with a focus on testing and debugging.</description>
   <dependencies>
