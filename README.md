@@ -10,7 +10,7 @@ CLAW versions follow the format `YEAR.V.v`, where `YEAR` is the WPILib release y
 version number.
 
 ### Making a New Release
-To make a new CLAW release, first ensure that everything is functioning properly. CLAW should be well-tested before any releases are made. Secondly, make a copy of `vendordeps\Vendordep Template.tjson` and follow the comments left as directions. Rename the file according to the commented directions, and delete the old CLAW vendor dependency JSON. Third, push your code to GitHub and make a pull request to the master branch. Finally, create a new release/tag following the established format of release names and descriptions, filling in details about the new release.
+To make a new CLAW release, first ensure that everything is functioning properly. CLAW should be well-tested before any releases are made. Make sure you've run `build-lib.bat` with the most recent changes. Secondly, make a copy of `vendordeps\Vendordep Template.tjson` and follow the comments left as directions. Rename the file according to the commented directions, and delete the old CLAW vendor dependency JSON. Third, push your code to GitHub and make a pull request to the master branch. Finally, create a new release/tag following the established format of release names and descriptions, filling in details about the new release.
 
 ## WPILib CLAW Usage
 ### Vendor Library
