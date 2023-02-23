@@ -85,7 +85,7 @@ public class LocalCommandInterpreter {
      * @param console                   The {@link ConsoleManager} to put output to and take input from.
      * @param line                      The line to process as command-line input.
      * @return                          Whether or not to send the command to remote to be processed.
-     * @throws Command.ParseException
+     * @throws RCTCommand.ParseException
      * @throws BadCallException
      */
     public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException {

@@ -1,0 +1,17 @@
+{
+    "fileName": "claw-local-vendordep.json",
+    "name": "CLAW",
+    "uuid": "14b8ad04-24df-11ea-978f-2e728ce88127",
+    "mavenUrls": [
+        "../lib/app/build/maven-repo"
+    ],
+    "javaDependencies": [
+        {
+            "groupId": "org.frc.raptors1711",
+            "artifactId": "raptors-claw",
+            "version": "0"
+        }
+    ],
+    "jniDependencies": [],
+    "cppDependencies": []
+}

@@ -1,0 +1,152 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.frc.raptors1711",
+    "module": "raptors-claw",
+    "version": "0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.3.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "raptors-claw-0.jar",
+          "url": "raptors-claw-0.jar",
+          "size": 113205,
+          "sha512": "25bee8a2b2221c1544b9860de60442c8cf77efed71e73f6f168c05ec812308b9c78262debc086cdf77426e26544b10be4af823118e25fc820b0f5962f65c3db7",
+          "sha256": "41050bf4db962f80a1e2456ad2def64d4851aac0173987f0cfec1b3a65c7aa3d",
+          "sha1": "bb5fa500ca0622333860118f2ad73d77621d4ad6",
+          "md5": "c64437c4e3855dfdbbc48ce9634a60bb"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.google.guava",
+          "module": "guava",
+          "version": {
+            "requires": "30.1.1-jre"
+          }
+        },
+        {
+          "group": "edu.wpi.first.wpiutil",
+          "module": "wpiutil-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
+          "group": "edu.wpi.first.wpilibj",
+          "module": "wpilibj-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
+          "group": "edu.wpi.first.wpilibNewCommands",
+          "module": "wpilibNewCommands-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
+          "group": "edu.wpi.first.ntcore",
+          "module": "ntcore-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
+          "group": "edu.wpi.first.wpimath",
+          "module": "wpimath-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
+          "group": "org.fusesource.jansi",
+          "module": "jansi",
+          "version": {
+            "requires": "2.4.0"
+          }
+        },
+        {
+          "group": "org.jline",
+          "module": "jline-terminal-jansi",
+          "version": {
+            "requires": "3.21.0"
+          }
+        },
+        {
+          "group": "org.jline",
+          "module": "jline-reader",
+          "version": {
+            "requires": "3.21.0"
+          }
+        },
+        {
+          "group": "net.java.dev.jna",
+          "module": "jna-platform",
+          "version": {
+            "requires": "5.12.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "raptors-claw-0.jar",
+          "url": "raptors-claw-0.jar",
+          "size": 113205,
+          "sha512": "25bee8a2b2221c1544b9860de60442c8cf77efed71e73f6f168c05ec812308b9c78262debc086cdf77426e26544b10be4af823118e25fc820b0f5962f65c3db7",
+          "sha256": "41050bf4db962f80a1e2456ad2def64d4851aac0173987f0cfec1b3a65c7aa3d",
+          "sha1": "bb5fa500ca0622333860118f2ad73d77621d4ad6",
+          "md5": "c64437c4e3855dfdbbc48ce9634a60bb"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "raptors-claw-0-sources.jar",
+          "url": "raptors-claw-0-sources.jar",
+          "size": 71904,
+          "sha512": "fe7f1e6c62a01bfd8d2d4ef4c7b814db7e818bb0ea0552dc80b6278d41765fc5955627bd1843083a43bf1b6db817afbd51a077ef496f82fd37bfb50ecb5f6e4e",
+          "sha256": "cc0de2620d8b5d26842e4091d44d9848c9782fc261dbdc893eaecb36e666ff1c",
+          "sha1": "94c6057efb26087e59d62bc642d50770cae0f2f3",
+          "md5": "f7be92f5ac76d7f011f43a4fbab9352a"
+        }
+      ]
+    }
+  ]
+}

@@ -9,9 +9,9 @@ import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.ConsoleManager;
 
 /**
- * Represents a system for interpreting {@link Command}s. Recognized commands can be added via
- * {@link #addCommandProcessor(String, CommandProcessor)} and commands can be parsed and processed
- * via {@link #processLine(String)}.
+ * Represents a system for interpreting {@link RCTCommand}s. Recognized commands can be added via
+ * {@link #addCommandProcessor(CommandProcessor)} and commands can be parsed and processed
+ * via {@link #processLine(ConsoleManager, String)}.
  */
 public class CommandLineInterpreter {
     
@@ -27,12 +27,12 @@ public class CommandLineInterpreter {
     }
     
     /**
-     * Processes a line into a {@link Command} and attempts to call one of this interpreter's command consumers
-     * on the command. See {@link Command.ParseException} for command line formatting. Command names
+     * Processes a line into a {@link RCTCommand} and attempts to call one of this interpreter's command consumers
+     * on the command. See {@link RCTCommand.ParseException} for command line formatting. Command names
      * are case insensitive.
      * @param console                           The {@link ConsoleManager} to put output to and take input from.
      * @param line                              The command line string.
-     * @throws Command.ParseException           An exception thrown if the command is malformed.
+     * @throws RCTCommand.ParseException           An exception thrown if the command is malformed.
      * @throws BadCallException            An exception thrown by the command processor if it received bad arguments.
      * @throws CommandNotRecognizedException    An exception thrown if the command is not recognized by this interpreter.
      */

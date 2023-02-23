@@ -6,7 +6,7 @@ import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.ResponseMessage;
 
 /**
- * A {@link Message} object which describes output from the remote command interpreter that controls the local
+ * A {@link ResponseMessage} object which describes output from the remote command interpreter that controls the local
  * {@link ConsoleManager}.
  */
 public class CommandOutputMessage extends ResponseMessage {
@@ -62,13 +62,13 @@ public class CommandOutputMessage extends ResponseMessage {
         
         /**
          * Retrieve a {@code boolean} describing whether or not input is ready in the {@link ConsoleManager}.
-         * @see {@link ConsoleManager#hasInputReady()}.
+         * @see ConsoleManager#hasInputReady()
          */
         HAS_INPUT_READY,
         
         /**
          * Retrieve a {@code String} user input line.
-         * @see {@link ConsoleManager#readInputLine()}.
+         * @see ConsoleManager#readInputLine()
          */
         READ_INPUT_LINE,
     }
@@ -103,7 +103,7 @@ public class CommandOutputMessage extends ResponseMessage {
          * @param moveUp_lines  See {@link ConsoleManagerOperation#moveUp_lines}.
          * @param print_message See {@link ConsoleManagerOperation#print_message}.
          * 
-         * @see {@link ConsoleManager}
+         * @see ConsoleManager
          */
         public ConsoleManagerOperation (ConsoleManagerOperationType operationType, int moveUp_lines, String print_message) {
             this.operationType = operationType;
@@ -120,61 +120,61 @@ public class CommandOutputMessage extends ResponseMessage {
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#clearWaitingInputLines()}.
+         * @see ConsoleManager#clearWaitingInputLines()
          */
         CLEAR_WAITING_INPUT_LINES,
         
         /**
          * Requires the {@code int moveUp_lines} argument.
-         * @see {@link ConsoleManager#moveUp(int)}.
+         * @see ConsoleManager#moveUp(int)
          */
         MOVE_UP,
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#clearLine()}.
+         * @see ConsoleManager#clearLine()
          */
         CLEAR_LINE,
         
         /**
          * Requires the {@code String print_message} argument.
-         * @see {@link ConsoleManager#print(String)}.
+         * @see ConsoleManager#print(String)
          */
         PRINT,
         
         /**
          * Requires the {@code String print_message} argument.
-         * @see {@link ConsoleManager#printErr(String)}.
+         * @see ConsoleManager#printErr(String)
          */
         PRINT_ERR,
         
         /**
          * Requires the {@code String print_message} argument.
-         * @see {@link ConsoleManager#printSys(String)}.
+         * @see ConsoleManager#printSys(String)
          */
         PRINT_SYS,
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#clear()}.
+         * @see ConsoleManager#clear()
          */
         CLEAR,
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#flush()}.
+         * @see ConsoleManager#flush()
          */
         FLUSH,
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#saveCursorPos()}.
+         * @see ConsoleManager#saveCursorPos()
          */
         SAVE_CURSOR_POS,
         
         /**
          * Requires no arguments.
-         * @see {@link ConsoleManager#restoreCursorPos()}.
+         * @see ConsoleManager#restoreCursorPos()
          */
         RESTORE_CURSOR_POS,
     }

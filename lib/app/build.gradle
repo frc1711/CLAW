@@ -8,16 +8,44 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
+    id 'maven-publish'
     id 'application'
     id 'java'
 }
 
-distZip {
-    archiveName "driverstation-rct-client.zip"
+java {
+    withSourcesJar()
 }
 
-jar {
-    archiveName "claw.jar"
+// maven-publish configuration
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'org.frc.raptors1711'
+            artifactId = 'raptors-claw'
+            version = '0' // GRADLE VERSION IS PERMANENTLY 0, DO NOT CHANGE
+            // The version is permanently zero because a separate maven repository actually exists for each version of CLAW.
+            // In other words, the version number is encoded in the GitHub release name, NOT THE MAVEN REPOSITORY.
+            // This is helpful because it ensures that each GitHub release only has to actually contain the build
+            // for its own version.
+            from components.java
+            pom {
+                name = 'Common Library Extension to WPILib'
+                description = 'An extension to WPILibJ with a focus on testing and debugging.'
+            }
+        }
+    }
+    
+    repositories {
+        maven {
+            url = layout.buildDir.dir('maven-repo')
+        }
+    }
+}
+
+distZip {
+    // Used for zipping the driverstation client app
+    archiveName "driverstation-rct-client.zip"
 }
 
 repositories {
@@ -74,6 +102,6 @@ dependencies {
 }
 
 application {
-    // Define the main class for the application.
+    // Define the main class for the driverstation RCT client application:
     mainClass = 'claw.rct.local.LocalMain'
 }

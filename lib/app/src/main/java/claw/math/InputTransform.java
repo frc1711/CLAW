@@ -10,12 +10,12 @@ public class InputTransform {
     public static final Transform NO_CURVE = Transform.NONE;
     
     /**
-     * f(x) = x^(3/2) as an odd function (negated for x < 0).
+     * f(x) = x^(3/2) as an odd function (negated for {@code x < 0}).
      */
     public static final Transform THREE_HALVES_CURVE = Transform.toOdd(x -> Math.pow(x, 1.5));
     
     /**
-     * f(x) = x^2 as an odd function (negated for x < 0).
+     * f(x) = x^2 as an odd function (negated for {@code x < 0}).
      */
     public static final Transform SQUARE_CURVE = Transform.toOdd(x -> x*x);
     

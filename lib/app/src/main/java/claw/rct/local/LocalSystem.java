@@ -94,9 +94,7 @@ public class LocalSystem implements ResponseMessageHandler {
     }
     
     /**
-     * Try to recreate the {@link DriverStationSocketHandler}, connecting to {@link DriverStationSocketHandler#getRoborioHost(int)}
-     * at the given remote port.
-     * @param remotePort    The remote port to connect to.
+     * Try to recreate the {@link DriverStationSocketHandler}, connecting to {@link DriverStationSocketHandler#getRoborioHost(boolean, int teamNum)}.
      * @throws IOException  If an i/o error occurred while trying to open the socket.
      */
     public synchronized void establishNewConnection () throws IOException {
@@ -201,7 +199,7 @@ public class LocalSystem implements ResponseMessageHandler {
      * within the timeout, a {@link NoResponseException} will be thrown.</li>
      * </ol>
      * @param line                      The input string to be processed into a command.
-     * @throws Command.ParseException   If the provided command string if malformed
+     * @throws RCTCommand.ParseException   If the provided command string if malformed
      * @throws NoResponseException      If no response was received from a command sent to remote
      * @throws IOException              If the command failed to send to remote
      */

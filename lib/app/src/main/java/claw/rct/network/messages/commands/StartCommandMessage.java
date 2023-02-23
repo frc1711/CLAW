@@ -3,7 +3,7 @@ package claw.rct.network.messages.commands;
 import claw.rct.network.low.InstructionMessage;
 
 /**
- * A {@link Message} object which describes an input command line to be processed
+ * A {@link InstructionMessage} object which describes an input command line to be processed
  * by the remote command interpreter as starting a new command. When received by remote,
  * if a command is currently running it should be exited and this new command should be
  * processed instead.

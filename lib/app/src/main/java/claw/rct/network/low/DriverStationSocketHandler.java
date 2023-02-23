@@ -17,7 +17,7 @@ public class DriverStationSocketHandler {
     /**
      * Constructs a new {@link DriverStationSocketHandler}, starting a new socket connection to remote.
      * @param teamNum           The team number to use for connecting to the roboRIO (1711 if you're on a cool team).
-     * @param useStaticIP       Whether to use a static IP instead of a dynamic address.
+     * @param useStaticAddress       Whether to use a static IP instead of a dynamic address.
      * @param port              The remote port to connect to.
      * @param responseReader    A {@link ResponseMessage} {@code Consumer<T>} which accepts messages as they are received from remote.
      * @param excHandler        A {@code Consumer<IOException>} which accepts i/o exceptions that occur when receiving messages from remote.

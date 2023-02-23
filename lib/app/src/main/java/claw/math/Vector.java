@@ -15,7 +15,7 @@ public class Vector <N extends Num> {
     
     /**
      * An array of components backed by the {@link Vector} (meaning these components should never be modified).
-     * For example, for a two-dimensional vector {@code Vector<N2>} or {@link Vector2D}, this array would
+     * For example, for a two-dimensional vector {@code Vector<N2>}, this array would
      * have a length of two and would contain the x and y components of the vector as {@code [x, y]}.
      */
     public final double[] components;

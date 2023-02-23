@@ -5,7 +5,7 @@ import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage.ConsoleManagerRequest;
 
 /**
- * A {@link Message} object which describes the current state of the {@link ConsoleManager},
+ * A {@link InstructionMessage} object which describes the current state of the {@link ConsoleManager},
  * including any input lines requested from {@link CommandOutputMessage} and whether there
  * is input waiting to be processed.
  */
