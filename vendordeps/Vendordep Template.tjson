@@ -1,9 +1,11 @@
 {
-    "fileName": "RAPTORS-CLAW.json",
+    /* DELETE ALL COMMENTS WHEN FINISHED */
+    /* Make sure to rename this JSON file according to the fileName below: */
+    "fileName": "CLAW-"/* Version number here */".json",
     "name": "CLAW",
-    "version": "2023.1.1",
+    "version": /* Version number here */,
     "uuid": "14b8ad04-24df-11ea-978f-2e728ce88127", /* Use https://www.uuidgenerator.net/ to generate a new version 4 UUID */
-    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/"/* GitHub tag/release name */"/vendordeps/RAPTORS-CLAW.json",
+    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/"/* GitHub tag/release name (should be "v{Version number}") */"/vendordeps/CLAW-"/* Version number here */".json",
     "mavenUrls": [
         "https://raw.githubusercontent.com/frc1711/CLAW/"/* GitHub tag/release name */"/lib/app/build/maven-repo"
     ],
