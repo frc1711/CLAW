@@ -24,7 +24,7 @@ public class LimitSwitchDevice extends Device<DigitalInput> {
      * @return  {@code true} if the limit switch is pressed.
      */
     public boolean isPressed () {
-        return (normalState == NormalState.NORMALLY_OPEN) == get().get();
+        return (normalState == NormalState.NORMALLY_OPEN) != get().get();
     }
     
     /**
