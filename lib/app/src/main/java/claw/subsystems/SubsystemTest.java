@@ -12,29 +12,45 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
+/**
+ * Represents a simple test bound to a subsystem which can be run through the Robot Control Terminal.
+ * @see CLAWSubsystem#addTests(SubsystemTest...)
+ */
 public class SubsystemTest {
     
-    private final CLAWSubsystem subsystem;
     private final String name, description;
     private final Consumer<LiveValues> periodicExecute;
     
-    public SubsystemTest (CLAWSubsystem subsystem, String name, String description, Consumer<LiveValues> periodicExecute) {
-        this.subsystem = subsystem;
+    /**
+     * Create a new {@link SubsystemTest}. A subsystem test should only ever control one subsystem to which it belongs.
+     * Never add a subsystem test to a subsystem which it does not belong to.
+     * @param name              A name to identify the particular test by.
+     * @param description       A description of what the test does and how it can be used.
+     * @param periodicExecute   A {@link LiveValues} consumer which will be run periodically (generally around once every 20ms)
+     * to control the subsystem and perform the test's operations. The {@code LiveValues} can be used to display telemetry fields
+     * in the console as the test runs.
+     */
+    public SubsystemTest (String name, String description, Consumer<LiveValues> periodicExecute) {
         this.name = name;
         this.description = description;
         this.periodicExecute = periodicExecute;
     }
     
+    /**
+     * Get the {@link SubsystemTest}'s name.
+     * @return  The name of this test.
+     */
     public String getName () {
         return name;
     }
     
     private class SubsystemTestCommand implements Command {
         
-        private final LiveValues values;
+        private final LiveValues values = new LiveValues();
+        private final CLAWSubsystem subsystem;
         
-        public SubsystemTestCommand (LiveValues values) {
-            this.values = values;
+        public SubsystemTestCommand (CLAWSubsystem subsystem) {
+            this.subsystem = subsystem;
         }
         
         @Override
@@ -89,8 +105,9 @@ public class SubsystemTest {
      * Run the subsystem command through a given console.
      * @param console
      */
-    void run (ConsoleManager console) {
+    void run (ConsoleManager console, CLAWSubsystem subsystem) {
         
+        // Display description and an important safety warning
         console.println("Double-tap enter to disable the robot and stop the test command at any time.");
         
         console.println("Usage and description:");
@@ -107,13 +124,12 @@ public class SubsystemTest {
         }
         
         // Run the command
-        LiveValues values = new LiveValues();
-        SubsystemTestCommand command = new SubsystemTestCommand(values);
+        SubsystemTestCommand command = new SubsystemTestCommand(subsystem);
         command.withInterruptBehavior(InterruptionBehavior.kCancelIncoming).schedule();
         console.printlnSys("\nRunning test command");
         
         while (DriverStation.isEnabled()) {
-            values.update(console);
+            command.values.update(console);
             console.flush();
         }
         
@@ -123,14 +139,30 @@ public class SubsystemTest {
         
     }
     
+    /**
+     * A class allowing for the live updating of fields to be displayed in the console. This is used for telemetry
+     * in a subsystem test.
+     */
     public static class LiveValues {
         
+        /**
+         * An object lock to be synchronized on before making any modifications to the fields,
+         * values, etc.
+         */
         private final Object fieldsLock = new Object();
+        
         private final ArrayList<String> fields = new ArrayList<>();
         private final ArrayList<String> values = new ArrayList<>();
         private final HashSet<String> newFieldNames = new HashSet<>();
         private final HashSet<String> updatedFields = new HashSet<>();
         
+        private LiveValues () { }
+        
+        /**
+         * Set a live field to a string value to be displayed in the console.
+         * @param fieldName The name of the field under which the value should be displayed.
+         * @param value     The value to put to the console.
+         */
         public void setField (String fieldName, String value) {
             synchronized (fieldsLock) {
                 // Get the index of the field in the fields and values arrays
@@ -153,14 +185,28 @@ public class SubsystemTest {
             }
         }
         
+        /**
+         * Set a live field to a double value to be displayed in the console.
+         * @param fieldName The name of the field under which the value should be displayed.
+         * @param value     The value to put to the console.
+         */
         public void setField (String fieldName, double value) {
             setField(fieldName, Double.toString(value));
         }
         
+        /**
+         * Set a live field to an integer value to be displayed in the console.
+         * @param fieldName The name of the field under which the value should be displayed.
+         * @param value     The value to put to the console.
+         */
         public void setField (String fieldName, int value) {
             setField(fieldName, Integer.toString(value));
         }
         
+        /**
+         * Update all the fields in the console to display the latest values.
+         * @param console
+         */
         private void update (ConsoleManager console) {
             synchronized (fieldsLock) {
                 
@@ -201,6 +247,9 @@ public class SubsystemTest {
             }
         }
         
+        /**
+         * Print a single field to the console
+         */
         private static void printField (ConsoleManager console, String fieldName, String value) {
             String space = " ".repeat(Math.max(0, 18 - fieldName.length()));
             console.println(fieldName + " : " + space + value);

@@ -88,6 +88,11 @@ public abstract class CLAWSubsystem extends SubsystemBase {
         
     }
     
+    /**
+     * Bind some {@link SubsystemTest}s to this subsystem so they can be easily run through the Robot Control Terminal.
+     * Make sure that only this subsystem is every controlled by these tests. 
+     * @param tests The {@code SubsystemTest}s to bind to this subsystem.
+     */
     protected void addTests (SubsystemTest... tests) {
         synchronized (subsystemTests) {
             for (SubsystemTest test : tests)
