@@ -1,54 +1,57 @@
-package claw.testing;
+package claw.subsystems;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
-import claw.rct.commands.CommandProcessor;
-import claw.rct.commands.CommandReader;
-import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.network.low.ConsoleManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
-public class LiveCommandTester {
+public class SubsystemTest {
     
-    private final String description;
+    private final CLAWSubsystem subsystem;
+    private final String name, description;
     private final Consumer<LiveValues> periodicExecute;
-    private final Runnable putInSafeState;
-    private final Subsystem[] subsystems;
     
-    public LiveCommandTester (String description, Consumer<LiveValues> periodicExecute, Runnable putInSafeState, Subsystem... subsystems) {
+    public SubsystemTest (CLAWSubsystem subsystem, String name, String description, Consumer<LiveValues> periodicExecute) {
+        this.subsystem = subsystem;
+        this.name = name;
         this.description = description;
         this.periodicExecute = periodicExecute;
-        this.putInSafeState = putInSafeState;
-        this.subsystems = subsystems;
     }
     
-    public CommandProcessor toCommandProcessor (String commandName) {
-        return new CommandProcessor(
-            commandName,
-            commandName,
-            "Use this command to run a custom test command on the robot.",
-            this::runCommand
-        );
+    public String getName () {
+        return name;
     }
     
-    public class TestCommand extends CommandBase {
+    private class SubsystemTestCommand implements Command {
         
         private final LiveValues values;
         
-        public TestCommand (LiveValues values) {
+        public SubsystemTestCommand (LiveValues values) {
             this.values = values;
-            addRequirements(subsystems);
+        }
+        
+        @Override
+        public String getName () {
+            return "SubsystemTestCommand<"+subsystem.getName()+">(\""+name+"\")";
+        }
+        
+        @Override
+        public Set<Subsystem> getRequirements () {
+            HashSet<Subsystem> reqs = new HashSet<>();
+            reqs.add(subsystem);
+            return reqs;
         }
         
         @Override
         public void initialize () {
-            putInSafeState.run();
+            subsystem.stop();
         }
         
         @Override
@@ -58,7 +61,7 @@ public class LiveCommandTester {
         
         @Override
         public void end (boolean interrupted) {
-            putInSafeState.run();
+            subsystem.stop();
         }
     }
     
@@ -82,8 +85,12 @@ public class LiveCommandTester {
         return answer.get();
     }
     
-    private void runCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNone();
+    /**
+     * Run the subsystem command through a given console.
+     * @param console
+     */
+    void run (ConsoleManager console) {
+        
         console.println("Double-tap enter to disable the robot and stop the test command at any time.");
         
         console.println("Usage and description:");
@@ -101,7 +108,7 @@ public class LiveCommandTester {
         
         // Run the command
         LiveValues values = new LiveValues();
-        TestCommand command = new TestCommand(values);
+        SubsystemTestCommand command = new SubsystemTestCommand(values);
         command.withInterruptBehavior(InterruptionBehavior.kCancelIncoming).schedule();
         console.printlnSys("\nRunning test command");
         

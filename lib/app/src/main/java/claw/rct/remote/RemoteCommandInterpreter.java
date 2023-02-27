@@ -15,6 +15,7 @@ import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.network.low.ConsoleManager;
+import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
@@ -41,6 +42,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             "Use -a or --all to watch all logs. Use -n or --none to watch no logs. " +
             "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand);
+        addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
