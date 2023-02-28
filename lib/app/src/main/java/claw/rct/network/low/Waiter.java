@@ -1,5 +1,7 @@
 package claw.rct.network.low;
 
+import java.util.Optional;
+
 /**
  * A helper class which allows for {@link Waiter#receive(Object)} and {@link Waiter#waitForValue(long)} to be called on
  * different threads, where {@code waitForValue} waits a given number of milliseconds (blocking) for a value to be received
@@ -9,8 +11,9 @@ public class Waiter <T> {
         
     private final Object waiterObject = new Object();
     private boolean isWaiting = false;
-    private boolean hasReceived = false;
-    private T valueReceived;
+    
+    private Optional<T> valueReceived;
+    private boolean stopWaiting = false;
     
     /**
      * Receives a value so that {@link Waiter#waitForValue()} will finish and return the given value.
@@ -21,15 +24,10 @@ public class Waiter <T> {
         if (!isWaiting) return;
         
         // Set the value field to match the provided value
-        valueReceived = value;
+        valueReceived = Optional.of(value);
         
-        // Set the hasReceived field to indicate a value has been received
-        hasReceived = true;
-        
-        // Notify the waiter object so that threads waiting for this value will start up again
-        synchronized (waiterObject) {
-            waiterObject.notifyAll();
-        }
+        // Start up waiting threads
+        startUpWaitingThreads();
     }
     
     /**
@@ -40,8 +38,13 @@ public class Waiter <T> {
         // Do nothing if we are not waiting for a new value
         if (!isWaiting) return;
         
-        // Set hasReceived field to indicate that no value has been received
-        hasReceived = false;
+        // Start up waiting threads
+        startUpWaitingThreads();
+    }
+    
+    private void startUpWaitingThreads () {
+        // Set stopWaiting so awoken threads will not start waiting again
+        stopWaiting = true;
         
         // Notify the waiter object so that threads waiting for this value will start up again
         synchronized (waiterObject) {
@@ -72,27 +75,30 @@ public class Waiter <T> {
         isWaiting = true;
         
         // Set the hasReceived field to false so that we can later check if it has been set to true by Waiter.receive()
-        hasReceived = false;
+        valueReceived = Optional.empty();
         
         // Wait for the given timeout period, or until notified by Waiter.receive()
-        synchronized (waiterObject) {
-            try {
-                if (millis == -1)
-                    waiterObject.wait();
-                else
-                    waiterObject.wait(millis);
-            } catch (InterruptedException e) { }
+        stopWaiting = false;
+        while (!stopWaiting) {
+            synchronized (waiterObject) {
+                try {
+                    if (millis == -1)
+                        waiterObject.wait();
+                    else
+                        waiterObject.wait(millis);
+                } catch (InterruptedException e) { }
+            }
         }
         
         // Set isWaiting to false so that new values passed in to Waiter.receive() will not be processed
         isWaiting = false;
         
         // If no value has been received, throw an exception
-        if (!hasReceived)
+        if (valueReceived.isEmpty())
             throw new NoValueReceivedException();
         
         // Otherwise, the new value can be returned
-        return valueReceived;
+        return valueReceived.get();
     }
     
     /**

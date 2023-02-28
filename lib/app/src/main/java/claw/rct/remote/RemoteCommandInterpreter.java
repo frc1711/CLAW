@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import claw.CLAWRobot;
+import claw.CLAWRobot.RuntimeMode;
 import claw.hardware.Device;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
@@ -41,10 +43,38 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             "Use -a or --all to watch all logs. Use -n or --none to watch no logs. " +
             "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand);
+        addCommand("restart",
+            "restart | restart [ all | server-only ]", // TODO: Here
+            "Use restart to restart the robot code in the current " +
+            "Use 'watch [name]...' to watch only a set of specific logs.",
+            this::watchCommand);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
         addCommandProcessor(new CommandProcessor(command, usage, helpDescription, function));
+    }
+    
+    private void restartCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        reader.allowNoOptions();
+        reader.allowNoFlags();
+        
+        if (reader.hasNextArg()) {
+            String mode = reader.readArgOneOf("restart mode", "Expected a restart mode: 'server-only' or 'all'.", "server-only", "all");
+            reader.noMoreArgs();
+            
+            if (mode.equals("server-only")) {
+                console.println("Restarting with CLAW server only.");
+                CLAWRobot.restartCode(RuntimeMode.CLAW_SERVER_ONLY);
+            } else {
+                console.println("Restarting with CLAW server and robot code.");
+                CLAWRobot.restartCode(RuntimeMode.CLAW_SERVER_AND_ROBOT_CODE);
+            }
+            
+        } else {
+            reader.noMoreArgs();
+            console.println("Restarting robot code.");
+            CLAWRobot.restartCode();
+        }
     }
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
