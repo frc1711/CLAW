@@ -5,9 +5,9 @@ import java.util.function.Consumer;
 
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
-import claw.rct.network.low.KeepaliveWatcher;
-import claw.rct.network.low.Waiter;
-import claw.rct.network.low.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.KeepaliveWatcher;
+import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
