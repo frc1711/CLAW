@@ -26,7 +26,6 @@ public class CLAWRobot {
     
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
-    private static final Waiter<Object> stopRuntimeThreadWaiter = new Waiter<>();
     private static boolean hasStartedCompetition = false;
     
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
@@ -42,17 +41,14 @@ public class CLAWRobot {
         
         // Run robot code if indicated by preferences to do so
         if (RUN_ROBOT_CODE) {
-            startThread(() -> initializeRobotCode(robot, robotStartCompetition));
+            // Run until robot code finishes
+            runRobotCode(robot, robotStartCompetition);
+        } else {
+            // Wait indefinitely
+            try {
+                new Waiter<>().waitForValue();
+            } catch (NoValueReceivedException e) { }
         }
-        
-        // Wait for stopRuntimeThreadWaiter so the robot runtime thread will wait until it is told to stop
-        try {
-            stopRuntimeThreadWaiter.waitForValue();
-        } catch (NoValueReceivedException e) { }
-        
-        // Send any remaining data through the server, if one exists
-        if (server != null)
-            LogHandler.getInstance().sendData(server);
         
     }
     
@@ -69,7 +65,7 @@ public class CLAWRobot {
     /**
      * Start the robot code and the CLAW robot code runtime necessary for robot code functioning
      */
-    private static void initializeRobotCode (TimedRobot robot, Runnable robotStartCompetition) {
+    private static void runRobotCode (TimedRobot robot, Runnable robotStartCompetition) {
         // Put a message into the console indicating that the CLAWRobot runtime has started
         System.out.println("\n -- CLAW is running -- \n");
         
@@ -90,11 +86,7 @@ public class CLAWRobot {
         } catch (Throwable exception) {
             // Catch any uncaught robot exceptions
             handleFatalUncaughtException(exception);
-            // TODO: Handling exceptions between this thread and the main thread, and restarting code at the correct time
-            // REQUIRES TESTING
             throw exception;
-        } finally {
-            restartCode();
         }
     }
     
@@ -119,12 +111,6 @@ public class CLAWRobot {
     public enum RuntimeMode {
         CLAW_SERVER_ONLY,
         CLAW_SERVER_AND_ROBOT_CODE,
-    }
-    
-    public static void restartCode () {
-        if (!hasStartedCompetition)
-            throw new RuntimeException("Cannot restart code when startCompetition has not yet been called");
-        stopRuntimeThreadWaiter.kill();
     }
     
     private static void robotPeriodic () {

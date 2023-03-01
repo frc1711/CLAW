@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import claw.CLAWRobot;
 import claw.hardware.Device;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
@@ -56,7 +55,6 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
     private void restartCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         console.println("Restarting robot code.");
-        CLAWRobot.restartCode();
     }
     
     private void watchCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
