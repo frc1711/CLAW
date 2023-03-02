@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.rct.network.low.Waiter;
-import claw.rct.network.low.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.LogDataMessage;
 import claw.rct.network.messages.LogDataMessage.LogData;
 import claw.rct.remote.RCTServer;

@@ -8,7 +8,8 @@ import java.util.Optional;
  * through {@code receive}.
  */
 public class Waiter <T> {
-        
+    // TODO: Split into ResponseWaiter and Waiter classes for waiting for objects vs. waiting in general
+    
     private final Object waiterObject = new Object();
     private boolean isWaiting = false;
     
