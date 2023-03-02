@@ -7,32 +7,53 @@ import java.io.StringWriter;
 import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
+import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import claw.rct.remote.RCTServer;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class CLAWRobot {
     
+    // Runtime execution determined by preferences so that the user can control
+    // this through any NetorkTables client (so that if you turn the server off,
+    // you can still control this execution)
+    private static final boolean
+        RUN_ROBOT_CODE = Preferences.getBoolean("CLAw.RUN_ROBOT_CODE", true),
+        RUN_RCT_SERVER = Preferences.getBoolean("CLAw.RUN_RCT_SERVER", true);
+    
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
+    private static boolean hasStartedCompetition = false;
+    
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
+        // Do not call startCompetition more than once
+        if (hasStartedCompetition)
+            throw new RuntimeException("Cannot call startCompetition more than once");
+        hasStartedCompetition = true;
         
-        initializeRuntime();
-        robot.addPeriodic(CLAWRobot::robotPeriodic, TimedRobot.kDefaultPeriod);
+        // Start the RCT server if indicated by preferences to do so
+        if (RUN_RCT_SERVER) {
+            startThread(CLAWRobot::initializeRCTServer);
+        }
         
-        try {
-            robotStartCompetition.run();
-        } catch (Throwable exception) {
-            handleFatalUncaughtException(exception);
-            onRobotCodeFinish();
-            throw exception;
+        // Run robot code if indicated by preferences to do so
+        if (RUN_ROBOT_CODE) {
+            // Run until robot code finishes
+            runRobotCode(robot, robotStartCompetition);
+        } else {
+            // Wait indefinitely
+            try {
+                new Waiter<>().waitForValue();
+            } catch (NoValueReceivedException e) { }
         }
         
     }
     
-    public static CommandLineInterpreter getExtensibleCommandInterpreter () {
-        return EXTENSIBLE_COMMAND_INTERPRETER;
+    private static void startThread (Runnable thread) {
+        new Thread(thread).start();
     }
     
     private static final CLAWLogger
@@ -40,13 +61,11 @@ public class CLAWRobot {
         RUNTIME_LOG = CLAWLogger.getLogger("claw.runtime");
     
     private static RCTServer server;
-    private static boolean initialized = false;
     
-    private static void initializeRuntime () {
-        
-        if (initialized) return;
-        initialized = true;
-        
+    /**
+     * Start the robot code and the CLAW robot code runtime necessary for robot code functioning
+     */
+    private static void runRobotCode (TimedRobot robot, Runnable robotStartCompetition) {
         // Put a message into the console indicating that the CLAWRobot runtime has started
         System.out.println("\n -- CLAW is running -- \n");
         
@@ -59,23 +78,39 @@ public class CLAWRobot {
         CommandScheduler.getInstance().onCommandFinish(CLAWRobot::onCommandFinish);
         CommandScheduler.getInstance().onCommandInterrupt(CLAWRobot::onCommandInterrupt);
         
-        // Start RCT server thread
-        new Thread(() -> {
-            try {
-                server = new RCTServer(5800, EXTENSIBLE_COMMAND_INTERPRETER);
-                server.start();
-            } catch (IOException e) {
-                System.err.println("Failed to start RCT server.");
-                e.printStackTrace();
-            }
-        }).start();
-        
+        try {
+            // Add the periodic method for the CLAWRobot and call start competition within a try-catch
+            // loop to catch any exceptions
+            robot.addPeriodic(CLAWRobot::robotPeriodic, TimedRobot.kDefaultPeriod);
+            robotStartCompetition.run();
+        } catch (Throwable exception) {
+            // Catch any uncaught robot exceptions
+            handleFatalUncaughtException(exception);
+            throw exception;
+        }
     }
     
+    /**
+     * Initialize the RCT server allowing for advanced debugging and control from the driver station
+     */
+    private static void initializeRCTServer () {
+        // Start RCT server
+        try {
+            server = new RCTServer(5800, EXTENSIBLE_COMMAND_INTERPRETER);
+            server.start();
+        } catch (IOException e) {
+            System.err.println("Failed to start RCT server.");
+            e.printStackTrace();
+        }
+    }
     
-    private static void onRobotCodeFinish () {
-        if (server != null)
-            LogHandler.getInstance().sendData(server);
+    public static CommandLineInterpreter getExtensibleCommandInterpreter () {
+        return EXTENSIBLE_COMMAND_INTERPRETER;
+    }
+    
+    public enum RuntimeMode {
+        CLAW_SERVER_ONLY,
+        CLAW_SERVER_AND_ROBOT_CODE,
     }
     
     private static void robotPeriodic () {
