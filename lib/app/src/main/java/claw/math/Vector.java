@@ -77,7 +77,8 @@ public class Vector <N extends Num> {
      * Applies a {@link Transform} to the magnitude of this vector. 
      * @param transform The {@code Transform} to apply to this vector's magnitude.
      * @return          This vector scaled such that the magnitude of the resulting vector is equal to the result
-     * of the transform applied to this vector's magnitude.
+     * of the transform applied to this vector's magnitude. If the magnitude of this vector is zero, then
+     * the output magnitude will always be zero.
      */
     public Vector<N> applyScale (Transform transform) {
         if (getMagnitude() == 0)
@@ -133,7 +134,7 @@ public class Vector <N extends Num> {
      * @return      The sum of the two vectors.
      */
     public Vector<N> add (Vector<N> other) {
-        return this.apply(other, (a, b) -> a * b);
+        return this.apply(other, (a, b) -> a + b);
     }
     
     /**
