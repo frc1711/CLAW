@@ -179,18 +179,16 @@ public class Vector <N extends Num> {
     }
     
     /**
-     * Applies a {@link Transform} to the magnitude of this vector. 
-     * @param transform The {@code Transform} to apply to this vector's magnitude.
-     * @return          This vector scaled such that the magnitude of the resulting vector is equal to the result
-     * of the transform applied to this vector's magnitude. If the magnitude of this vector is zero, then
-     * the output magnitude will always be zero.
+     * Returns this vector scaled so that the new magnitude is equal to the given magnitude. If this vector's magnitude
+     * is zero, a zero vector will be returned.
+     * @param magnitude The magnitude of the vector after scaling.
+     * @return          This vector, scale such that the magnitude equals the provided magnitude.
      */
-    public Vector<N> applyScale (Transform transform) {
+    public Vector<N> scaleToMagnitude (double magnitude) {
         if (getMagnitude() == 0)
             return this.scale(0);
-        
-        double newMagnitude = transform.apply(getMagnitude());
-        return this.scale(newMagnitude / getMagnitude());
+        else
+            return this.scale(magnitude / getMagnitude());
     }
     
     /**
@@ -289,8 +287,8 @@ public class Vector <N extends Num> {
     public String toString () {
         String[] componentsStrings = new String[components.length];
         for (int i = 0; i < components.length; i ++)
-            componentsStrings[i] = Double.toString(components.length);
-        return "<" + String.join(", " + componentsStrings) + ">";
+            componentsStrings[i] = Double.toString(components[i]);
+        return "<" + String.join(", ", componentsStrings) + ">";
     }
     
 }
