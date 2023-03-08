@@ -4,13 +4,16 @@ import java.util.Optional;
 
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.Num;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.numbers.N3;
 
 /**
- * A type-safe vector class which can be used for calculations.
+ * A vector class which can be used for calculations.
  */
 public class Vector <N extends Num> {
     
     private Optional<Double> magnitude = Optional.empty();
+    private Optional<Double> angle = Optional.empty();
     private final Nat<N> dimensionality;
     
     /**
@@ -32,6 +35,27 @@ public class Vector <N extends Num> {
         dimensionality = dim;
         
         this.components = components.clone();
+    }
+    
+    /**
+     * Create a new two-dimensional vector {@code <x, y>} from the given components.
+     * @param x The x component of the vector.
+     * @param y The y component of the vector.
+     * @return  The vector {@code <x, y>}.
+     */
+    public static Vector<N2> from (double x, double y) {
+        return new Vector<>(Nat.N2(), x, y);
+    }
+    
+    /**
+     * Create a new three-dimensional vector {@code <x, y, z>} from the given components.
+     * @param x The x component of the vector.
+     * @param y The y component of the vector.
+     * @param z The z component of the vector.
+     * @return  The vector {@code <x, y, z>}.
+     */
+    public static Vector<N3> from (double x, double y, double z) {
+        return new Vector<>(Nat.N3(), x, y, z);
     }
     
     /**
@@ -144,6 +168,35 @@ public class Vector <N extends Num> {
      */
     public Vector<N> subtract (Vector<N> other) {
         return this.apply(other, (a, b) -> a - b);
+    }
+    
+    
+    public static double getVectorAngle (Vector<N2> vector) {
+        if (vector.angle.isEmpty()) {
+            
+            // Set vector.angle as a cache
+            
+            if (vector.getMagnitude() == 0) {
+                
+                // Return 0 if the magnitude is 0 to prevent dividing by zero (or yielding a nonsensical answer)
+                vector.angle = Optional.of(0.);
+                
+            } else {
+                
+                // Get the X component of the vector if it were on the unit circle so we can use arccos
+                double unitX = vector.components[0] / vector.getMagnitude();
+                
+                // Get the angle if the vector were above the x-axis
+                double angle = Math.acos(unitX);
+                
+                // Use the angle directly if the vector is above the x-axis, or modify it to flip across the x-axis otherwise
+                vector.angle = Optional.of(vector.components[1] >= 0 ? (angle) : (2*Math.PI - angle));
+                
+            }
+            
+        }
+        
+        return vector.angle.get();
     }
     
 }
