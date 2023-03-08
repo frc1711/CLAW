@@ -66,6 +66,11 @@ public class InputTransform implements Transform {
             .then(INPUT_CLAMP);
     }
     
+    /**
+     * Applies this {@link InputTransform} to the given input. The input is assumed to be on the range [-1, 1], but
+     * this transform will still clamp input to that range in case it isn't already. The input transform
+     * is best used when applying input directly to a value taken from a joystick axis on a controller.
+     */
     @Override
     public double apply (double input) {
         return innerTransform.apply(input);
