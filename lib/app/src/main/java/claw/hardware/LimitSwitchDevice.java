@@ -33,15 +33,15 @@ public class LimitSwitchDevice extends Device<DigitalInput> {
     public enum NormalState {
         /**
          * For a normally open limit switch, if the limit switch is not pressed, the circuit will be open,
-         * and so a low signal will be received through DIO. Because of this, if the DIO is unplugged,
-         * the input to the roboRIO will indicate that the limit switch is not pressed.
+         * and so a high signal (5V) will be received through DIO. Because of this, if the DIO is unplugged,
+         * the input to the roboRIO will indicate that the limit switch is pressed.
          */
         NORMALLY_OPEN,
         
         /**
          * For a normally closed limit switch, if the limit switch is not pressed, the circuit will be closed,
-         * and so a high signal will be received through DIO. Because of this, if the DIO is unplugged,
-         * the input to the roboRIO will indicate that the limit switch is pressed.
+         * and so a low signal (0V) will be received through DIO. Because of this, if the DIO is unplugged,
+         * the input to the roboRIO will indicate that the limit switch is not pressed.
          */
         NORMALLY_CLOSED,
     }
