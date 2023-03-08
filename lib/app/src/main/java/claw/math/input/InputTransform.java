@@ -54,7 +54,7 @@ public class InputTransform implements Transform {
      * the output is clamped to the range [-1, 1].
      * 
      * @param inputMap      Any {@code Transform}. It is recommended but not required that this transform map -1 to -1,
-     * 0 to 0, and 1 to 1. See {@link Transform#toOdd(Transform)} for a easy way to convert an existing input curve which
+     * 0 to 0, and 1 to 1. See {@link Transform#toOdd(Transform)} for a easy way to convert an existing transform which
      * works for positive numbers into one which will also properly handle negative numbers. If you're not sure where
      * to start, try out {@link InputTransform#THREE_HALVES_CURVE}.
      * @param deadbandValue Any input with a magnitude of less than this deadband value will be mapped to zero.
