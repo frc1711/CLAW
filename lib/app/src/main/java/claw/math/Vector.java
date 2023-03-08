@@ -170,8 +170,13 @@ public class Vector <N extends Num> {
         return this.apply(other, (a, b) -> a - b);
     }
     
-    
-    public static double getVectorAngle (Vector<N2> vector) {
+    /**
+     * Returns the angle formed between a two-dimensional vector and the x-axis, in radians. This angle
+     * increases counterclockwise. For example, a vector facing in the +y direction will return {@code pi/2}.
+     * @param vector    The two-dimensional vector to retrieve the direction angle of.
+     * @return          The angle of the vector, in radians.
+     */
+    public static double getDirection (Vector<N2> vector) {
         if (vector.angle.isEmpty()) {
             
             // Set vector.angle as a cache
