@@ -1,6 +1,12 @@
-package claw.math;
+package claw.math.input;
 
-public class InputTransform {
+import claw.math.Transform;
+
+/**
+ * A class which helps to process input from a sinlge axis on the controller, handling a deadband zone
+ * and applying a curve to refine control
+ */
+public class InputTransform implements Transform {
     
     private static final Transform INPUT_CLAMP = Transform.clamp(-1, 1);
     
@@ -38,9 +44,11 @@ public class InputTransform {
         }));
     }
     
+    private final Transform innerTransform;
+    
     /**
-     * Create a {@link Transform} which can be applied to any input (but designed for handling human input
-     * from an axis on a controller). The transform applies a deadband
+     * Create an {@link InputTransform} which can be applied to any input (but designed for handling human input
+     * from a single axis on a controller). The transform applies a deadband
      * so that any input with a magnitude less than the deadband value will be ignored.
      * A given input map is then applied to the output from this deadband, and finally
      * the output is clamped to the range [-1, 1].
@@ -50,15 +58,17 @@ public class InputTransform {
      * works for positive numbers into one which will also properly handle negative numbers. If you're not sure where
      * to start, try out {@link InputTransform#THREE_HALVES_CURVE}.
      * @param deadbandValue Any input with a magnitude of less than this deadband value will be mapped to zero.
-     * @return              The final {@code Transform} which can be applied directly to input from a controller axis.
      */
-    public static Transform getInputTransform (Transform inputMap, double deadbandValue) {
-        return
+    public InputTransform (Transform inputMap, double deadbandValue) {
+        innerTransform =
             makeDeadband(deadbandValue)
             .then(inputMap)
             .then(INPUT_CLAMP);
     }
     
-    private InputTransform () { }
+    @Override
+    public double apply (double input) {
+        return innerTransform.apply(input);
+    }
     
 }
