@@ -285,4 +285,12 @@ public class Vector <N extends Num> {
         return vector.angle.get();
     }
     
+    @Override
+    public String toString () {
+        String[] componentsStrings = new String[components.length];
+        for (int i = 0; i < components.length; i ++)
+            componentsStrings[i] = Double.toString(components.length);
+        return "<" + String.join(", " + componentsStrings) + ">";
+    }
+    
 }
