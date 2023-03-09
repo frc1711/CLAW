@@ -2,6 +2,7 @@ package claw.hardware;
 
 import java.util.Optional;
 
+import claw.LiveValues;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
@@ -29,9 +30,16 @@ public class DIOReadCommand {
             ports[i] = new DIOPort(i);
         }
         
-        // TODO: Automatically updating with DIO values
-        for (int i = 0; i < ports.length; i ++) {
-            console.println("DIO["+i+"] : " + ports[i]);
+        LiveValues values = new LiveValues();
+        
+        while (!console.hasInputReady()) {
+            
+            for (int i = 0; i < ports.length; i ++) {
+                values.setField("DIO["+i+"]", ports[i].toString());
+            }
+            
+            values.update(console);
+            
         }
         
         for (int i = 0; i < ports.length; i ++) {
