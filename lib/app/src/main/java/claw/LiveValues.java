@@ -82,6 +82,11 @@ public class LiveValues {
     public void update (ConsoleManager console) {
         synchronized (fieldsLock) {
             
+            // Do nothing if no fields have been changed
+            if (updatedFields.size() == 0 && newFieldNames.size() == 0) {
+                return;
+            }
+            
             // Move up to the top of the preexisting lines
             int preexistingLines = fields.size() - newFieldNames.size();
             console.moveUp(preexistingLines);
