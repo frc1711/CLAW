@@ -7,8 +7,6 @@ import java.io.StringWriter;
 import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import claw.rct.remote.RCTServer;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -20,9 +18,7 @@ public class CLAWRobot {
     // Runtime execution determined by preferences so that the user can control
     // this through any NetorkTables client (so that if you turn the server off,
     // you can still control this execution)
-    private static final boolean
-        RUN_ROBOT_CODE = Preferences.getBoolean("CLAW.RUN_ROBOT_CODE", true),
-        RUN_RCT_SERVER = Preferences.getBoolean("CLAW.RUN_RCT_SERVER", true);
+    private static final String RUN_RCT_SERVER = "CLAW.RUN_RCT_SERVER";
     
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
@@ -35,31 +31,24 @@ public class CLAWRobot {
         hasStartedCompetition = true;
         
         // Start the RCT server if indicated by preferences to do so
-        if (RUN_RCT_SERVER) {
+        Preferences.initBoolean(RUN_RCT_SERVER, true);
+        if (Preferences.getBoolean(RUN_RCT_SERVER, true)) {
             startThread(CLAWRobot::initializeRCTServer);
         }
         
-        // Run robot code if indicated by preferences to do so
-        if (RUN_ROBOT_CODE) {
-            // Run until robot code finishes
-            runRobotCode(robot, robotStartCompetition);
-        } else {
-            // Wait indefinitely
-            try {
-                new Waiter<>().waitForValue();
-            } catch (NoValueReceivedException e) { }
-        }
+        // Run until robot code finishes
+        runRobotCode(robot, robotStartCompetition);
         
     }
-    
+
     private static void startThread (Runnable thread) {
         new Thread(thread).start();
     }
-    
+
     private static final CLAWLogger
         COMMANDS_LOG = CLAWLogger.getLogger("claw.commands"),
         RUNTIME_LOG = CLAWLogger.getLogger("claw.runtime");
-    
+
     private static RCTServer server;
     
     /**
