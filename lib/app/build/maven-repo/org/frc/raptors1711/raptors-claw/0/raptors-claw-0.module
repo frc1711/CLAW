@@ -27,11 +27,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-          "size": 113785,
-          "sha512": "0c6208d40e8dfe35d67d99f0395b7f68ccbb82d79eed422b92a85a3b1c5befbd102840eea9a495ee21520619fe22ceff4b9a294502e39421cfddbb124056f114",
-          "sha256": "c29714a2cdcb56698b077b8c423cda6ce73cb22f87903b48050b548daf8cf48c",
-          "sha1": "14e6533280ddc568aafb54c3621fcba937a9d37f",
-          "md5": "54318e44722aa6a0851d336e87dace44"
+          "size": 117738,
+          "sha512": "86ef9f3d16bc66f5ea3ffb363819bb85cc8e776b5374ce7a12a8354dfd9020b03028172ee423be8bf2e33d2122c7c3a16bff4d8b64ff8be233629a91ba7f4f61",
+          "sha256": "65feaf9e693f39d2131b62a2a20f512cbbca21ccad37790079c9cb8f8658670f",
+          "sha1": "70bca846a11ebad49f33027d5ea0c93973691240",
+          "md5": "3bc68c74555770d50bb66d097ad2c1b5"
         }
       ]
     },
@@ -88,6 +88,13 @@
           }
         },
         {
+          "group": "edu.wpi.first.hal",
+          "module": "hal-java",
+          "version": {
+            "requires": "2023.1.1"
+          }
+        },
+        {
           "group": "org.fusesource.jansi",
           "module": "jansi",
           "version": {
@@ -120,11 +127,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-          "size": 113785,
-          "sha512": "0c6208d40e8dfe35d67d99f0395b7f68ccbb82d79eed422b92a85a3b1c5befbd102840eea9a495ee21520619fe22ceff4b9a294502e39421cfddbb124056f114",
-          "sha256": "c29714a2cdcb56698b077b8c423cda6ce73cb22f87903b48050b548daf8cf48c",
-          "sha1": "14e6533280ddc568aafb54c3621fcba937a9d37f",
-          "md5": "54318e44722aa6a0851d336e87dace44"
+          "size": 117738,
+          "sha512": "86ef9f3d16bc66f5ea3ffb363819bb85cc8e776b5374ce7a12a8354dfd9020b03028172ee423be8bf2e33d2122c7c3a16bff4d8b64ff8be233629a91ba7f4f61",
+          "sha256": "65feaf9e693f39d2131b62a2a20f512cbbca21ccad37790079c9cb8f8658670f",
+          "sha1": "70bca846a11ebad49f33027d5ea0c93973691240",
+          "md5": "3bc68c74555770d50bb66d097ad2c1b5"
         }
       ]
     },
@@ -140,11 +147,11 @@
         {
           "name": "raptors-claw-0-sources.jar",
           "url": "raptors-claw-0-sources.jar",
-          "size": 72236,
-          "sha512": "6a0aeb14ae56eb8d6d417b696d7159a501504194cf66ab3263ee60afaa06b5d35289a961cd41edead5db76f7acb522378fb7f3ad1629a57497a8da566579b135",
-          "sha256": "6fb9fecc3b986514b2bf452237e50af8665727f7921f31e40028795ebe51a21c",
-          "sha1": "25c71d0e2a0bfccaa7b1a01d79327ce195cad7ec",
-          "md5": "dda439c8b017c2350a8ddc96c9e5edc9"
+          "size": 73390,
+          "sha512": "47ae076222bbcbfeb851a5f3aba9a7b5606ae23ecf5d3b485b5151f32be9fa174682a5755e57fd5c9c6b0959ea5277bac0c1d8fb8ab54c66c24aacb9e95b6d7d",
+          "sha256": "d58277b80c45d1b92ffd40fe38e62b16d6365fcf8ae9ce7494d7f859003a94f6",
+          "sha1": "e100907f9a0a3238f4dc061e8e141a86b469a6b8",
+          "md5": "bdaa7ee77c22aed20b557db6cdf609fd"
         }
       ]
     }

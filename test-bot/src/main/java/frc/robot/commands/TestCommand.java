@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import claw.logs.CLAWLogger;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 
@@ -18,18 +19,16 @@ public class TestCommand extends CommandBase {
     @Override
     public void initialize () {
         LOG.out("Initializing TestCommand");
-        subsystem.stop();
     }
     
     @Override
     public void execute () {
-        subsystem.set(0.4);
+        
     }
     
     @Override
     public void end (boolean interrupted) {
         LOG.out("Ending TestCommand");
-        subsystem.stop();
     }
     
     @Override

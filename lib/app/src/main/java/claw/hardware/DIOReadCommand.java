@@ -6,7 +6,7 @@ import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.network.low.ConsoleManager;
-import edu.wpi.first.hal.DIOJNI;
+import edu.wpi.first.hal.util.AllocationException;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class DIOReadCommand {
@@ -31,7 +31,7 @@ public class DIOReadCommand {
         
         // TODO: Automatically updating with DIO values
         for (int i = 0; i < ports.length; i ++) {
-            console.println(i + " : " + ports[i]);
+            console.println("DIO["+i+"] : " + ports[i]);
         }
         
         for (int i = 0; i < ports.length; i ++) {
@@ -41,9 +41,15 @@ public class DIOReadCommand {
     }
     
     private static class DIOPort {
+        
         private Optional<DigitalInput> digitalInput = Optional.empty();
+        
         private DIOPort (int port) {
-            DIOJNI.checkDIOChannel(port);
+            try {
+                digitalInput = Optional.of(new DigitalInput(port));
+            } catch (AllocationException e) {
+                // Ignore AllocationExceptions
+            }
         }
         
         @Override
@@ -58,6 +64,7 @@ public class DIOReadCommand {
         public void free () {
             digitalInput.ifPresent(DigitalInput::close);
         }
+        
     }
     
 }
