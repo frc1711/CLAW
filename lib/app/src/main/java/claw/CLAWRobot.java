@@ -21,8 +21,8 @@ public class CLAWRobot {
     // this through any NetorkTables client (so that if you turn the server off,
     // you can still control this execution)
     private static final boolean
-        RUN_ROBOT_CODE = Preferences.getBoolean("CLAw.RUN_ROBOT_CODE", true),
-        RUN_RCT_SERVER = Preferences.getBoolean("CLAw.RUN_RCT_SERVER", true);
+        RUN_ROBOT_CODE = Preferences.getBoolean("CLAW.RUN_ROBOT_CODE", true),
+        RUN_RCT_SERVER = Preferences.getBoolean("CLAW.RUN_RCT_SERVER", true);
     
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
