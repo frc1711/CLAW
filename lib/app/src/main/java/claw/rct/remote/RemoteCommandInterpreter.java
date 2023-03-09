@@ -3,6 +3,7 @@ package claw.rct.remote;
 import java.util.ArrayList;
 import java.util.List;
 
+import claw.hardware.DIOReadCommand;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -28,6 +29,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand);
         addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
+        addCommandProcessor(DIOReadCommand.DIO_RAW_COMMAND_PROCESSOR);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
