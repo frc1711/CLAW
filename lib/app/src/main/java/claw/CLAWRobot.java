@@ -108,11 +108,6 @@ public class CLAWRobot {
         return EXTENSIBLE_COMMAND_INTERPRETER;
     }
     
-    public enum RuntimeMode {
-        CLAW_SERVER_ONLY,
-        CLAW_SERVER_AND_ROBOT_CODE,
-    }
-    
     private static void robotPeriodic () {
         if (server != null)
             LogHandler.getInstance().sendData(server);
