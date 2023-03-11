@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import claw.hardware.DIOReadCommand;
+import claw.hardware.can.CANScanner;
 import claw.logs.LogHandler;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
@@ -30,6 +31,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             this::watchCommand);
         addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
         addCommandProcessor(DIOReadCommand.DIO_RAW_COMMAND_PROCESSOR);
+        addCommandProcessor(CANScanner.CAN_SCAN_COMMAND_PROCESSOR);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {

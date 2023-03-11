@@ -1,10 +1,18 @@
 package claw.hardware.can;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+
+import java.util.Set;
+import java.util.HashSet;
+
+import java.nio.ByteOrder;
 import claw.LiveValues;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.network.low.ConsoleManager;
+import edu.wpi.first.hal.CANAPIJNI;
 import edu.wpi.first.hal.CANStreamMessage;
 import edu.wpi.first.hal.can.CANJNI;
 import edu.wpi.first.hal.can.CANStatus;
@@ -14,6 +22,8 @@ import edu.wpi.first.hal.can.CANStatus;
  * so the {@code CANScanner} should read messages from any active device on the CAN bus.
  */
 public class CANScanner implements AutoCloseable {
+    
+    public static record CANMessage (CANMessageID messageID, byte[] messageData, long timestamp, int intID) { }
     
     public static final CommandProcessor CAN_SCAN_COMMAND_PROCESSOR = new CommandProcessor(
         "canscan",
@@ -33,33 +43,63 @@ public class CANScanner implements AutoCloseable {
             values.setField("receiveErrorCount",        status.receiveErrorCount);
             values.setField("transmitErrorCount",       status.transmitErrorCount);
             values.setField("txFullCount",              status.txFullCount);
+            
+            values.update(console);
         }
         
-        console.printlnSys("\nReading 10 messages:");
         CANScanner scanner = new CANScanner();
-        for (int i = 0; i < 10; i ++) {
-            CANStreamMessage message = scanner.readMessage();
-            printMessage(console, message);
-            console.flush();
+        Set<Integer> messageIds = new HashSet<Integer>();
+        
+        console.readInputLine();
+        
+        while (!console.hasInputReady()) {
+            for (int i = 0; i < 100; i ++) {
+                try {
+                    CANMessage message = scanner.readMessage();
+                    messageIds.add(message.intID());
+                } catch (Exception e) { }
+            }
+            console.printlnSys("what");
         }
+        
+        for (int id : messageIds) {
+            printMessageId(console, id, CANMessageID.fromMessageId(id));
+        }
+        
+        // for (int i = 0; i < 100; i ++) {
+        //     CANMessage message = scanner.readMessage();
+        //     printMessage(console, message);
+        //     console.flush();
+        // }
         
         scanner.close();
     }
     
-    private static void printMessage (ConsoleManager console, CANStreamMessage message) {
-        console.printlnSys("Message ID: " + Integer.toBinaryString(message.messageID));
-        CANMessageID messageID = CANMessageID.fromMessageId(message.messageID);
-        console.printlnSys("  API Class: " + messageID.apiClass());
-        console.printlnSys("  API Index: " + messageID.apiIndex());
-        console.printlnSys("  Device Number: " + messageID.deviceNum());
-        console.printlnSys("  Device Type: " + messageID.deviceType().name());
-        console.printlnSys("  Manufacturer: " + messageID.manufacturer().friendlyName);
+    private static void printMessageId (ConsoleManager console, int idInt, CANMessageID id) {
+        String byteRepr = Integer.toBinaryString(idInt);
+        byteRepr = "0".repeat(Math.min(32, 32 - byteRepr.length())) + byteRepr;
         
-        console.printlnSys("Timestamp:  " + message.timestamp);
-        console.printlnSys("Length:     " + message.length);
-        console.printlnSys("-- Message Content --");
-        for (byte b : message.data) {
-            console.print(Byte.toString(b) + " ");
+        console.printlnSys("Message ID: " + byteRepr);
+        console.printlnSys("  API Class: " + id.apiClass());
+        console.printlnSys("  API Index: " + id.apiIndex());
+        console.printlnSys("  Device Number: " + id.deviceNum());
+        console.printlnSys("  Device Type: " + id.deviceType().name());
+        console.printlnSys("  Manufacturer: " + id.manufacturer().friendlyName);
+    }
+    
+    private static void printMessage (ConsoleManager console, CANMessage message) {
+        if (message != null) {
+            printMessageId(console, message.intID(), message.messageID());
+            // console.printlnSys("Timestamp:  " + message.timestamp);
+            // console.printlnSys("Length:     " + message.length);
+            console.printlnSys("-- Message Content --");
+            for (byte b : message.messageData()) {
+                console.print(Byte.toString(b) + " ");
+            }
+            console.println("");
+            
+        } else {
+            console.printlnSys("Null message received");
         }
     }
     
@@ -89,8 +129,29 @@ public class CANScanner implements AutoCloseable {
      * the message will not be {@code null}.
      * @return  The latest message received from the CAN bus.
      */
-    public CANStreamMessage readMessage () {
-        return readMessages(1)[0];
+    public CANMessage readMessage () {
+        
+        ByteBuffer messageId = ByteBuffer.allocateDirect(4);
+        messageId.order(ByteOrder.LITTLE_ENDIAN);
+        
+        messageId.clear();
+        messageId.asIntBuffer().put(0, 0);
+        
+        ByteBuffer timestamp = ByteBuffer.allocate(4);
+        
+        byte[] message = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(
+            messageId.asIntBuffer(),
+            0,
+            timestamp
+        );
+        
+        int messageIdInt = messageId.get();
+        System.out.println("Message ID: " + Integer.toBinaryString(messageIdInt));
+        System.out.println("Device Type: " + CANMessageID.fromMessageId(messageIdInt).deviceType());
+        
+        // TODO: Use timestamp ByteBuffer to get message timestamp
+        return new CANMessage(CANMessageID.fromMessageId(messageIdInt), message, 0, messageIdInt);
+        
     }
     
     /**
@@ -101,15 +162,39 @@ public class CANScanner implements AutoCloseable {
      * @param numMessages   The number of messages read from the CAN bus.
      * @return              An array of messages read from the CAN bus.
      */
-    public CANStreamMessage[] readMessages (int numMessages) {
-        // Create a buffer of messages which will be populated by CANJNI
-        CANStreamMessage[] messageBuffer = new CANStreamMessage[numMessages];
+    public CANMessage[] readMessages (int numMessages) {
         
-        // Read messages to fill the length of the messageBuffer
-        CANJNI.readCANStreamSession(sessionHandle, messageBuffer, numMessages);
+        return new CANMessage[0];
         
-        // Return the messageBuffer which contains all the messages read from CAN
-        return messageBuffer;
+        // System.out.println("Message ID: " + messageId.get());
+        // for (byte b : message) {
+        //     System.out.print(b + " ");
+        // }
+        
+        // System.out.println("\n");
+        
+        // CANStreamMessage msg = new CANStreamMessage();
+        // msg.setStreamData(1, 0, 0);
+        
+        // return new CANMessage();
+        
+        // // Create a buffer of messages which will be populated by CANJNI
+        // CANStreamMessage[] messageBuffer = new CANStreamMessage[numMessages];
+        
+        // // Read messages to fill the length of the messageBuffer
+        // new Thread(() -> CANJNI.readCANStreamSession(sessionHandle, messageBuffer, numMessages)).start();
+        
+        // try {
+        //     Object obj = new Object();
+        //     synchronized (obj) {
+        //         obj.wait(500);
+        //     }
+        // } catch (InterruptedException e) {
+            
+        // }
+        
+        // // Return the messageBuffer which contains all the messages read from CAN
+        // return messageBuffer;
     }
     
     @Override

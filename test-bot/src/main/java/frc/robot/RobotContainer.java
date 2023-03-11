@@ -5,7 +5,6 @@
 package frc.robot;
 
 import claw.logs.CLAWLogger;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.TestCommand;
 import frc.robot.subsystems.TestSubsystem;
@@ -19,7 +18,7 @@ public class RobotContainer {
     public RobotContainer () {
         LOG.out("Starting up RobotContainer");
         testSubsystem.setDefaultCommand(testCommand);
-        new DigitalInput(3);
+        
     }
     
     public Command getAutonomousCommand () {
