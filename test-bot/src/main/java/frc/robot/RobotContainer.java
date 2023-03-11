@@ -18,7 +18,6 @@ public class RobotContainer {
     public RobotContainer () {
         LOG.out("Starting up RobotContainer");
         testSubsystem.setDefaultCommand(testCommand);
-        
     }
     
     public Command getAutonomousCommand () {

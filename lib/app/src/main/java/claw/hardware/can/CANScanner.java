@@ -48,29 +48,29 @@ public class CANScanner implements AutoCloseable {
         }
         
         CANScanner scanner = new CANScanner();
-        Set<Integer> messageIds = new HashSet<Integer>();
+        // Set<Integer> messageIds = new HashSet<Integer>();
         
-        console.readInputLine();
+        // console.readInputLine();
         
-        while (!console.hasInputReady()) {
-            for (int i = 0; i < 100; i ++) {
-                try {
-                    CANMessage message = scanner.readMessage();
-                    messageIds.add(message.intID());
-                } catch (Exception e) { }
-            }
-            console.printlnSys("what");
-        }
-        
-        for (int id : messageIds) {
-            printMessageId(console, id, CANMessageID.fromMessageId(id));
-        }
-        
-        // for (int i = 0; i < 100; i ++) {
-        //     CANMessage message = scanner.readMessage();
-        //     printMessage(console, message);
-        //     console.flush();
+        // while (!console.hasInputReady()) {
+        //     for (int i = 0; i < 100; i ++) {
+        //         try {
+        //             CANMessage message = scanner.readMessage();
+        //             messageIds.add(message.intID());
+        //         } catch (Exception e) { }
+        //     }
+        //     console.printlnSys("what");
         // }
+        
+        // for (int id : messageIds) {
+        //     printMessageId(console, id, CANMessageID.fromMessageId(id));
+        // }
+        
+        for (int i = 0; i < 100; i ++) {
+            CANMessage message = scanner.readMessage();
+            printMessage(console, message);
+            console.flush();
+        }
         
         scanner.close();
     }
@@ -122,6 +122,7 @@ public class CANScanner implements AutoCloseable {
         // messageID and messageIDMask are both 0 so all message IDs seen by the roboRIO
         // will match the messageID once the messageIDMask is applied
         sessionHandle = CANJNI.openCANStreamSession(0, 0, Integer.MAX_VALUE);
+        
     }
     
     /**
@@ -145,9 +146,9 @@ public class CANScanner implements AutoCloseable {
             timestamp
         );
         
-        int messageIdInt = messageId.get();
-        System.out.println("Message ID: " + Integer.toBinaryString(messageIdInt));
-        System.out.println("Device Type: " + CANMessageID.fromMessageId(messageIdInt).deviceType());
+        System.out.println("Next ID Position: " + messageId.asIntBuffer().position());
+        
+        int messageIdInt = messageId.asIntBuffer().get();
         
         // TODO: Use timestamp ByteBuffer to get message timestamp
         return new CANMessage(CANMessageID.fromMessageId(messageIdInt), message, 0, messageIdInt);
