@@ -1,78 +1,107 @@
 package claw.hardware.can;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-
-import java.util.Set;
-import java.util.HashSet;
 
 import java.nio.ByteOrder;
+import java.util.HashSet;
+import java.util.Set;
+
 import claw.LiveValues;
+import claw.hardware.can.CANMessageID.DeviceType;
+import claw.hardware.can.CANMessageID.ManufacturerCode;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.network.low.ConsoleManager;
-import edu.wpi.first.hal.CANAPIJNI;
-import edu.wpi.first.hal.CANStreamMessage;
 import edu.wpi.first.hal.can.CANJNI;
+import edu.wpi.first.hal.can.CANMessageNotFoundException;
 import edu.wpi.first.hal.can.CANStatus;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.LinearFilter;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 
 /**
  * A utility class which can read messages from the CAN bus. Messages are read without distinction based on arbitration ID,
  * so the {@code CANScanner} should read messages from any active device on the CAN bus.
  */
-public class CANScanner implements AutoCloseable {
+public class CANScanner {
     
     public static record CANMessage (CANMessageID messageID, byte[] messageData, long timestamp, int intID) { }
+    public static record CANDeviceTrace (DeviceType deviceType, ManufacturerCode manufacturer, int deviceNum) { }
     
     public static final CommandProcessor CAN_SCAN_COMMAND_PROCESSOR = new CommandProcessor(
         "canscan",
-        "canscan",
-        "Use 'canscan' to get the status of the CAN bus and to enumerate all active devices.",
+        "canscan [status | devices]",
+        "Use 'canscan status' to get the status of the CAN bus (bus utilization and presence of errors). " +
+        "'canscan devices' will scan to detect devices on the CAN bus. It reads manufacturers, device types, " +
+        "and device numbers (IDs).",
         CANScanner::canScanCommand
     );
     
+    private static double roundTo (double value, int precision) {
+        return Math.round(value * precision) / precision;
+    }
+    
+    private static String fillToSize (String str, int size) {
+        int totalPadding = Math.max(size - str.length(), 0);
+        
+        int leftPadding = totalPadding / 2;
+        int rightPadding = totalPadding - leftPadding;
+        
+        return " ".repeat(leftPadding) + str + " ".repeat(rightPadding);
+    }
+    
     private static void canScanCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        String scanType = reader.readArgOneOf("scan type", "Expected a scan type of 'status' or 'devices'.", "status", "devices");
+        reader.noMoreArgs();
+        reader.allowNoOptions();
+        reader.allowNoFlags();
+        
         LiveValues values = new LiveValues();
         
-        while (!console.hasInputReady()) {
-            CANStatus status = getCANStatus();
+        if (scanType.equals("status")) {
             
-            values.setField("busOffCount",              status.busOffCount);
-            values.setField("percentBusUtilization",    status.percentBusUtilization);
-            values.setField("receiveErrorCount",        status.receiveErrorCount);
-            values.setField("transmitErrorCount",       status.transmitErrorCount);
-            values.setField("txFullCount",              status.txFullCount);
+            LinearFilter canUtilizationFilter = LinearFilter.movingAverage(35);
+            Debouncer receiveErrorDebouncer = new Debouncer(0.1, DebounceType.kFalling);
+            Debouncer transmitErrorDebouncer = new Debouncer(0.1, DebounceType.kFalling);
             
-            values.update(console);
-        }
-        
-        CANScanner scanner = new CANScanner();
-        // Set<Integer> messageIds = new HashSet<Integer>();
-        
-        // console.readInputLine();
-        
-        // while (!console.hasInputReady()) {
-        //     for (int i = 0; i < 100; i ++) {
-        //         try {
-        //             CANMessage message = scanner.readMessage();
-        //             messageIds.add(message.intID());
-        //         } catch (Exception e) { }
-        //     }
-        //     console.printlnSys("what");
-        // }
-        
-        // for (int id : messageIds) {
-        //     printMessageId(console, id, CANMessageID.fromMessageId(id));
-        // }
-        
-        for (int i = 0; i < 100; i ++) {
-            CANMessage message = scanner.readMessage();
-            printMessage(console, message);
+            while (!console.hasInputReady()) {
+                
+                CANStatus canStatusReading = getCANStatus();
+                double percentBusUtilization = canUtilizationFilter.calculate(canStatusReading.percentBusUtilization) * 100;
+                
+                boolean hasReceiveError = receiveErrorDebouncer.calculate(canStatusReading.receiveErrorCount > 0);
+                boolean hasTransmitError = transmitErrorDebouncer.calculate(canStatusReading.transmitErrorCount > 0);
+                
+                values.setField("Bus Utilization", roundTo(percentBusUtilization, 1000) + "%");
+                values.setField("Receive Error", hasReceiveError ? "Present" : "None");
+                values.setField("Transmit Error", hasTransmitError ? "Present" : "None");
+                
+                values.update(console);
+            }
+            
+        } else if (scanType.equals("devices")) {
+            
+            console.printlnSys("Scanning...");
             console.flush();
+            
+            console.printlnSys(
+                fillToSize("Manufacturer", 35) +
+                fillToSize("Device Type", 35) +
+                fillToSize("Device Number", 20)
+            );
+            
+            Set<CANDeviceTrace> devices = scanCANDevices(250);
+            for (CANDeviceTrace device : devices) {
+                console.println(
+                    fillToSize(device.manufacturer.friendlyName, 35) +
+                    fillToSize(device.deviceType+"", 35) +
+                    fillToSize(device.deviceNum+"", 20)
+                );
+            }
+            
         }
         
-        scanner.close();
     }
     
     private static void printMessageId (ConsoleManager console, int idInt, CANMessageID id) {
@@ -113,24 +142,11 @@ public class CANScanner implements AutoCloseable {
         return status;
     }
     
-    private final int sessionHandle;
-    
     /**
-     * Create a new {@link CANScanner} which can read any available messages on the CAN bus.
+     * Read a single message from the CAN bus. This can be {@code null}.
+     * @return  A new message received from the CAN bus.
      */
-    public CANScanner () {
-        // messageID and messageIDMask are both 0 so all message IDs seen by the roboRIO
-        // will match the messageID once the messageIDMask is applied
-        sessionHandle = CANJNI.openCANStreamSession(0, 0, Integer.MAX_VALUE);
-        
-    }
-    
-    /**
-     * Read a single message from the CAN bus. There is no guarantee that
-     * the message will not be {@code null}.
-     * @return  The latest message received from the CAN bus.
-     */
-    public CANMessage readMessage () {
+    public static CANMessage readMessage () {
         
         ByteBuffer messageId = ByteBuffer.allocateDirect(4);
         messageId.order(ByteOrder.LITTLE_ENDIAN);
@@ -140,11 +156,16 @@ public class CANScanner implements AutoCloseable {
         
         ByteBuffer timestamp = ByteBuffer.allocate(4);
         
-        byte[] message = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(
-            messageId.asIntBuffer(),
-            0,
-            timestamp
-        );
+        byte[] message;
+        try {
+            message = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(
+                messageId.asIntBuffer(),
+                0,
+                timestamp
+            );
+        } catch (CANMessageNotFoundException e) {
+            return null;
+        }
         
         System.out.println("Next ID Position: " + messageId.asIntBuffer().position());
         
@@ -155,53 +176,28 @@ public class CANScanner implements AutoCloseable {
         
     }
     
-    /**
-     * Reads {@code numMessages} messages from the CAN bus into an array.
-     * There is no guarantee that message elements of the returned array
-     * will not be {@code null}, but the length of the array is guaranteed to be equal to
-     * {@code numMessages}.
-     * @param numMessages   The number of messages read from the CAN bus.
-     * @return              An array of messages read from the CAN bus.
-     */
-    public CANMessage[] readMessages (int numMessages) {
+    public static Set<CANDeviceTrace> scanCANDevices (int messagesToScan) {
         
-        return new CANMessage[0];
+        HashSet<CANDeviceTrace> devices = new HashSet<>();
         
-        // System.out.println("Message ID: " + messageId.get());
-        // for (byte b : message) {
-        //     System.out.print(b + " ");
-        // }
-        
-        // System.out.println("\n");
-        
-        // CANStreamMessage msg = new CANStreamMessage();
-        // msg.setStreamData(1, 0, 0);
-        
-        // return new CANMessage();
-        
-        // // Create a buffer of messages which will be populated by CANJNI
-        // CANStreamMessage[] messageBuffer = new CANStreamMessage[numMessages];
-        
-        // // Read messages to fill the length of the messageBuffer
-        // new Thread(() -> CANJNI.readCANStreamSession(sessionHandle, messageBuffer, numMessages)).start();
-        
-        // try {
-        //     Object obj = new Object();
-        //     synchronized (obj) {
-        //         obj.wait(500);
-        //     }
-        // } catch (InterruptedException e) {
+        for (int i = 0; i < messagesToScan; i ++) {
+            CANMessage msg = readMessage();
             
-        // }
+            if (msg != null) {
+                CANDeviceTrace deviceTrace = new CANDeviceTrace(
+                    msg.messageID().deviceType(),
+                    msg.messageID().manufacturer(),
+                    msg.messageID().deviceNum()
+                );
+                
+                devices.add(deviceTrace);
+            }
+        }
         
-        // // Return the messageBuffer which contains all the messages read from CAN
-        // return messageBuffer;
+        return devices;
+        
     }
     
-    @Override
-    public void close () {
-        // Close the stream session handle
-        CANJNI.closeCANStreamSession(sessionHandle);
-    }
+    private CANScanner () { }
     
 }
