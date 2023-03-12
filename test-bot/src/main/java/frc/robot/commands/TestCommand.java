@@ -1,7 +1,7 @@
 package frc.robot.commands;
 
 import claw.logs.CLAWLogger;
-import edu.wpi.first.wpilibj.DigitalInput;
+import claw.RobotErrorLog;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.TestSubsystem;
 
@@ -19,6 +19,7 @@ public class TestCommand extends CommandBase {
     @Override
     public void initialize () {
         LOG.out("Initializing TestCommand");
+        RobotErrorLog.logWarning("This is a warning");
     }
     
     @Override

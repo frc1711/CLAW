@@ -120,7 +120,12 @@ public class CLAWRobot {
     
     private static void handleUncaughtException (Thread thread, Throwable exception) {
         // Print to the driver station
-        System.err.println("Caught an uncaught exception: " + exception.getMessage());
+        System.err.println(
+            "Caught an exception in the robot code: " + exception.getMessage()+". Use the " + 
+            "'errlog' command in the Robot Control Terminal to examine it."
+        );
+        
+        RobotErrorLog.logThreadError(exception);
         
         // Put to the logger
         RUNTIME_LOG.err("Uncaught exception in a thread '"+thread.getName()+"':\n"+getStackTrace(exception));
@@ -129,6 +134,8 @@ public class CLAWRobot {
     private static void handleFatalUncaughtException (Throwable exception) {
         // Put to the logger
         RUNTIME_LOG.err("Fatal uncaught exception in robot code:\n"+getStackTrace(exception));
+        
+        RobotErrorLog.logFatalError(exception);
     }
     
     private static String getStackTrace (Throwable e) {

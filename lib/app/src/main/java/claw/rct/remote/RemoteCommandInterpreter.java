@@ -3,6 +3,7 @@ package claw.rct.remote;
 import java.util.ArrayList;
 import java.util.List;
 
+import claw.RobotErrorLog;
 import claw.hardware.DIOReadCommand;
 import claw.hardware.can.CANScanner;
 import claw.logs.LogHandler;
@@ -32,6 +33,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
         addCommandProcessor(DIOReadCommand.DIO_RAW_COMMAND_PROCESSOR);
         addCommandProcessor(CANScanner.CAN_SCAN_COMMAND_PROCESSOR);
+        addCommandProcessor(RobotErrorLog.ERROR_LOG_COMMAND_PROCESSOR);
     }
     
     private void addCommand (String command, String usage, String helpDescription, CommandFunction function) {
