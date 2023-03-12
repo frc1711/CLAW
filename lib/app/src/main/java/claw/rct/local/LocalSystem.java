@@ -116,10 +116,13 @@ public class LocalSystem implements ResponseMessageHandler {
                 this::receiveMessage,
                 this::handleSocketReceiverException
             );
+            
             lastConnectionException = null;
             
             updateConnectionStatus(ConnectionStatus.OK);
+            
         } catch (IOException exception) {
+            
             // If there's an IOException (one that's different from the previous exception),
             // then log it and throw it again so whatever is calling establishNewConnection can do its own handling
             if (lastConnectionException == null || !lastConnectionException.getClass().equals(exception.getClass())) {

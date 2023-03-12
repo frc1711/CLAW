@@ -1,6 +1,7 @@
 package claw.rct.network.low;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.function.Consumer;
 
@@ -33,7 +34,8 @@ public class DriverStationSocketHandler {
         
         Socket socket = null;
         try {
-            socket = new Socket(getRoborioHost(useStaticAddress, teamNum), port);
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(getRoborioHost(useStaticAddress, teamNum), port), 500);
             socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
         } catch (IOException e) {
             if (socket != null) socket.close();
