@@ -27,11 +27,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-          "size": 130493,
-          "sha512": "948fb0e11d4768eca0ea664d43753c0a63c2b49bb24ecc5384abcc20ba90e8707456b257418b4f2e12caba15a0dc415bae21e6499845f8a60a19b301b7bf72f4",
-          "sha256": "ecf0c46e4f6d26456305a2ffbd7f9547c9e59579392ad21e7927ecf72f0f08e2",
-          "sha1": "0e1aa1c5a526df81a5698cd020c412a8df16b5a9",
-          "md5": "f3b1d3959b4464dd0168771e4f2104f1"
+          "size": 130494,
+          "sha512": "05581d2645f66ac79d09fef78485e8d67731687639d08dc91879dbd84a35138c406ed5fae9cd3cbd18e9e88a08c0a3a688e179f4f596b657082c1b8f711b09b5",
+          "sha256": "ed0115c01ea7d2ac4eee9c2659663191765b3924b068bbfedc9e3a9d2f1d191d",
+          "sha1": "1f8619122a00324d523c439e64cb7839e216b1fd",
+          "md5": "c0ade031f17332a53919482e158f41e9"
         }
       ]
     },
@@ -134,11 +134,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-          "size": 130493,
-          "sha512": "948fb0e11d4768eca0ea664d43753c0a63c2b49bb24ecc5384abcc20ba90e8707456b257418b4f2e12caba15a0dc415bae21e6499845f8a60a19b301b7bf72f4",
-          "sha256": "ecf0c46e4f6d26456305a2ffbd7f9547c9e59579392ad21e7927ecf72f0f08e2",
-          "sha1": "0e1aa1c5a526df81a5698cd020c412a8df16b5a9",
-          "md5": "f3b1d3959b4464dd0168771e4f2104f1"
+          "size": 130494,
+          "sha512": "05581d2645f66ac79d09fef78485e8d67731687639d08dc91879dbd84a35138c406ed5fae9cd3cbd18e9e88a08c0a3a688e179f4f596b657082c1b8f711b09b5",
+          "sha256": "ed0115c01ea7d2ac4eee9c2659663191765b3924b068bbfedc9e3a9d2f1d191d",
+          "sha1": "1f8619122a00324d523c439e64cb7839e216b1fd",
+          "md5": "c0ade031f17332a53919482e158f41e9"
         }
       ]
     },
@@ -154,11 +154,11 @@
         {
           "name": "raptors-claw-0-sources.jar",
           "url": "raptors-claw-0-sources.jar",
-          "size": 78703,
-          "sha512": "04f0049007bd6aceb978e08e2d700192d61363b2db33b55531773ebae8dfc1c7d44c73970f0df550a7b7d1bd67eb61178aba8635eecd11502e5f0afd830dc9c1",
-          "sha256": "615430a2f6a64e6418cd9939d2c5521cf02be445f6e31e16dcc40bec4f409654",
-          "sha1": "c2298e0b7d034c108fadebc2500ade5d580b2047",
-          "md5": "383f06c43354f86fcd5f3fa10825da9b"
+          "size": 78702,
+          "sha512": "8dfbbcb30e6a1dcefca5c4b8432dc34ddbbd7cf829b4dc104b6a2d8a86ab7269a063dde09d56fb918d88e1dd2d3f536c4c8453b6be33581bbc4c6e112dde90b9",
+          "sha256": "636283aae792b5df2511774c10dd298264648320ed345c05117c3cd6fd8e4cf7",
+          "sha1": "cd95c2291e5d0d690b2a40234f747570f4854e3e",
+          "md5": "e6451f367c7a0ed74fb6506d5f5bb66e"
         }
       ]
     }

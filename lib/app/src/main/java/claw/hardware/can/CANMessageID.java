@@ -1,7 +1,7 @@
 package claw.hardware.can;
 
 /**
- * Last updated 2023
+ * Represents the arbitration ID of a message received over CAN. See the FRC CAN Device Specifications for details on formatting:
  * https://docs.wpilib.org/en/stable/docs/software/can-devices/can-addressing.html
  */
 public record CANMessageID (byte deviceNum, byte apiIndex, byte apiClass, ManufacturerCode manufacturer, DeviceType deviceType) {

@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 
 import java.nio.ByteOrder;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import claw.LiveValues;
@@ -21,14 +22,23 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 
 /**
- * A utility class which can read messages from the CAN bus. Messages are read without distinction based on arbitration ID,
- * so the {@code CANScanner} should read messages from any active device on the CAN bus.
+ * A utility class which can detect devices on, send messages to, and read messages from the CAN bus.
  */
 public class CANScanner {
     
-    public static record CANMessage (CANMessageID messageID, byte[] messageData, long timestamp, int intID) { }
+    /**
+     * A message read from the CAN bus.
+     */
+    public static record CANMessage (CANMessageID messageID, byte[] messageData, long timestamp) { }
+    
+    /**
+     * A trace for a device connected to the roboRIO via CAN.
+     */
     public static record CANDeviceTrace (DeviceType deviceType, ManufacturerCode manufacturer, int deviceNum) { }
     
+    /**
+     * A command processor for the {@code canscan} command.
+     */
     public static final CommandProcessor CAN_SCAN_COMMAND_PROCESSOR = new CommandProcessor(
         "canscan",
         "canscan [status | devices]",
@@ -42,7 +52,7 @@ public class CANScanner {
         return Math.round(value * precision) / precision;
     }
     
-    private static String fillToSize (String str, int size) {
+    private static String padToSize (String str, int size) {
         int totalPadding = Math.max(size - str.length(), 0);
         
         int leftPadding = totalPadding / 2;
@@ -82,54 +92,29 @@ public class CANScanner {
             
         } else if (scanType.equals("devices")) {
             
+            // TODO: Send an "enumerate" CAN frame, write a wrapper around the FRC_Net_Comm_Mux functions,
+            // filter out bad data, remove System.out printing, and clean up CANMessageIDs
+            
             console.printlnSys("Scanning...");
             console.flush();
             
             console.printlnSys(
-                fillToSize("Manufacturer", 35) +
-                fillToSize("Device Type", 35) +
-                fillToSize("Device Number", 20)
+                padToSize("Manufacturer", 35) +
+                padToSize("Device Type", 35) +
+                padToSize("Device Number", 20)
             );
             
-            Set<CANDeviceTrace> devices = scanCANDevices(250);
+            Set<CANDeviceTrace> devices = scanCANDevices(600);
             for (CANDeviceTrace device : devices) {
                 console.println(
-                    fillToSize(device.manufacturer.friendlyName, 35) +
-                    fillToSize(device.deviceType+"", 35) +
-                    fillToSize(device.deviceNum+"", 20)
+                    padToSize(device.manufacturer.friendlyName, 35) +
+                    padToSize(device.deviceType+"", 35) +
+                    padToSize(device.deviceNum+"", 20)
                 );
             }
             
         }
         
-    }
-    
-    private static void printMessageId (ConsoleManager console, int idInt, CANMessageID id) {
-        String byteRepr = Integer.toBinaryString(idInt);
-        byteRepr = "0".repeat(Math.min(32, 32 - byteRepr.length())) + byteRepr;
-        
-        console.printlnSys("Message ID: " + byteRepr);
-        console.printlnSys("  API Class: " + id.apiClass());
-        console.printlnSys("  API Index: " + id.apiIndex());
-        console.printlnSys("  Device Number: " + id.deviceNum());
-        console.printlnSys("  Device Type: " + id.deviceType().name());
-        console.printlnSys("  Manufacturer: " + id.manufacturer().friendlyName);
-    }
-    
-    private static void printMessage (ConsoleManager console, CANMessage message) {
-        if (message != null) {
-            printMessageId(console, message.intID(), message.messageID());
-            // console.printlnSys("Timestamp:  " + message.timestamp);
-            // console.printlnSys("Length:     " + message.length);
-            console.printlnSys("-- Message Content --");
-            for (byte b : message.messageData()) {
-                console.print(Byte.toString(b) + " ");
-            }
-            console.println("");
-            
-        } else {
-            console.printlnSys("Null message received");
-        }
     }
     
     /**
@@ -143,47 +128,73 @@ public class CANScanner {
     }
     
     /**
-     * Read a single message from the CAN bus. This can be {@code null}.
+     * Read a single message from the CAN bus (from any device).
      * @return  A new message received from the CAN bus.
      */
-    public static CANMessage readMessage () {
+    public static Optional<CANMessage> readMessage () {
+        return readMessage(0, 0);
+    }
+    
+    /**
+     * Read a single message from the CAN bus. See the FRC CAN Device Specifications for
+     * the specifications on the message ID.
+     * https://docs.wpilib.org/en/stable/docs/software/can-devices/can-addressing.html
+     * <br></br>
+     * Note that there are generally better options through WPILib for reading messages
+     * from the CAN bus. This would only be useful if you need to read a broad range of
+     * messages from varying IDs for some reason.
+     * @param messageID         The arbitration ID of the messages to read. See the specifications.
+     * @param messageIDMask     A bit mask to apply to messages IDs received from the CAN bus.
+     * The received message ID, after applying a bitwise {@code &} with the given mask, will be checked
+     * against the {@code messageID} argument to see if it should be intercepted.
+     * @return                  The CAN message intercepted from the bus, if one could be read.
+     */
+    public static Optional<CANMessage> readMessage (int messageID, int messageIDMask) {
         
-        ByteBuffer messageId = ByteBuffer.allocateDirect(4);
-        messageId.order(ByteOrder.LITTLE_ENDIAN);
+        // Create a message ID buffer for distinguishing which messages to intercept
+        // This buffer will also be filled with the ID of the retrieved message once done
+        ByteBuffer messageIDBuffer = ByteBuffer.allocateDirect(4);
+        messageIDBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        messageIDBuffer.clear();
+        messageIDBuffer.asIntBuffer().put(messageID, 0);
         
-        messageId.clear();
-        messageId.asIntBuffer().put(0, 0);
+        // Create a buffer to store the timestamp of the received message. This will be filled
+        // after receiving the message
+        ByteBuffer timestampBuffer = ByteBuffer.allocate(4);
         
-        ByteBuffer timestamp = ByteBuffer.allocate(4);
+        byte[] messageContent;
         
-        byte[] message;
         try {
-            message = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(
-                messageId.asIntBuffer(),
-                0,
-                timestamp
+            // Receive a message from the CAN bus and fill the messageIDBuffer and timestampBuffer
+            messageContent = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(
+                messageIDBuffer.asIntBuffer(),
+                messageIDMask,
+                timestampBuffer
             );
         } catch (CANMessageNotFoundException e) {
-            return null;
+            // If no message was found, return the empty optional
+            return Optional.empty();
         }
         
-        System.out.println("Next ID Position: " + messageId.asIntBuffer().position());
-        
-        int messageIdInt = messageId.asIntBuffer().get();
-        
         // TODO: Use timestamp ByteBuffer to get message timestamp
-        return new CANMessage(CANMessageID.fromMessageId(messageIdInt), message, 0, messageIdInt);
+        return Optional.of(new CANMessage(CANMessageID.fromMessageId(messageIDBuffer.asIntBuffer().get()), messageContent, 0));
         
     }
     
     public static Set<CANDeviceTrace> scanCANDevices (int messagesToScan) {
         
+        // Create a set of CAN device traces to return
         HashSet<CANDeviceTrace> devices = new HashSet<>();
         
+        // TODO: Send the enumerate message or something else to encourage devices to identify themselves
+        
+        // Scan through the given number of messages to find all device traces
         for (int i = 0; i < messagesToScan; i ++) {
-            CANMessage msg = readMessage();
-            
-            if (msg != null) {
+            readMessage().ifPresent(msg -> {
+                
+                // TODO: Filter out devices with non-device manufacturers or device types
+                
+                // Add the device trace to the set
                 CANDeviceTrace deviceTrace = new CANDeviceTrace(
                     msg.messageID().deviceType(),
                     msg.messageID().manufacturer(),
@@ -191,7 +202,8 @@ public class CANScanner {
                 );
                 
                 devices.add(deviceTrace);
-            }
+                
+            });
         }
         
         return devices;
