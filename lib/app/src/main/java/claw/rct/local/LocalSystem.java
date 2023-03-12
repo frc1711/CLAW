@@ -83,14 +83,17 @@ public class LocalSystem implements ResponseMessageHandler {
         this.console = console;
         interpreter = new LocalCommandInterpreter(this, logDataStorage);
         
+        // Attempt to establish socket connection
+        try {
+            establishNewConnection();
+        } catch (IOException e) {
+            console.println(e.getMessage());
+        }
+        
         // Start the requireNewConnectionThread, which will attempt to establish a new connection
         // whenever it is interrupted
         requireNewConnectionThread.start();
         
-        // Attempt to establish socket connection
-        try {
-            establishNewConnection();
-        } catch (IOException e) { }
     }
     
     /**
@@ -114,8 +117,9 @@ public class LocalSystem implements ResponseMessageHandler {
                 this::handleSocketReceiverException
             );
             lastConnectionException = null;
-        } catch (IOException exception) {
             
+            updateConnectionStatus(ConnectionStatus.OK);
+        } catch (IOException exception) {
             // If there's an IOException (one that's different from the previous exception),
             // then log it and throw it again so whatever is calling establishNewConnection can do its own handling
             if (lastConnectionException == null || !lastConnectionException.getClass().equals(exception.getClass())) {
