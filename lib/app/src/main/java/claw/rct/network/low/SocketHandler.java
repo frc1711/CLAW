@@ -5,6 +5,9 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.function.Consumer;
 
+import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
+
 /**
  * A simple wrapper around {@code Socket} specialized for sending and receiving serializable {@link Message} objects.
  */
@@ -33,13 +36,47 @@ public class SocketHandler {
         beginReceivingMessages();
     }
     
+    public String getHostname () {
+        return socket.getInetAddress().getHostAddress();
+    }
+    
     /**
      * Sends a message through the socket.
      * @param sendMessage   The {@link Message} to send.
      * @throws IOException  If the socket failed to send the {@code Message}.
      */
-    public void sendMessage (Message sendMessage) throws IOException {
+    public void sendMessage (Message sendMessage, int millisTimeout) throws IOException {
+        
+        // Create a timeout waiter 
+        Waiter<Object> timeoutWaiter = new Waiter<>();
+        
+        // TODO: Remove the output waiter killer
+        
+        // In a separate thread, wait for the timeout
+        new Thread(() -> {
+            try {
+                
+                // Close the socket output after the millisTimeout
+                try {
+                    
+                    // Try to wait for the duration of the given timeout
+                    timeoutWaiter.waitForValue(millisTimeout);
+                    
+                } catch (NoValueReceivedException e) {
+                    
+                    // If the message isn't sent by the timeout, shut down the socket output stream
+                    socket.getOutputStream().close();
+                }
+                
+            } catch (Throwable t) { }
+        });
+        
+        // Try to write the message to the output stream
         this.socket.getOutputStream().write(sendMessage.getData());
+        
+        // After the message is sent (if it's sent before the timeout), send a message to the timeout waiter
+        // so the socket output stream isn't shut down
+        timeoutWaiter.receive(new Object());
     }
     
     private void beginReceivingMessages () throws IOException {

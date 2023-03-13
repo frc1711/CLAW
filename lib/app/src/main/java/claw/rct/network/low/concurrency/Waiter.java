@@ -80,14 +80,30 @@ public class Waiter <T> {
         
         // Wait for the given timeout period, or until notified by Waiter.receive()
         stopWaiting = false;
+        
+        // Calculate an end timestamp for the wait (-1 if the millis wait duration is -1)
+        long endWaitingTime = millis == -1 ? -1 : System.currentTimeMillis() + millis;
+        
+        // Continue waiting until stopped
         while (!stopWaiting) {
+            
+            // Attempt to wait for the remaining duration, but is is possible an interruption will happen
+            // without the time going off or anything being received by the waiter
             synchronized (waiterObject) {
                 try {
-                    if (millis == -1)
+                    if (endWaitingTime == -1) {
                         waiterObject.wait();
-                    else
-                        waiterObject.wait(millis);
+                    } else {
+                        if (endWaitingTime - System.currentTimeMillis() > 0) {
+                            waiterObject.wait(endWaitingTime - System.currentTimeMillis());
+                        }
+                    }
                 } catch (InterruptedException e) { }
+            }
+            
+            // Stop waiting if we have passed the end waiting time (assuming the endWaitingTime is not -1)
+            if (endWaitingTime != -1 && System.currentTimeMillis() > endWaitingTime) {
+                stopWaiting = true;
             }
         }
         

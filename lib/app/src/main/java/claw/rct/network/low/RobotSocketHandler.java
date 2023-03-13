@@ -84,7 +84,7 @@ public class RobotSocketHandler {
     public void sendResponseMessage (ResponseMessage responseMessage) throws IOException {
         if (clientSocketHandler == null)
             throw new IOException("No socket to send the response message through");
-        clientSocketHandler.sendMessage(responseMessage);
+        clientSocketHandler.sendMessage(responseMessage, 4000);
     }
     
     /**

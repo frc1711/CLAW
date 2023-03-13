@@ -25,24 +25,42 @@ public class DriverStationSocketHandler {
      * @throws IOException      If the socket throws an i/o exception.
      */
     public DriverStationSocketHandler (
-            int teamNum,
-            boolean useStaticAddress,
-            int port,
-            Consumer<ResponseMessage> responseReader,
-            Consumer<IOException> excHandler)
-            throws IOException {
+        int teamNum,
+        int port,
+        Consumer<ResponseMessage> responseReader,
+        Consumer<IOException> excHandler
+    ) throws IOException {
         
+        // Get a socket handler, trying both static and dynamic addresses
+        SocketHandler handler;
+        try {
+            handler = getSocketHandler(teamNum, false, port);
+        } catch (IOException e) {
+            handler = getSocketHandler(teamNum, true, port);
+        }
+        
+        this.socketHandler = handler;
+        
+        this.responseReader = responseReader;
+        this.excHandler = excHandler;
+    }
+    
+    private SocketHandler getSocketHandler (int teamNum, boolean useStaticAddress, int port) throws IOException {
         Socket socket = null;
         try {
             socket = new Socket();
             socket.connect(new InetSocketAddress(getRoborioHost(useStaticAddress, teamNum), port), 500);
-            socketHandler = new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
+            return new SocketHandler(socket, this::receiveMessage, this::handleReceiverIOException);
         } catch (IOException e) {
-            if (socket != null) socket.close();
+            try {
+                if (socket != null) socket.close();
+            } catch (IOException ex) { }
             throw e;
         }
-        this.responseReader = responseReader;
-        this.excHandler = excHandler;
+    }
+    
+    public String getRoborioHost () {
+        return socketHandler.getHostname();
     }
     
     /**
@@ -50,7 +68,7 @@ public class DriverStationSocketHandler {
      * @param teamNum   The team number associated with the roboRIO.
      * @return          The hostname for connecting to the rorboRIO
      */
-    public static String getRoborioHost (boolean useStaticAddress, int teamNum) {
+    private static String getRoborioHost (boolean useStaticAddress, int teamNum) {
         if (useStaticAddress) {
             int first = teamNum / 100;
             int second = teamNum % 100;
@@ -96,7 +114,7 @@ public class DriverStationSocketHandler {
      * @throws IOException  If the socket failed to send the message.
      */
     public void sendInstructionMessage (InstructionMessage message) throws IOException {
-        socketHandler.sendMessage(message);
+        socketHandler.sendMessage(message, 3000);
     }
     
     /**

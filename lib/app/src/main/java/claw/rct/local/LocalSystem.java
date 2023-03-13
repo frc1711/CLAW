@@ -51,8 +51,6 @@ public class LocalSystem implements ResponseMessageHandler {
     private final Thread requireNewConnectionThread = new Thread(this::requireNewConnectionThreadRunnable);
     private boolean requireNewConnection = false;
     
-    private boolean useStaticRoboRIOAddress;
-    
     private Optional<HelpMessage[]> remoteHelpMessages = Optional.empty();
     private final Object remoteHelpMessagesLock = new Object();
     
@@ -69,15 +67,14 @@ public class LocalSystem implements ResponseMessageHandler {
      * @param console
      */
     public LocalSystem (
-            int teamNum,
-            boolean useStaticAddress,
-            int remotePort,
-            LogDataStorage logDataStorage,
-            ConsoleManager console) {
+        int teamNum,
+        int remotePort,
+        LogDataStorage logDataStorage,
+        ConsoleManager console
+    ) {
         
         // Instantiating final fields
         this.teamNum = teamNum;
-        this.useStaticRoboRIOAddress = useStaticAddress;
         this.remotePort = remotePort;
         this.logDataStorage = logDataStorage;
         this.console = console;
@@ -86,9 +83,7 @@ public class LocalSystem implements ResponseMessageHandler {
         // Attempt to establish socket connection
         try {
             establishNewConnection();
-        } catch (IOException e) {
-            console.println(e.getMessage());
-        }
+        } catch (IOException e) { }
         
         // Start the requireNewConnectionThread, which will attempt to establish a new connection
         // whenever it is interrupted
@@ -111,7 +106,6 @@ public class LocalSystem implements ResponseMessageHandler {
         try {
             socket = new DriverStationSocketHandler(
                 teamNum,
-                useStaticRoboRIOAddress,
                 remotePort,
                 this::receiveMessage,
                 this::handleSocketReceiverException
@@ -137,12 +131,12 @@ public class LocalSystem implements ResponseMessageHandler {
         }
     }
     
-    public void setUseStaticRoborioAddress (boolean useStaticAddress) {
-        useStaticRoboRIOAddress = useStaticAddress;
-    }
-    
-    public String getRoborioHost () {
-        return DriverStationSocketHandler.getRoborioHost(useStaticRoboRIOAddress, teamNum) + ":" + remotePort;
+    public Optional<String> getRoborioHost () {
+        DriverStationSocketHandler s = socket;
+        
+        if (s != null) {
+            return Optional.of(s.getRoborioHost());
+        } else return Optional.empty();
     }
     
     /**
@@ -157,6 +151,7 @@ public class LocalSystem implements ResponseMessageHandler {
      * @return The {@link ConnectionStatus} describing the current connection to the server.
      */
     public ConnectionStatus checkServerConnection () {
+        
         // Attempt to send a connection check message to remote
         try {
             DriverStationSocketHandler s = throwIfNullSocket();
@@ -312,6 +307,7 @@ public class LocalSystem implements ResponseMessageHandler {
         while (true) {
             // If a new connection needs to be established, try to do that
             checkServerConnection(); // This will update the requireNewConnection flag
+            
             if (requireNewConnection) {
                 try {
                     // Try to establish a new connection
