@@ -3,8 +3,8 @@ package claw.math.input;
 import claw.math.Transform;
 
 /**
- * A class which helps to process input from a sinlge axis on the controller, handling a deadband zone
- * and applying a curve to refine control
+ * A class which helps to process input from a scalar or vector input on a controller (trigger or joystick),
+ * handling a deadband zone and applying a curve to refine control.
  */
 public class InputTransform implements Transform {
     
@@ -26,7 +26,7 @@ public class InputTransform implements Transform {
     public static final Transform SQUARE_CURVE = Transform.toOdd(x -> x*x);
     
     /**
-     * Creates {@link Transform} representing a deadband's application to some input value.
+     * Creates a {@link Transform} representing a deadband's application to some input value.
      * @param deadband  A deadband value on the interval [0, 1).
      * @return          The deadband {@code Transform}.
      */
@@ -48,7 +48,7 @@ public class InputTransform implements Transform {
     
     /**
      * Create an {@link InputTransform} which can be applied to any input (but designed for handling human input
-     * from a single axis on a controller). The transform applies a deadband
+     * from one (scalar) or two (vector) axes on a controller). The transform applies a deadband
      * so that any input with a magnitude less than the deadband value will be ignored.
      * A given input map is then applied to the output from this deadband, and finally
      * the output is clamped to the range [-1, 1].
