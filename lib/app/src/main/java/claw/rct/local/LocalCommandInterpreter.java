@@ -73,6 +73,10 @@ public class LocalCommandInterpreter {
         addCommand("log", "log",
             "Print data with CLAWLoggers to the terminal when it is received from the robot.",
             this::logCommand);
+        
+        addCommand("config", "config [team number] [remote port]",
+            "Configure the connection to the RCT server, setting the team number and server port.",
+            this::configCommand);
     }
     
     /**
@@ -115,6 +119,25 @@ public class LocalCommandInterpreter {
     private void exitCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         System.exit(0);
+    }
+    
+    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        int teamNum = reader.readArgInt("team number");
+        int port = reader.readArgInt("RCT server port");
+        reader.noMoreArgs();
+        reader.allowNoOptions();
+        reader.allowNoFlags();
+        
+        system.setServerPort(port);
+        system.setTeamNum(teamNum);
+        
+        try {
+            system.establishNewConnection();
+            console.printlnSys("Successfully connected to the RCT server at " + system.getRoborioHost().orElse("[connection failed]"));
+        } catch (IOException e) {
+            console.printlnErr("Failed to connect to the RCT server.");
+        }
+        
     }
     
     private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {

@@ -45,7 +45,7 @@ public class LocalSystem implements ResponseMessageHandler {
     private final LogDataStorage logDataStorage;
     
     // Socket handling
-    private final int teamNum, remotePort;
+    private int teamNum, remotePort;
     private DriverStationSocketHandler socket = null;
     
     private final Thread requireNewConnectionThread = new Thread(this::requireNewConnectionThreadRunnable);
@@ -139,11 +139,12 @@ public class LocalSystem implements ResponseMessageHandler {
         } else return Optional.empty();
     }
     
-    /**
-     * Gets the team number passed in through the constructor.
-     */
-    public int getTeamNum () {
-        return teamNum;
+    public void setTeamNum (int newTeamNum) {
+        teamNum = newTeamNum;
+    }
+    
+    public void setServerPort (int newPort) {
+        remotePort = newPort;
     }
     
     /**

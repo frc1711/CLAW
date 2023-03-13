@@ -18,7 +18,8 @@ public class CLAWRobot {
     // Runtime execution determined by preferences so that the user can control
     // this through any NetorkTables client (so that if you turn the server off,
     // you can still control this execution)
-    private static final String RUN_RCT_SERVER = "CLAW.RUN_RCT_SERVER";
+    private static final String RUN_RCT_SERVER = "CLAW.RUN_RCT_SERVER", RCT_SERVER_PORT = "CLAW.RCT_SERVER_PORT";
+    private static final int DEFAULT_SERVER_PORT = 5800;
     
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
@@ -32,6 +33,7 @@ public class CLAWRobot {
         
         // Start the RCT server if indicated by preferences to do so
         Preferences.initBoolean(RUN_RCT_SERVER, true);
+        Preferences.initInt(RCT_SERVER_PORT, DEFAULT_SERVER_PORT);
         if (Preferences.getBoolean(RUN_RCT_SERVER, true)) {
             startThread(CLAWRobot::initializeRCTServer);
         }
@@ -85,7 +87,7 @@ public class CLAWRobot {
     private static void initializeRCTServer () {
         // Start RCT server
         try {
-            server = new RCTServer(5800, EXTENSIBLE_COMMAND_INTERPRETER);
+            server = new RCTServer(Preferences.getInt(RCT_SERVER_PORT, DEFAULT_SERVER_PORT), EXTENSIBLE_COMMAND_INTERPRETER);
             server.start();
         } catch (IOException e) {
             System.err.println("Failed to start RCT server.");
