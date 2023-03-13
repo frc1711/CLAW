@@ -85,6 +85,8 @@ dependencies {
     // Used by other dependencies
     implementation "edu.wpi.first.wpimath:wpimath-java:2023.1.1"
     
+    implementation "edu.wpi.first.hal:hal-java:2023.1.1"
+    implementation "edu.wpi.first.hal:hal-jni:2023.1.1"
     
     // Add org.fusesource.jansi
     // Used for console ANSI processing for driverstation-side RCT

@@ -3,19 +3,19 @@ package claw.hardware;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 /**
- * An implementation of {@link Device} for limit switches connected via DIO.
+ * A wrapper around {@link DigitalInput} for reading a value from a limit switch.
  */
-public class LimitSwitchDevice extends Device<DigitalInput> {
+public class LimitSwitchDevice implements AutoCloseable {
     
+    private final DigitalInput limitSwitchInput;
     private final NormalState normalState;
     
     /**
      * Create a new {@link LinkSwitchDevice}.
-     * @param deviceName    The unique device name.
      * @param normalState   The {@link NormalState} of the limit switch's circuit.
      */
-    public LimitSwitchDevice (String deviceName, NormalState normalState) {
-        super(deviceName, DigitalInput::new, DigitalInput::close);
+    public LimitSwitchDevice (DigitalInput limitSwitchInput, NormalState normalState) {
+        this.limitSwitchInput = limitSwitchInput;
         this.normalState = normalState;
     }
     
@@ -24,7 +24,7 @@ public class LimitSwitchDevice extends Device<DigitalInput> {
      * @return  {@code true} if the limit switch is pressed.
      */
     public boolean isPressed () {
-        return (normalState == NormalState.NORMALLY_OPEN) != get().get();
+        return (normalState == NormalState.NORMALLY_OPEN) != limitSwitchInput.get();
     }
     
     /**
@@ -44,6 +44,11 @@ public class LimitSwitchDevice extends Device<DigitalInput> {
          * the input to the roboRIO will indicate that the limit switch is not pressed.
          */
         NORMALLY_CLOSED,
+    }
+    
+    @Override
+    public void close () {
+        limitSwitchInput.close();
     }
     
 }

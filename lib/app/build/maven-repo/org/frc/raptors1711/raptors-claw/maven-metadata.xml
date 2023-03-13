@@ -8,6 +8,10 @@
     <versions>
       <version>0</version>
     </versions>
+<<<<<<< HEAD
     <lastUpdated>20230313004904</lastUpdated>
+=======
+    <lastUpdated>20230312222412</lastUpdated>
+>>>>>>> feature/hardware-control
   </versioning>
 </metadata>
