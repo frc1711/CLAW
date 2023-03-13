@@ -33,7 +33,8 @@ public class LinearInterpolator implements Transform {
      * Create a linear interpolator from the given x and y coordinates representing points to interpolate between.
      * @param xyPairs   Pairs of {@code double} coordinates (x, y), (x, y), (x, y)...
      * Because the given {@code xyPairs} represents pairs of x and y coordinates, an odd number of {@code xyPairs}
-     * values is invalid.
+     * values is invalid. For example, the input {@code new LinearInterpolator(1, 2, 3, 4, 5, 6)} would represent
+     * the points (1, 2), (3, 4) and (5, 6).
      */
     public LinearInterpolator (double... xyPairs) {
         this(xyPairsToPoints(xyPairs));
