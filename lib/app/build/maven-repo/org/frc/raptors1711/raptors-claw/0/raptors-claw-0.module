@@ -27,19 +27,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-<<<<<<< HEAD
-          "size": 123189,
-          "sha512": "34396b3cfcdeb38865b51fee30c417f359e4786893a719400bdd4d8c5d77f6aafee5a75addd706e312de4695dc7e551c2df51dcf87ca2d021043e3e51f45fee3",
-          "sha256": "45d3c1dde942dbcd52b2c773fb51bd2bbb72f3e7e7f78e6dee9c974a169e139c",
-          "sha1": "c0662d7836c7ff6bccf02db2be6a27ef838ce999",
-          "md5": "a0639e9ee44cbfb3f88d0ec7624fc20c"
-=======
-          "size": 135138,
-          "sha512": "fc0eda0049ce67b46e3628ca5f096a0d0086ff1ae2c54b256b87cdb3d0fa2bdd72aa0bec9775e830266f40280fb2c29e089f08bdd7bbf27e842b74b6349cf10d",
-          "sha256": "3527bbc3edcb03139a7142e38aa2597066e8cd5cd1ef7655a510cb39285138ec",
-          "sha1": "020648a67749e8bd8240d13ac4552450b6f31a6b",
-          "md5": "1802117bbd519dfe5920a80e9d83602d"
->>>>>>> feature/hardware-control
+          "size": 134864,
+          "sha512": "b6f9779b67461521ab202f2e15cea79473bef6b99ac58fdf3e9f58b0ffe39ae5748e22de02ad38270109dcff5fdadb5df082770f09ee48df6e17292fc98ca75c",
+          "sha256": "10726e4e07f9f7ec319555e6b9e64304e330500a1d7783e0ada9fbc30f90b4a4",
+          "sha1": "8add7b8c438474efda9d2fc518800963258d475e",
+          "md5": "86be3820dadd9b8d17a95e9da75ffbe2"
         }
       ]
     },
@@ -142,19 +134,11 @@
         {
           "name": "raptors-claw-0.jar",
           "url": "raptors-claw-0.jar",
-<<<<<<< HEAD
-          "size": 123189,
-          "sha512": "34396b3cfcdeb38865b51fee30c417f359e4786893a719400bdd4d8c5d77f6aafee5a75addd706e312de4695dc7e551c2df51dcf87ca2d021043e3e51f45fee3",
-          "sha256": "45d3c1dde942dbcd52b2c773fb51bd2bbb72f3e7e7f78e6dee9c974a169e139c",
-          "sha1": "c0662d7836c7ff6bccf02db2be6a27ef838ce999",
-          "md5": "a0639e9ee44cbfb3f88d0ec7624fc20c"
-=======
-          "size": 135138,
-          "sha512": "fc0eda0049ce67b46e3628ca5f096a0d0086ff1ae2c54b256b87cdb3d0fa2bdd72aa0bec9775e830266f40280fb2c29e089f08bdd7bbf27e842b74b6349cf10d",
-          "sha256": "3527bbc3edcb03139a7142e38aa2597066e8cd5cd1ef7655a510cb39285138ec",
-          "sha1": "020648a67749e8bd8240d13ac4552450b6f31a6b",
-          "md5": "1802117bbd519dfe5920a80e9d83602d"
->>>>>>> feature/hardware-control
+          "size": 134864,
+          "sha512": "b6f9779b67461521ab202f2e15cea79473bef6b99ac58fdf3e9f58b0ffe39ae5748e22de02ad38270109dcff5fdadb5df082770f09ee48df6e17292fc98ca75c",
+          "sha256": "10726e4e07f9f7ec319555e6b9e64304e330500a1d7783e0ada9fbc30f90b4a4",
+          "sha1": "8add7b8c438474efda9d2fc518800963258d475e",
+          "md5": "86be3820dadd9b8d17a95e9da75ffbe2"
         }
       ]
     },
@@ -170,19 +154,11 @@
         {
           "name": "raptors-claw-0-sources.jar",
           "url": "raptors-claw-0-sources.jar",
-<<<<<<< HEAD
-          "size": 78578,
-          "sha512": "01af96bb71e6829af1005566c5e03fe0417d0720b3a0e8b57b6030e03a7ff5e174efd2095bd159c8ede3e7c61ac4b7937dcb7c291683c80c9c9c50547df19ec9",
-          "sha256": "13bd1630e790c1cac5c4589d6c880339c2f43c768f7c2454ac78b25857dec8db",
-          "sha1": "d5036c02a589b29021d291d6211d2b03c10b00bb",
-          "md5": "b11fef3bb824626027368b04aaa257d3"
-=======
-          "size": 80657,
-          "sha512": "a0971a6a73a889aca2058c6463896dc529e5993765857cb921d325fea83604d69910ef3f730bfbbb5dcbaf4e082a6d20998183ec9ec6883d83ac200faed97345",
-          "sha256": "3ffd699f3a1bc8b3efcaffce8af2d132f1b5f51b02fa7539511d655a065e1620",
-          "sha1": "a9e115009767993deaa62303797a5363c4c8afd0",
-          "md5": "2dcfe3ce533e9ec10e9651a0b24cbd5b"
->>>>>>> feature/hardware-control
+          "size": 80788,
+          "sha512": "55257115584c21d0a0a7ee5dc76c3f238862ac9a0c21db5e196875ed72d5fc68fc9edb8715073b4c67f012922bc7d3ebfb7358d8946070685b26cb520021d3a5",
+          "sha256": "db01bb28d497e4d7a9f1d9afed4066255a86cf790fac599922a3ca21f62a3e90",
+          "sha1": "0e27e2743ef312dbcf507bf6b149f2236e825252",
+          "md5": "8e3ce34d194ced1491f33aa5d0cb794d"
         }
       ]
     }

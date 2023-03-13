@@ -6,6 +6,7 @@ cd lib
 @REM Build the distribution zip (used for the driverstation client)
 call gradlew.bat distZip
 @REM Build the maven repo (used for the test-bot and for any vendor dependencies)
+rmdir /Q /S app\build\maven-repo\org\frc\raptors1711\raptors-claw
 call gradlew.bat publish
 cd ..
 
