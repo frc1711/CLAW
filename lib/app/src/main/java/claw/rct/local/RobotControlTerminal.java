@@ -7,7 +7,6 @@ import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.local.console.LocalConsoleManager;
 import claw.rct.network.low.ConsoleManager;
-import claw.rct.network.low.DriverStationSocketHandler;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server
@@ -33,18 +32,10 @@ public class RobotControlTerminal {
      */
     public void start () {
         
-        // Check whether to use the static or dynamic address for the roboRIO
-        boolean useStaticAddress = getUseStaticAddress();
-        console.clear();
-        
-        // Display of helpful message with roboRIO host url
-        String host = DriverStationSocketHandler.getRoborioHost(useStaticAddress, TEAM_NUMBER) + ":" + REMOTE_PORT;
-        console.printlnSys("Attempting to connect to server at " + host + "...");
-        
         // LocalSystem setup
+        console.printlnSys("Attempting to connect to roboRIO server...");
         LocalSystem system = new LocalSystem(
             TEAM_NUMBER,
-            useStaticAddress,
             REMOTE_PORT,
             new LogDataStorage(),
             console
@@ -81,31 +72,6 @@ public class RobotControlTerminal {
             console.print("\n");
         }
         
-    }
-    
-    private boolean getUseStaticAddress () {
-        console.printlnSys("Use the static (radio) or dynamic (ethernet/usb) IP address for the roboRIO? ");
-        console.printlnSys("s - Static: " + DriverStationSocketHandler.getRoborioHost(true, TEAM_NUMBER));
-        console.printlnSys("d - Dynamic: " + DriverStationSocketHandler.getRoborioHost(false, TEAM_NUMBER));
-        
-        String input = null;
-        boolean useStaticAddress = true;
-        
-        console.printSys("(s | d): ");
-        
-        while (input == null) {
-            input = console.readInputLine().trim().toLowerCase();
-            if (input.equals("s")) {
-                useStaticAddress = true;
-            } else if (input.equals("d")) {
-                useStaticAddress = false;
-            } else {
-                input = null;
-                console.printSys("Use 's' for static or 'd' for dynamic. ");
-            }
-        }
-        
-        return useStaticAddress;
     }
     
     private void processCommand (LocalSystem system, String line) {

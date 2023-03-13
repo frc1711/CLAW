@@ -66,10 +66,6 @@ public class LocalCommandInterpreter {
             "Displays the current status of the connection to the remote (the roboRIO), automatically updating over time. Press enter to stop.",
             this::commsCommand);
         
-        addCommand("ip", "ip [static | dynamic]",
-            "Change the IP address to use for the roboRIO to be either static (use for connection via radio) or dynamic (ethernet or usb).",
-            this::ipAddressCommand);
-        
         addCommand("ssh", "ssh [user]",
             "Launches an Secure Socket Shell for the roboRIO, using either the user 'lvuser' or 'admin'.",
             this::sshCommand);
@@ -77,6 +73,10 @@ public class LocalCommandInterpreter {
         addCommand("log", "log",
             "Print data with CLAWLoggers to the terminal when it is received from the robot.",
             this::logCommand);
+        
+        addCommand("config", "config [team number] [remote port]",
+            "Configure the connection to the RCT server, setting the team number and server port.",
+            this::configCommand);
     }
     
     /**
@@ -111,30 +111,6 @@ public class LocalCommandInterpreter {
     
     // Command methods:
     
-    private void ipAddressCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
-        reader.allowNoOptions();
-        reader.allowNoFlags();
-        
-        String addressType = reader.readArgOneOf(
-            "address type",
-            "The given IP address type must be either 'static' or 'dynamic'.",
-            "static", "dynamic");
-        
-        if (addressType.equals("static")) {
-            system.setUseStaticRoborioAddress(true);
-        } else {
-            system.setUseStaticRoborioAddress(false);
-        }
-        
-        try {
-            console.println("Attempting to connect to " + system.getRoborioHost() + "...");
-            system.establishNewConnection();
-            console.println("Successfully connected.");
-        } catch (IOException e) {
-            console.printlnErr("Failed to establish a new connection.");
-        }
-    }
-    
     private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         console.clear();
@@ -143,6 +119,25 @@ public class LocalCommandInterpreter {
     private void exitCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
         reader.allowNone();
         System.exit(0);
+    }
+    
+    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+        int teamNum = reader.readArgInt("team number");
+        int port = reader.readArgInt("RCT server port");
+        reader.noMoreArgs();
+        reader.allowNoOptions();
+        reader.allowNoFlags();
+        
+        system.setServerPort(port);
+        system.setTeamNum(teamNum);
+        
+        try {
+            system.establishNewConnection();
+            console.printlnSys("Successfully connected to the RCT server at " + system.getRoborioHost().orElse("[connection failed]"));
+        } catch (IOException e) {
+            console.printlnErr("Failed to connect to the RCT server.");
+        }
+        
     }
     
     private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
@@ -257,12 +252,16 @@ public class LocalCommandInterpreter {
         reader.noMoreArgs();
         
         // Get host for ssh and generate command
-        String host = system.getRoborioHost();
+        Optional<String> host = system.getRoborioHost();
+        if (host.isEmpty()) {
+            console.printlnErr("There is no connection to the roboRIO.");
+            return;
+        }
         
         String[] puttyCommand = new String[] {
             "putty",
             "-ssh",
-            user+"@"+host,
+            user+"@"+host.get(),
         };
         
         // Attempt to run the command to start PuTTY

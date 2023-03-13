@@ -10,8 +10,8 @@ import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.low.Waiter;
-import claw.rct.network.low.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
@@ -45,13 +45,11 @@ public class LocalSystem implements ResponseMessageHandler {
     private final LogDataStorage logDataStorage;
     
     // Socket handling
-    private final int teamNum, remotePort;
+    private int teamNum, remotePort;
     private DriverStationSocketHandler socket = null;
     
     private final Thread requireNewConnectionThread = new Thread(this::requireNewConnectionThreadRunnable);
     private boolean requireNewConnection = false;
-    
-    private boolean useStaticRoboRIOAddress;
     
     private Optional<HelpMessage[]> remoteHelpMessages = Optional.empty();
     private final Object remoteHelpMessagesLock = new Object();
@@ -69,28 +67,28 @@ public class LocalSystem implements ResponseMessageHandler {
      * @param console
      */
     public LocalSystem (
-            int teamNum,
-            boolean useStaticAddress,
-            int remotePort,
-            LogDataStorage logDataStorage,
-            ConsoleManager console) {
+        int teamNum,
+        int remotePort,
+        LogDataStorage logDataStorage,
+        ConsoleManager console
+    ) {
         
         // Instantiating final fields
         this.teamNum = teamNum;
-        this.useStaticRoboRIOAddress = useStaticAddress;
         this.remotePort = remotePort;
         this.logDataStorage = logDataStorage;
         this.console = console;
         interpreter = new LocalCommandInterpreter(this, logDataStorage);
         
-        // Start the requireNewConnectionThread, which will attempt to establish a new connection
-        // whenever it is interrupted
-        requireNewConnectionThread.start();
-        
         // Attempt to establish socket connection
         try {
             establishNewConnection();
         } catch (IOException e) { }
+        
+        // Start the requireNewConnectionThread, which will attempt to establish a new connection
+        // whenever it is interrupted
+        requireNewConnectionThread.start();
+        
     }
     
     /**
@@ -108,12 +106,15 @@ public class LocalSystem implements ResponseMessageHandler {
         try {
             socket = new DriverStationSocketHandler(
                 teamNum,
-                useStaticRoboRIOAddress,
                 remotePort,
                 this::receiveMessage,
                 this::handleSocketReceiverException
             );
+            
             lastConnectionException = null;
+            
+            updateConnectionStatus(ConnectionStatus.OK);
+            
         } catch (IOException exception) {
             
             // If there's an IOException (one that's different from the previous exception),
@@ -130,19 +131,20 @@ public class LocalSystem implements ResponseMessageHandler {
         }
     }
     
-    public void setUseStaticRoborioAddress (boolean useStaticAddress) {
-        useStaticRoboRIOAddress = useStaticAddress;
+    public Optional<String> getRoborioHost () {
+        DriverStationSocketHandler s = socket;
+        
+        if (s != null) {
+            return Optional.of(s.getRoborioHost());
+        } else return Optional.empty();
     }
     
-    public String getRoborioHost () {
-        return DriverStationSocketHandler.getRoborioHost(useStaticRoboRIOAddress, teamNum) + ":" + remotePort;
+    public void setTeamNum (int newTeamNum) {
+        teamNum = newTeamNum;
     }
     
-    /**
-     * Gets the team number passed in through the constructor.
-     */
-    public int getTeamNum () {
-        return teamNum;
+    public void setServerPort (int newPort) {
+        remotePort = newPort;
     }
     
     /**
@@ -150,6 +152,7 @@ public class LocalSystem implements ResponseMessageHandler {
      * @return The {@link ConnectionStatus} describing the current connection to the server.
      */
     public ConnectionStatus checkServerConnection () {
+        
         // Attempt to send a connection check message to remote
         try {
             DriverStationSocketHandler s = throwIfNullSocket();
@@ -305,6 +308,7 @@ public class LocalSystem implements ResponseMessageHandler {
         while (true) {
             // If a new connection needs to be established, try to do that
             checkServerConnection(); // This will update the requireNewConnection flag
+            
             if (requireNewConnection) {
                 try {
                     // Try to establish a new connection

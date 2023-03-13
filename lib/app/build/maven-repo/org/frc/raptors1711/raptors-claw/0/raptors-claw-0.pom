@@ -50,6 +50,18 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
+      <groupId>edu.wpi.first.hal</groupId>
+      <artifactId>hal-java</artifactId>
+      <version>2023.1.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>edu.wpi.first.hal</groupId>
+      <artifactId>hal-jni</artifactId>
+      <version>2023.1.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>org.fusesource.jansi</groupId>
       <artifactId>jansi</artifactId>
       <version>2.4.0</version>

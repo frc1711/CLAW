@@ -4,21 +4,20 @@ import java.util.Optional;
 
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.Num;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N4;
 
 /**
- * A type-safe vector class which can be used for calculations.
+ * A vector class which can be used for calculations.
  */
 public class Vector <N extends Num> {
     
     private Optional<Double> magnitude = Optional.empty();
+    private Optional<Double> angle = Optional.empty();
     private final Nat<N> dimensionality;
-    
-    /**
-     * An array of components backed by the {@link Vector} (meaning these components should never be modified).
-     * For example, for a two-dimensional vector {@code Vector<N2>}, this array would
-     * have a length of two and would contain the x and y components of the vector as {@code [x, y]}.
-     */
-    public final double[] components;
+    private final double[] components;
     
     /**
      * Gets a {@link Vector} from a list of components and the dimensionality of the vector.
@@ -30,8 +29,114 @@ public class Vector <N extends Num> {
         if (dim.getNum() != components.length)
             throw new IllegalArgumentException("The number of components given for this Vector does not match the dimensionality of the Vector");
         dimensionality = dim;
-        
         this.components = components.clone();
+    }
+    
+    /**
+     * Create a new one-dimensional vector {@code <x>} from the given x component.
+     * @param x The x component of the vector.
+     * @return  The vector {@code <x>}.
+     */
+    public static Vector<N1> from (double x) {
+        return new Vector<>(Nat.N1(), x);
+    }
+    
+    /**
+     * Create a new two-dimensional vector {@code <x, y>} from the given components.
+     * @param x The x component of the vector.
+     * @param y The y component of the vector.
+     * @return  The vector {@code <x, y>}.
+     */
+    public static Vector<N2> from (double x, double y) {
+        return new Vector<>(Nat.N2(), x, y);
+    }
+    
+    /**
+     * Create a new three-dimensional vector {@code <x, y, z>} from the given components.
+     * @param x The x component of the vector.
+     * @param y The y component of the vector.
+     * @param z The z component of the vector.
+     * @return  The vector {@code <x, y, z>}.
+     */
+    public static Vector<N3> from (double x, double y, double z) {
+        return new Vector<>(Nat.N3(), x, y, z);
+    }
+    
+    /**
+     * Create a new four-dimensional vector {@code <x, y, z, w>} from the given components.
+     * @param x The x component of the vector.
+     * @param y The y component of the vector.
+     * @param z The z component of the vector.
+     * @param w The w component of the vector.
+     * @return  The vector {@code <x, y, z, w>}.
+     */
+    public static Vector<N4> from (double x, double y, double z, double w) {
+        return new Vector<>(Nat.N4(), x, y, z, w);
+    }
+    
+    /**
+     * Get the dimensionality of this vector (i.e. the number of components it has), as an integer.
+     * @return The dimensionality of this vector.
+     */
+    public int getDimensionality () {
+        return dimensionality.getNum();
+    }
+    
+    /**
+     * Get the {@code i+1}th component of this vector. For example,
+     * {@code getComponent(2)} would return the third component.
+     * @param i The index of the component to retrieve.
+     * @return  The {@code i+1}th component of this vector.
+     * @throws  IllegalArgumentException If the given component index {@code i} is invalid for this vector
+     * (i.e. no {@code i+1}th component exists for this vector).
+     */
+    public double getComponent (int i) throws IllegalArgumentException {
+        if (i < 0) {
+            throw new IllegalArgumentException("Cannot retrieve a component with index less than zero");
+        } else if (i >= getDimensionality()) {
+            throw new IllegalArgumentException(
+                "Cannot retrieve component with index "+i+" from a " +
+                getDimensionality()+"-dimensional vector"
+            );
+        } else {
+            return components[i];
+        }
+    }
+    
+    /**
+     * Get the x (1st) component of this vector.
+     * If this vector's dimensionality is less than one, an exception will be thrown.
+     * @return The x component of this vector.
+     */
+    public double getX () {
+        return getComponent(0);
+    }
+    
+    /**
+     * Get the y (2nd) component of this vector.
+     * If this vector's dimensionality is less than two, an exception will be thrown.
+     * @return The y component of this vector.
+     */
+    public double getY () {
+        return getComponent(1);
+    }
+    
+    /**
+     * Get the z (3rd) component of this vector.
+     * If this vector's dimensionality is less than three, an exception will be thrown.
+     * @return The z component of this vector.
+     */
+    public double getZ () {
+        return getComponent(2);
+    }
+    
+    /**
+     * Get the w (4th) component of this vector.
+     * If this vector's dimensionality is less than four, an exception will be thrown.
+     * @return The w component of this vector.
+     */
+    public double getW () {
+        return getComponent(3);
     }
     
     /**
@@ -74,17 +179,16 @@ public class Vector <N extends Num> {
     }
     
     /**
-     * Applies a {@link Transform} to the magnitude of this vector. 
-     * @param transform The {@code Transform} to apply to this vector's magnitude.
-     * @return          This vector scaled such that the magnitude of the resulting vector is equal to the result
-     * of the transform applied to this vector's magnitude.
+     * Returns this vector scaled so that the new magnitude is equal to the given magnitude. If this vector's magnitude
+     * is zero, a zero vector will be returned.
+     * @param magnitude The magnitude of the vector after scaling.
+     * @return          This vector, scale such that the magnitude equals the provided magnitude.
      */
-    public Vector<N> applyScale (Transform transform) {
+    public Vector<N> scaleToMagnitude (double magnitude) {
         if (getMagnitude() == 0)
             return this.scale(0);
-        
-        double newMagnitude = transform.apply(getMagnitude());
-        return this.scale(newMagnitude / getMagnitude());
+        else
+            return this.scale(magnitude / getMagnitude());
     }
     
     /**
@@ -133,7 +237,7 @@ public class Vector <N extends Num> {
      * @return      The sum of the two vectors.
      */
     public Vector<N> add (Vector<N> other) {
-        return this.apply(other, (a, b) -> a * b);
+        return this.apply(other, (a, b) -> a + b);
     }
     
     /**
@@ -143,6 +247,48 @@ public class Vector <N extends Num> {
      */
     public Vector<N> subtract (Vector<N> other) {
         return this.apply(other, (a, b) -> a - b);
+    }
+    
+    /**
+     * Returns the angle formed between a two-dimensional vector and the x-axis, in radians. This angle
+     * increases counterclockwise. For example, a vector facing in the +y direction will return {@code pi/2}.
+     * @param vector    The two-dimensional vector to retrieve the direction angle of.
+     * @return          The angle of the vector, in radians.
+     */
+    public static double getAngle (Vector<N2> vector) {
+        if (vector.angle.isEmpty()) {
+            
+            // Set vector.angle as a cache
+            
+            if (vector.getMagnitude() == 0) {
+                
+                // Return 0 if the magnitude is 0 to prevent dividing by zero (or yielding a nonsensical answer)
+                vector.angle = Optional.of(0.);
+                
+            } else {
+                
+                // Get the X component of the vector if it were on the unit circle so we can use arccos
+                double unitX = vector.components[0] / vector.getMagnitude();
+                
+                // Get the angle if the vector were above the x-axis
+                double angle = Math.acos(unitX);
+                
+                // Use the angle directly if the vector is above the x-axis, or modify it to flip across the x-axis otherwise
+                vector.angle = Optional.of(vector.components[1] >= 0 ? (angle) : (2*Math.PI - angle));
+                
+            }
+            
+        }
+        
+        return vector.angle.get();
+    }
+    
+    @Override
+    public String toString () {
+        String[] componentsStrings = new String[components.length];
+        for (int i = 0; i < components.length; i ++)
+            componentsStrings[i] = Double.toString(components[i]);
+        return "<" + String.join(", ", componentsStrings) + ">";
     }
     
 }

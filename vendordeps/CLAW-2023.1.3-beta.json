@@ -1,0 +1,19 @@
+{
+    "fileName": "CLAW-2023.1.3-beta.json",
+    "name": "CLAW",
+    "version": "2023.1.3-beta",
+    "uuid": "57a8af13-8c4a-4143-98bf-0906db40bb07",
+    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/v2023.1.3-beta/vendordeps/CLAW-2023.1.3-beta.json",
+    "mavenUrls": [
+        "https://raw.githubusercontent.com/frc1711/CLAW/v2023.1.3-beta/lib/app/build/maven-repo"
+    ],
+    "javaDependencies": [
+        {
+            "groupId": "org.frc.raptors1711",
+            "artifactId": "raptors-claw",
+            "version": "0"
+        }
+    ],
+    "jniDependencies": [],
+    "cppDependencies": []
+}

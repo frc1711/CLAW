@@ -31,6 +31,17 @@ public interface Transform {
     }
     
     /**
+     * Gets a linear {@link Transform} which applies the equation {@code y = mx + b}
+     * to the parameter for the given {@code m} and {@code b}.
+     * @param m The slope of the line represented by this linear transform.
+     * @param b The y-intercept of the line represented by this linear transform.
+     * @return  The linear transform.
+     */
+    public static Transform linear (double m, double b) {
+        return x -> m*x + b;
+    }
+    
+    /**
      * Turns a transform into an even function by reflecting all x values less than zero across the y-axis.
      * @param transform The base {@link Transform} to turn into an even function.
      * @return          The symmetrical (even function) version of the given transform. 
