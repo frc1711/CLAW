@@ -1,8 +1,6 @@
 package claw.rct.remote;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 
 import claw.logs.CLAWLogger;
@@ -47,6 +45,8 @@ public class RCTServer implements InstructionMessageHandler {
     private void waitForConnection () throws IOException {
         // Establish a new connection
         serverSocket.getNewConnection();
+        
+        System.out.println("DriverStation Robot Control Terminal connected.");
         
         // Try to send a commands listing message
         try {
@@ -158,12 +158,7 @@ public class RCTServer implements InstructionMessageHandler {
     private void handleNonFatalServerException (IOException e) {
         // Try to get a new connection to the driverstation
         try {
-            StringWriter stringWriter = new StringWriter();
-            e.printStackTrace(new PrintWriter(stringWriter));
-            String message = "Nonfatal RCT server exception:\n" + stringWriter.toString();
-            
-            System.err.println(message);
-            LOG.err(message);
+            System.out.println("DriverStation Robot Control Terminal disconnected.");
             
             waitForConnection();
         } catch (IOException fatalEx) {
