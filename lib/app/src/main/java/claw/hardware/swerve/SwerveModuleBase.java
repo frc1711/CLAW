@@ -60,12 +60,20 @@ public abstract class SwerveModuleBase {
     public abstract void driveToRawState (SwerveModuleState state);
     
     /**
-     * Get a {@link SwerveModulePosition} describing the position of the swerve module. Note that
+     * Get a {@link SwerveModulePosition} describing the measured position of the swerve module. Note that
      * the rotation of the module's position increases counter-clockwise, with zero being directly
      * forward.
      * @return  The swerve module's current position.
      */
     public abstract SwerveModulePosition getPosition ();
+    
+    /**
+     * Get a {@link SwerveModuleState} describing the measured state of the swerve module. Note
+     * that the rotation of the module's state increases counter-clockwise, with zero being directly
+     * forward.
+     * @return  The swerve module's current state.
+     */
+    public abstract SwerveModuleState getState ();
     
     /**
      * Get the maximum attainable drive speed of this swerve module.

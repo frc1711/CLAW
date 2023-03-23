@@ -76,10 +76,10 @@ public class SwerveDriveHandler {
     }
     
     /**
-     * Drive the modules according to the given {@code speeds}.
+     * Drive the modules according to the given robot-relative {@code speeds}.
      * @param speeds    The {@link ChassisSpeeds} to drive the robot according to.
      */
-    public void driveRobotRelative (ChassisSpeeds speeds) {
+    public void drive (ChassisSpeeds speeds) {
         // Get module speeds and desaturate so they don't go beyond the capabilities of any of the modules
         SwerveModuleState[] desiredModuleStates = kinematics.toSwerveModuleStates(speeds);
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredModuleStates, getMaxDriveSpeedMetersPerSec());
@@ -141,6 +141,27 @@ public class SwerveDriveHandler {
         }
         
         return positions;
+    }
+    
+    /**
+     * Get the {@link SwerveModuleState}s of the swerve modules.
+     * @return  An array with type {@code SwerveModuleState[]} describing the current states of the swerve modules.
+     */
+    public SwerveModuleState[] getModuleStates () {
+        SwerveModuleState[] states = new SwerveModuleState[swerveModules.length];
+        for (int i = 0; i < states.length; i ++) {
+            states[i] = swerveModules[i].getState();
+        }
+        
+        return states;
+    }
+    
+    /**
+     * Get robot-relative speeds measured from the swerve modules.
+     * @return The measured {@link ChassisSpeeds}.
+     */
+    public ChassisSpeeds getRobotSpeed () {
+        return kinematics.toChassisSpeeds(getModuleStates());
     }
     
     /**

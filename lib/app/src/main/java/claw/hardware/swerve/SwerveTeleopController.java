@@ -4,23 +4,67 @@ import claw.hardware.swerve.SwerveMotionConstraints.ChassisSpeedsFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
+/**
+ * A teleop controller for {@link SwerveDriveHandler} which applies motion constraints
+ * and has additional functionality for field-relative driving.
+ */
 public class SwerveTeleopController {
     
     private final SwerveDriveHandler swerveDrive;
     private final ChassisSpeedsFilter speedsFilter;
     private Rotation2d teleopZeroRotationOffset = new Rotation2d();
     
+    /**
+     * Create a new {@link SwerveTeleopController} given a swerve drive and a set of motion constraints.
+     * @param swerveDrive       The {@link SwerveDriveHandler} to use for driving.
+     * @param motionConstraints The {@link SwerveMotionConstraints} describing acceleration and velocity
+     * limits.
+     */
     public SwerveTeleopController (SwerveDriveHandler swerveDrive, SwerveMotionConstraints motionConstraints) {
         this.swerveDrive = swerveDrive;
         speedsFilter = motionConstraints.getSpeedsFilter();
     }
     
+    /**
+     * Perform robot-relative driving.
+     * @param desiredSpeeds The robot-relative {@link ChassisSpeeds} which swerve will attempt
+     * to drive to, after applying motion constraints.
+     */
     public void driveRobotRelative (ChassisSpeeds desiredSpeeds) {
-        swerveDrive.driveRobotRelative(speedsFilter.calculate(desiredSpeeds));
+        swerveDrive.drive(speedsFilter.calculate(desiredSpeeds));
     }
     
+    /**
+     * Perform field-relative driving.
+     * @param desiredSpeeds The field-relative {@link ChassisSpeeds} which swerve will attempt
+     * to drive to, after applying motion constraints.
+     */
     public void driveFieldRelative (ChassisSpeeds desiredSpeeds) {
         driveRobotRelative(ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds, getTeleopRotation()));
+    }
+    
+    /**
+     * Drive swerve to x-mode, where all modules face inward which can stop robot movement.
+     */
+    public void driveXMode () {
+        swerveDrive.driveXMode();
+        speedsFilter.reset();
+    }
+    
+    /**
+     * Immediately stop the swerve drive.
+     */
+    public void stop () {
+        swerveDrive.stop();
+        speedsFilter.reset();
+    }
+    
+    /**
+     * Get the robot-relative {@link ChassisSpeeds}.
+     * @return  Measured robot chassis speeds.
+     */
+    public ChassisSpeeds getRobotSpeed () {
+        return swerveDrive.getRobotSpeed();
     }
     
     /**

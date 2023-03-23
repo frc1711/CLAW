@@ -119,6 +119,13 @@ public class SwerveMotionConstraints {
         }
         
         /**
+         * Reset the {@link ChassisSpeedsFilter} to zero movement {@link ChassisSpeeds}.
+         */
+        public void reset () {
+            reset(new ChassisSpeeds());
+        }
+        
+        /**
          * Reset the {@link ChassisSpeedsFilter} to the given {@link ChassisSpeeds}.
          * @param robotRelSpeeds The current robot-relative speeds to reset to.
          */
