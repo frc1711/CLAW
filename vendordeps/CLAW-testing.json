@@ -3,7 +3,7 @@
     "name": "CLAW",
     "uuid": "935d25f6-5774-4148-b87a-9f803cc91b00",
     "mavenUrls": [
-        "https://raw.githubusercontent.com/frc1711/CLAW/feature/subsystems-testing-gabriel/lib/app/build/maven-repo"
+        "https://raw.githubusercontent.com/frc1711/CLAW/feature/swerve/lib/app/build/maven-repo"
     ],
     "javaDependencies": [
         {
