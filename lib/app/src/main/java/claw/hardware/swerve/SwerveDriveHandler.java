@@ -28,7 +28,7 @@ public class SwerveDriveHandler {
      * in order to get accurate pose estimates.
      * @param initialRobotPose          The robot's initial {@link Pose2d}.
      * @param absoluteRotationSupplier  A {@link Supplier} providing {@link Rotation2d} describing the robot's rotation.
-     * This should never reset. Counter-clockwise must be positive.
+     * <b>This should never reset, and its basis should never change.</b> Counter-clockwise must be positive.
      * @param swerveModules             The {@link SwerveModuleBase}s to control.
      */
     public SwerveDriveHandler (
