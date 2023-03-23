@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.Num;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
@@ -15,7 +16,7 @@ import edu.wpi.first.math.numbers.N4;
 public class Vector <N extends Num> {
     
     private Optional<Double> magnitude = Optional.empty();
-    private Optional<Double> angle = Optional.empty();
+    private Optional<Rotation2d> angle = Optional.empty();
     private final Nat<N> dimensionality;
     private final double[] components;
     
@@ -30,6 +31,19 @@ public class Vector <N extends Num> {
             throw new IllegalArgumentException("The number of components given for this Vector does not match the dimensionality of the Vector");
         dimensionality = dim;
         this.components = components.clone();
+    }
+    
+    /**
+     * Create a new two-dimensional vector from the given angle and magnitude.
+     * @param angle         The angle of the vector, as a {@link Rotation2d}.
+     * @param magnitude     The magnitude of the vector.
+     * @return              The vector with the given {@code angle} and {@code magnitude}.
+     */
+    public static Vector<N2> from (Rotation2d angle, double magnitude) {
+        return Vector.from(
+            magnitude * angle.getCos(),
+            magnitude * angle.getSin()
+        );
     }
     
     /**
@@ -251,36 +265,35 @@ public class Vector <N extends Num> {
     
     /**
      * Returns the angle formed between a two-dimensional vector and the x-axis, in radians. This angle
-     * increases counterclockwise. For example, a vector facing in the +y direction will return {@code pi/2}.
+     * increases counterclockwise. For example, a vector facing in the +y direction will return a {@link Rotation2d}
+     * equivalent to pi/2 radians.
      * @param vector    The two-dimensional vector to retrieve the direction angle of.
-     * @return          The angle of the vector, in radians.
+     * @return          The angle of the vector as a {@code Rotation2d}.
      */
-    public static double getAngle (Vector<N2> vector) {
+    public static Rotation2d getAngle (Vector<N2> vector) {
         if (vector.angle.isEmpty()) {
-            
-            // Set vector.angle as a cache
-            
-            if (vector.getMagnitude() == 0) {
-                
-                // Return 0 if the magnitude is 0 to prevent dividing by zero (or yielding a nonsensical answer)
-                vector.angle = Optional.of(0.);
-                
-            } else {
-                
-                // Get the X component of the vector if it were on the unit circle so we can use arccos
-                double unitX = vector.components[0] / vector.getMagnitude();
-                
-                // Get the angle if the vector were above the x-axis
-                double angle = Math.acos(unitX);
-                
-                // Use the angle directly if the vector is above the x-axis, or modify it to flip across the x-axis otherwise
-                vector.angle = Optional.of(vector.components[1] >= 0 ? (angle) : (2*Math.PI - angle));
-                
-            }
-            
+            vector.angle = Optional.of(new Rotation2d(vector.getX(), vector.getY()));
         }
         
         return vector.angle.get();
+    }
+    
+    /**
+     * Get the output of rotating a two-dimensional vector by a set amount.
+     * @param vector    The two-dimensional vector to rotate.
+     * @param rotation  The rotation which the vector should be rotated by.
+     * @return          The rotated vector.
+     */
+    public static Vector<N2> rotateBy (Vector<N2> vector, Rotation2d rotation) {        
+        double x = vector.getX();
+        double y = vector.getY();
+        double sin = rotation.getSin();
+        double cos = rotation.getCos();
+        
+        return Vector.from(
+            cos * x - sin * y,
+            sin * x + cos * y
+        );
     }
     
     @Override
