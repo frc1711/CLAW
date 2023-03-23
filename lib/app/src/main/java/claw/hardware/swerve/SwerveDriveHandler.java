@@ -70,28 +70,13 @@ public class SwerveDriveHandler {
     /**
      * Drive the modules according to the given {@code speeds}.
      * @param speeds                    The {@link ChassisSpeeds} to drive the robot according to.
-     * @param robotCenterTranslation    A {@link Translation2d} describing the center of robot rotation. Most
-     * of the time, this is {@code <0, 0>}.
      */
-    public void driveRobotRelative (ChassisSpeeds speeds, Translation2d robotCenterTranslation) {
-        SwerveModuleState[] desiredModuleStates = kinematics.toSwerveModuleStates(speeds, robotCenterTranslation);
+    public void driveRobotRelative (ChassisSpeeds speeds) {
+        SwerveModuleState[] desiredModuleStates = kinematics.toSwerveModuleStates(speeds);
         for (int i = 0; i < swerveModules.length; i ++) {
             // Drive the module to the desired state (optimizing) where the module will not turn if the speed is zero
             swerveModules[i].driveToStateOptimize(desiredModuleStates[i], false);
         }
-    }
-    
-    /**
-     * Drive the modules according to the given field-relative {@code speeds}.
-     * @param speeds                    The {@link ChassisSpeeds} to drive the robot according to.
-     * @param robotCenterTranslation    A {@link Translation2d} describing the center of robot rotation. Most
-     * of the time, this is {@code <0, 0>}.
-     */
-    public void driveFieldRelative (ChassisSpeeds speeds, Translation2d robotCenterTranslation) {
-        driveRobotRelative(
-            ChassisSpeeds.fromFieldRelativeSpeeds(speeds, absoluteRotationSupplier.get()),
-            robotCenterTranslation
-        );
     }
     
     /**
@@ -108,6 +93,20 @@ public class SwerveDriveHandler {
             // Drive the module to the target angle with zero speed
             swerveModules[i].driveToStateOptimize(new SwerveModuleState(0, targetAngle), true);
         }
+    }
+    
+    /**
+     * Get the maximum drive speed in meters per second of this swerve drive,
+     * based on the maximum module drive speeds.
+     * @return  The maximum drive speed, in meters per second.
+     */
+    public double getMaxDriveSpeedMetersPerSec () {
+        double maxDriveSpeed = Double.POSITIVE_INFINITY;
+        for (SwerveModuleBase module : swerveModules) {
+            maxDriveSpeed = Math.min(maxDriveSpeed, module.getMaxDriveSpeedMetersPerSec());
+        }
+        
+        return Math.max(maxDriveSpeed, 0);
     }
     
     /**

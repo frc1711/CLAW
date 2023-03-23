@@ -68,6 +68,12 @@ public abstract class SwerveModuleBase {
     public abstract SwerveModulePosition getPosition ();
     
     /**
+     * Get the maximum attainable drive speed of this swerve module.
+     * @return The max drive speed in meters per second.
+     */
+    public abstract double getMaxDriveSpeedMetersPerSec ();
+    
+    /**
      * Stop all movement of the swerve module immediately. Make sure to reset
      * any relevant PID loops or filters.
      */
