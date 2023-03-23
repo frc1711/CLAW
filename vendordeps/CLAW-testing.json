@@ -1,7 +1,9 @@
 {
     "fileName": "CLAW-testing.json",
     "name": "CLAW",
-    "uuid": "935d25f6-5774-4148-b87a-9f803cc91b00",
+    "version": "CLAW-test",
+    "uuid": "935d25f6-5774-4148-b87a-9f803cc91b03",
+    "jsonUrl": "https://raw.githubusercontent.com/frc1711/CLAW/feature/swerve/vendordeps/CLAW-testing.json",
     "mavenUrls": [
         "https://raw.githubusercontent.com/frc1711/CLAW/feature/swerve/lib/app/build/maven-repo"
     ],
