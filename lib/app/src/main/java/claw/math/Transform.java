@@ -1,24 +1,24 @@
 package claw.math;
 
 /**
- * Represents a functional mapping of a real number onto another real number.
+ * Represents a functional mapping of objects onto objects of the same type.
  */
 @FunctionalInterface
-public interface Transform {
+public interface Transform <T> {
     /**
      * f(x) = x
      */
-    public static final Transform NONE = x -> x;
+    public static final Transform<Double> NONE = x -> x;
     
     /**
      * f(x) = -x
      */
-    public static final Transform NEGATE = x -> -x;
+    public static final Transform<Double> NEGATE = x -> -x;
         
     /**
      * The mathematical sign (sgn) function.
      */
-    public static final Transform SIGN = x -> x == 0 ? 0 : (x > 0 ? 1 : -1);
+    public static final Transform<Double> SIGN = x -> x == 0 ? 0. : (x > 0 ? 1 : -1);
     
     /**
      * Gets a {@link Transform} which clamps a value to a closed interval.
@@ -26,7 +26,7 @@ public interface Transform {
      * @param high  The maximum output value.
      * @return      The described clamp transform.
      */
-    public static Transform clamp (double low, double high) {
+    public static Transform<Double> clamp (double low, double high) {
         return input -> Math.min(Math.max(input, low), high);
     }
     
@@ -37,7 +37,7 @@ public interface Transform {
      * @param b The y-intercept of the line represented by this linear transform.
      * @return  The linear transform.
      */
-    public static Transform linear (double m, double b) {
+    public static Transform<Double> linear (double m, double b) {
         return x -> m*x + b;
     }
     
@@ -46,7 +46,7 @@ public interface Transform {
      * @param transform The base {@link Transform} to turn into an even function.
      * @return          The symmetrical (even function) version of the given transform. 
      */
-    public static Transform toEven (Transform transform) {
+    public static Transform<Double> toEven (Transform<Double> transform) {
         return x -> transform.apply(x >= 0 ? x : -x);
     }
     
@@ -57,7 +57,7 @@ public interface Transform {
      * @param transform The base {@link Transform} to turn into an odd function.
      * @return          The symmetrical (odd function) version of the given transform. 
      */
-    public static Transform toOdd (Transform transform) {
+    public static Transform<Double> toOdd (Transform<Double> transform) {
         return x -> toEven(transform).apply(x) * SIGN.apply(x);
     }
     
@@ -68,15 +68,15 @@ public interface Transform {
      * @param transform The transform to be applied after this one finishes.
      * @return          The composition of the two transforms.
      */
-    public default Transform then (Transform transform) {
+    public default Transform<T> then (Transform<T> transform) {
         return x -> transform.apply(this.apply(x));
     }
     
     /**
      * Apply the functional mapping described by this transformation.
-     * @param x The {@code double} input to the function.
-     * @return  The {@code double} output from the function.
+     * @param x The input to the function.
+     * @return  The output from the function.
      */
-    public double apply (double x);
+    public T apply (T x);
     
 }

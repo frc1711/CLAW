@@ -6,45 +6,45 @@ import claw.math.Transform;
  * A class which helps to process input from a scalar or vector input on a controller (trigger or joystick),
  * handling a deadband zone and applying a curve to refine control.
  */
-public class InputTransform implements Transform {
+public class InputTransform implements Transform<Double> {
     
-    private static final Transform INPUT_CLAMP = Transform.clamp(-1, 1);
+    private static final Transform<Double> INPUT_CLAMP = Transform.clamp(-1, 1);
     
     /**
      * A {@link Transform} which represents no input curve applied.
      */
-    public static final Transform NO_CURVE = Transform.NONE;
+    public static final Transform<Double> NO_CURVE = Transform.NONE;
     
     /**
      * f(x) = x^(3/2) as an odd function (negated for {@code x < 0}).
      */
-    public static final Transform THREE_HALVES_CURVE = Transform.toOdd(x -> Math.pow(x, 1.5));
+    public static final Transform<Double> THREE_HALVES_CURVE = Transform.toOdd(x -> Math.pow(x, 1.5));
     
     /**
      * f(x) = x^2 as an odd function (negated for {@code x < 0}).
      */
-    public static final Transform SQUARE_CURVE = Transform.toOdd(x -> x*x);
+    public static final Transform<Double> SQUARE_CURVE = Transform.toOdd(x -> x*x);
     
     /**
      * Creates a {@link Transform} representing a deadband's application to some input value.
      * @param deadband  A deadband value on the interval [0, 1).
      * @return          The deadband {@code Transform}.
      */
-    public static final Transform makeDeadband (double deadband) {
+    public static final Transform<Double> makeDeadband (double deadband) {
         if (deadband < 0 || deadband >= 1)
             throw new IllegalArgumentException("A deadband must be on the interval [0, 1).");
         
         // Transform.toOdd will allow us to ignore negative input values:
         return Transform.toOdd((input -> {
             // Return 0 if the input is within the deadband
-            if (input <= deadband) return 0;
+            if (input <= deadband) return 0.;
             
             // Apply the deadband
             return input / (1 - deadband);
         }));
     }
     
-    private final Transform innerTransform;
+    private final Transform<Double> innerTransform;
     
     /**
      * Create an {@link InputTransform} which can be applied to any input (but designed for handling human input
@@ -59,7 +59,7 @@ public class InputTransform implements Transform {
      * to start, try out {@link InputTransform#THREE_HALVES_CURVE}.
      * @param deadbandValue Any input with a magnitude of less than this deadband value will be mapped to zero.
      */
-    public InputTransform (Transform inputMap, double deadbandValue) {
+    public InputTransform (Transform<Double> inputMap, double deadbandValue) {
         innerTransform =
             makeDeadband(deadbandValue)
             .then(inputMap)
@@ -72,7 +72,7 @@ public class InputTransform implements Transform {
      * is best used when applying input directly to a value taken from a joystick axis on a controller.
      */
     @Override
-    public double apply (double input) {
+    public Double apply (Double input) {
         return innerTransform.apply(input);
     }
     

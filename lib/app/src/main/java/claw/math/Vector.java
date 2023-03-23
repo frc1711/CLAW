@@ -162,7 +162,7 @@ public class Vector <N extends Num> {
      * @param transform The transform to apply to each component.
      * @return          The result of the transformation applied to each component of this vector.
      */
-    public Vector<N> apply (Transform transform) {
+    public Vector<N> apply (Transform<Double> transform) {
         double[] newComponents = new double[components.length];
         for (int i = 0; i < components.length; i ++)
             newComponents[i] = transform.apply(components[i]);
