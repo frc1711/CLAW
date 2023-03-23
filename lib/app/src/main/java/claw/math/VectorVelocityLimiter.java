@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.Timer;
  * A {@link Transform} acting on {@link Vector}s which limits the magnitude of the vector's velocity over time.
  * This filter works for vectors of arbitrary dimensionality.
  */
-public class VectorVelocityFilter <N extends Num> implements Transform<Vector<N>> {
+public class VectorVelocityLimiter <N extends Num> implements Transform<Vector<N>> {
     
     private final double maxVelocity;
     
@@ -15,12 +15,12 @@ public class VectorVelocityFilter <N extends Num> implements Transform<Vector<N>
     private double lastTimestamp;
     
     /**
-     * Create a new {@link VectorVelocityFilter} with an initial vector value.
+     * Create a new {@link VectorVelocityLimiter} with an initial vector value.
      * @param initialValue  The initial {@link Vector} value of this filter.
      * @param maxVelocity   The maximum velocity of this filter's vector value, measured in units
      * per second.
      */
-    public VectorVelocityFilter (Vector<N> initialValue, double maxVelocity) {
+    public VectorVelocityLimiter (Vector<N> initialValue, double maxVelocity) {
         this.maxVelocity = maxVelocity;
         reset(initialValue);
     }

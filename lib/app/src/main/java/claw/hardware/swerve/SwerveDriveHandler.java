@@ -53,10 +53,18 @@ public class SwerveDriveHandler {
         // Get the pose estimator
         poseEstimator = new SwerveDrivePoseEstimator(
             kinematics,
-            absoluteRotationSupplier.get(),
+            getAbsoluteRobotRotation(),
             getModulePositions(),
             initialRobotPose
         );
+    }
+    
+    /**
+     * Gets the robot's yaw rotation (counter-clockwise positive).
+     * @return  The robot's rotation.
+     */
+    public Rotation2d getAbsoluteRobotRotation () {
+        return absoluteRotationSupplier.get();
     }
     
     /**
@@ -69,10 +77,14 @@ public class SwerveDriveHandler {
     
     /**
      * Drive the modules according to the given {@code speeds}.
-     * @param speeds                    The {@link ChassisSpeeds} to drive the robot according to.
+     * @param speeds    The {@link ChassisSpeeds} to drive the robot according to.
      */
     public void driveRobotRelative (ChassisSpeeds speeds) {
+        // Get module speeds and desaturate so they don't go beyond the capabilities of any of the modules
         SwerveModuleState[] desiredModuleStates = kinematics.toSwerveModuleStates(speeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredModuleStates, getMaxDriveSpeedMetersPerSec());
+        
+        // Drive each module
         for (int i = 0; i < swerveModules.length; i ++) {
             // Drive the module to the desired state (optimizing) where the module will not turn if the speed is zero
             swerveModules[i].driveToStateOptimize(desiredModuleStates[i], false);
@@ -137,7 +149,7 @@ public class SwerveDriveHandler {
      * @param newPose           The new robot {@link Pose2d}.
      */
     public void resetPoseEstimation (Pose2d newPose) {
-        poseEstimator.resetPosition(absoluteRotationSupplier.get(), getModulePositions(), newPose);
+        poseEstimator.resetPosition(getAbsoluteRobotRotation(), getModulePositions(), newPose);
     }
     
     /**
@@ -173,7 +185,7 @@ public class SwerveDriveHandler {
      */
     public void periodicUpdate () {
         // Update the pose estimator
-        poseEstimator.update(absoluteRotationSupplier.get(), getModulePositions());
+        poseEstimator.update(getAbsoluteRobotRotation(), getModulePositions());
     }
     
 }
