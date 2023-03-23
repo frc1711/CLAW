@@ -8,7 +8,7 @@ import edu.wpi.first.math.filter.Debouncer;
  * it may be useful to use a {@code DualDebouncer} even if different rising edge and falling edge debounce times are not
  * required.
  */
-public class DualDebouncer extends Debouncer implements Transform<Boolean> {
+public class DualDebouncer extends Debouncer {
     
     private final double fallingEdgeTime, risingEdgeTime;
     
@@ -95,15 +95,6 @@ public class DualDebouncer extends Debouncer implements Transform<Boolean> {
         
         return baselineState;
         
-    }
-    
-    /**
-     * Equivalent to {@link #calculate(boolean)}, allowing this debouncer to be used as a {@link Transform}
-     * acting on booleans.
-     */
-    @Override
-    public Boolean apply (Boolean input) {
-        return calculate(input);
     }
     
 }

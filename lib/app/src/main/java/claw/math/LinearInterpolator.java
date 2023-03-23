@@ -6,7 +6,7 @@ import java.util.Arrays;
  * A linear interpolator {@link Transform} which can take in x-coordinates and provide a corresponding y-coordinate
  * according to a provided dataset.
  */
-public class LinearInterpolator implements Transform<Double> {
+public class LinearInterpolator implements Transform {
     
     /**
      * A record representing a point on the x-y plane, which can be used to perform interpolation calculations.
@@ -81,7 +81,7 @@ public class LinearInterpolator implements Transform<Double> {
      * @return  The corresponding y output coordinate.
      */
     @Override
-    public Double apply (Double x) {
+    public double apply (double x) {
         
         // Return a constant value if there are exactly 0 or 1 given points, as all later calculations
         // depends on there being at least two points

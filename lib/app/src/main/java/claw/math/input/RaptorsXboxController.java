@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
  */
 public class RaptorsXboxController extends XboxController {
     
-    private final Transform<Double> leftStickTransform, rightStickTransform;
+    private final Transform leftStickTransform, rightStickTransform;
     
     /**
      * Create a new {@link RaptorsXboxController}.
@@ -34,7 +34,7 @@ public class RaptorsXboxController extends XboxController {
      * @param stickVectorTransform  The transform to apply to both joystick vectors' magnitudes. This is recommended
      * to be an {@link InputTransform}.
      */
-    public RaptorsXboxController (int port, Transform<Double> stickVectorTransform) {
+    public RaptorsXboxController (int port, Transform stickVectorTransform) {
         this(port, stickVectorTransform, stickVectorTransform);
     }
     
@@ -45,13 +45,13 @@ public class RaptorsXboxController extends XboxController {
      * @param leftStickVectorTransform  The transform to apply to the left joystick's position vector (magnitude).
      * @param rightStickVectorTransform The transform to apply to the right joystick's position vector (magnitude).
      */
-    public RaptorsXboxController (int port, Transform<Double> leftStickVectorTransform, Transform<Double> rightStickVectorTransform) {
+    public RaptorsXboxController (int port, Transform leftStickVectorTransform, Transform rightStickVectorTransform) {
         super(port);
         leftStickTransform = leftStickVectorTransform;
         rightStickTransform = rightStickVectorTransform;
     }
     
-    private Vector<N2> getStickVector (double x, double y, Transform<Double> transform) {
+    private Vector<N2> getStickVector (double x, double y, Transform transform) {
         // Invert y because the input from the driver station is also inverted
         Vector<N2> rawVector = Vector.from(x, -y);
         
