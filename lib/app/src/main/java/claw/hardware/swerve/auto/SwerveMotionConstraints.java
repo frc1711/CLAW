@@ -1,5 +1,6 @@
-package claw.hardware.swerve;
+package claw.hardware.swerve.auto;
 
+import claw.hardware.swerve.SwerveDriveHandler;
 import claw.math.Vector;
 import claw.math.VectorVelocityLimiter;
 import edu.wpi.first.math.MathUtil;
@@ -62,6 +63,11 @@ public class SwerveMotionConstraints {
                 maxDriveSpeed,
                 maxDriveAcceleration
             ).addConstraint(
+                // SwerveDriveKinematicsConstraint restricts the kinematics assuming that
+                // the swerve drive is actually turning according to the trajectory, even
+                // though this very well may not be the case, especially if we want to be able
+                // to use a trajectory that involves driving in a different direction than
+                // the robot is rotated in
                 new SwerveDriveKinematicsConstraint(
                     swerveDrive.getKinematics(),
                     swerveDrive.getMaxDriveSpeedMetersPerSec()

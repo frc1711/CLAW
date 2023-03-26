@@ -1,6 +1,7 @@
 package claw.hardware.swerve;
 
-import claw.hardware.swerve.SwerveMotionConstraints.ChassisSpeedsFilter;
+import claw.hardware.swerve.auto.SwerveMotionConstraints;
+import claw.hardware.swerve.auto.SwerveMotionConstraints.ChassisSpeedsFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
