@@ -1,16 +1,10 @@
 package claw.subsystems;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
 
 import claw.LiveValues;
 import claw.rct.network.low.ConsoleManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 /**
  * Represents a simple test bound to a subsystem which can be run through the Robot Control Terminal.
@@ -19,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 public class SubsystemTest {
     
     private final String name, description;
-    private final Consumer<LiveValues> periodicExecute;
+    private final TestSection[] testSections;
     
     /**
      * Create a new {@link SubsystemTest}. A subsystem test should only ever control one subsystem to which it belongs.
@@ -30,10 +24,10 @@ public class SubsystemTest {
      * to control the subsystem and perform the test's operations. The {@code LiveValues} can be used to display telemetry fields
      * in the console as the test runs.
      */
-    public SubsystemTest (String name, String description, Consumer<LiveValues> periodicExecute) {
+    public SubsystemTest (String name, String description, TestSection... testSections) {
         this.name = name;
         this.description = description;
-        this.periodicExecute = periodicExecute;
+        this.testSections = testSections.clone();
     }
     
     /**
@@ -42,43 +36,6 @@ public class SubsystemTest {
      */
     public String getName () {
         return name;
-    }
-    
-    private class SubsystemTestCommand implements Command {
-        
-        private final LiveValues values = new LiveValues();
-        private final CLAWSubsystem subsystem;
-        
-        public SubsystemTestCommand (CLAWSubsystem subsystem) {
-            this.subsystem = subsystem;
-        }
-        
-        @Override
-        public String getName () {
-            return "SubsystemTestCommand<"+subsystem.getName()+">(\""+name+"\")";
-        }
-        
-        @Override
-        public Set<Subsystem> getRequirements () {
-            HashSet<Subsystem> reqs = new HashSet<>();
-            reqs.add(subsystem);
-            return reqs;
-        }
-        
-        @Override
-        public void initialize () {
-            subsystem.stop();
-        }
-        
-        @Override
-        public void execute () {
-            periodicExecute.accept(values);
-        }
-        
-        @Override
-        public void end (boolean interrupted) {
-            subsystem.stop();
-        }
     }
     
     private static boolean getYesNo (ConsoleManager console, String prompt) {
@@ -123,19 +80,28 @@ public class SubsystemTest {
             if (!runCommand) return;
         }
         
-        // Run the command
-        SubsystemTestCommand command = new SubsystemTestCommand(subsystem);
-        command.withInterruptBehavior(InterruptionBehavior.kCancelIncoming).schedule();
+        // Run each test section, one by one
         console.printlnSys("\nRunning test command");
-        
-        while (DriverStation.isEnabled()) {
-            command.values.update(console);
-            console.flush();
+        for (TestSection section : testSections) {
+            section.run(subsystem, getName(), console);
         }
         
-        // Stop the command
-        console.printlnSys("\nStopping command");
-        command.cancel();
+        // TODO: Implement code to disable all the test sections on robot disable
+        
+        // Indicate that the test is finished
+        console.printlnSys("\nTest concluded");
+        
+    }
+    
+    public static interface TestSection {
+        
+        /**
+         * This should run the entirety of the test section (blocking).
+         * @param subsystem The {@link CLAWSubsystem} this test section is linked to.
+         * @param testName  The name of this subsystem test.
+         * @param console   The {@link ConsoleManager} this test section will be linked to.
+         */
+        public void run (CLAWSubsystem subsystem, String testName, ConsoleManager console);
         
     }
     
