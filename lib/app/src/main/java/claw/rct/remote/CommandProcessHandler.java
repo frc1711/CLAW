@@ -26,7 +26,7 @@ public class CommandProcessHandler implements ConsoleManager {
     private final Waiter<Boolean> hasInputReadyWaiter = new Waiter<Boolean>();
     private final KeepaliveWatcher keepaliveWatcher;
     
-    private List<ConsoleManagerOperation> operations = new ArrayList<ConsoleManagerOperation>();
+    private final List<ConsoleManagerOperation> operations = new ArrayList<ConsoleManagerOperation>();
     
     private boolean isTerminated = false;
     
@@ -96,102 +96,62 @@ public class CommandProcessHandler implements ConsoleManager {
     
     @Override
     public void print (String msg) {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the print operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT, 0, msg));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT, 0, msg));
     }
     
     @Override
     public void printErr (String msg) {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the printErr operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_ERR, 0, msg));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_ERR, 0, msg));
     }
     
     @Override
     public void printSys (String msg) {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the printSys operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_SYS, 0, msg));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_SYS, 0, msg));
     }
     
     @Override
     public void clear () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the clear operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR, 0, null));
     }
     
     @Override
     public void moveUp (int lines) {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the moveUp operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.MOVE_UP, lines, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.MOVE_UP, lines, null));
     }
     
     @Override
     public void clearLine () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the clearLine operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_LINE, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_LINE, 0, null));
     }
     
     @Override
     public void saveCursorPos () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the saveCursorPos operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.SAVE_CURSOR_POS, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.SAVE_CURSOR_POS, 0, null));
     }
     
     @Override
     public void restoreCursorPos () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the restoreCursorPos operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.RESTORE_CURSOR_POS, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.RESTORE_CURSOR_POS, 0, null));
     }
     
     @Override
     public void clearWaitingInputLines () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the restoreCursorPos operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_WAITING_INPUT_LINES, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_WAITING_INPUT_LINES, 0, null));
     }
     
     @Override
     public void flush () {
-        // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
-        
         // Add the flush operation
-        operations.add(new ConsoleManagerOperation(ConsoleManagerOperationType.FLUSH, 0, null));
+        addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.FLUSH, 0, null));
         
         // Also flush the output buffer to send all operations to local
         flushOperationsBuffer(ConsoleManagerRequest.NO_REQUEST);
@@ -234,11 +194,28 @@ public class CommandProcessHandler implements ConsoleManager {
     // Private control methods
     
     private void flushOperationsBuffer (ConsoleManagerRequest request) {
-        // Send a response based on the set request and the list of operations to perform
-        responseSender.accept(new CommandOutputMessage(processId, isTerminated, request, operations.toArray(new ConsoleManagerOperation[0])));
+        // Copy contents of the operations list into an array and clear the list
+        ConsoleManagerOperation[] operationsArray;
+        synchronized (operations) {
+            operationsArray = operations.toArray(new ConsoleManagerOperation[0]);
+            operations.clear();
+        }
         
-        // Clear the operations list so that it can be filled again
-        operations.clear();
+        // Send a response based on the set request and the list of operations to perform
+        // This is done outside the synchronized block so we don't take control of the operations
+        // list for longer than necessary
+        responseSender.accept(new CommandOutputMessage(processId, isTerminated, request, operationsArray));
+    }
+    
+    private void addOperation (ConsoleManagerOperation operation) {
+        // Throw an exception if the process is terminated
+        if (isTerminated)
+            throw new TerminatedProcessException();
+        
+        // Add the operation to the buffer (synchronized for thread safety)
+        synchronized (operations) {
+            operations.add(operation);
+        }
     }
     
     /**
