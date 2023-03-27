@@ -5,6 +5,7 @@ import java.util.Optional;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.Num;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
@@ -13,7 +14,7 @@ import edu.wpi.first.math.numbers.N4;
 /**
  * A vector class which can be used for calculations.
  */
-public class Vector <N extends Num> {
+public class Vector <N extends Num> implements Interpolatable<Vector<N>> {
     
     private Optional<Double> magnitude = Optional.empty();
     private Optional<Rotation2d> angle = Optional.empty();
@@ -294,6 +295,11 @@ public class Vector <N extends Num> {
             cos * x - sin * y,
             sin * x + cos * y
         );
+    }
+    
+    @Override
+    public Vector<N> interpolate (Vector<N> endValue, double t) {
+        return endValue.scale(t).add(this.scale(1-t));
     }
     
     @Override

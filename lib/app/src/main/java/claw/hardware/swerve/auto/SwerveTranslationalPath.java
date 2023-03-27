@@ -13,13 +13,13 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 
-public class SwerveTrajectory {
+public class SwerveTranslationalPath {
     
     private final Trajectory translationalTrajectory;
     private final Transform sampleTimeToRobotRotationRadians;
     private final double totalTimeSecs;
     
-    public SwerveTrajectory (Pose2d firstPose, List<Translation2d> intermediateWaypoints, Pose2d lastPose, TrajectoryConfig config) {
+    public SwerveTranslationalPath (Pose2d firstPose, List<Translation2d> intermediateWaypoints, Pose2d lastPose, TrajectoryConfig config) {
         
         // Generate the translational portion of the trajectory
         translationalTrajectory = generateSafeTrajectory(firstPose, intermediateWaypoints, lastPose, config);
