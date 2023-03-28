@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.WrapperCommand;
 
-class CommandAction implements Action {
+class CommandExecutor {
     
     /**
      * If the command scheduler takes longer than this amount of time to schedule a command,
@@ -20,12 +20,11 @@ class CommandAction implements Action {
     private final Command command;
     private final ReentrantLock runningLock = new ReentrantLock();
     
-    public CommandAction (Command command) {
+    public CommandExecutor (Command command) {
         this.command = command;
     }
     
-    @Override
-    public void run () {
+    public void execute () {
         
         if (!runningLock.tryLock()) {
             throw new RuntimeException("Cannot run a command action more than one time at once");
