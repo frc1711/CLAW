@@ -2,9 +2,10 @@ package claw.subsystems;
 
 import java.util.Optional;
 
-import claw.LiveValues;
+import claw.actions.Action;
 import claw.rct.network.low.ConsoleManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
 
 /**
  * Represents a simple test bound to a subsystem which can be run through the Robot Control Terminal.
@@ -13,21 +14,19 @@ import edu.wpi.first.wpilibj.DriverStation;
 public class SubsystemTest {
     
     private final String name, description;
-    private final TestSection[] testSections;
+    private final TestCommandSupplier testCommandSupplier;
     
     /**
-     * Create a new {@link SubsystemTest}. A subsystem test should only ever control one subsystem to which it belongs.
+     * Create a new {@link SubsystemTest}. A subsystem test should only ever control the one subsystem to which it belongs.
      * Never add a subsystem test to a subsystem which it does not belong to.
-     * @param name              A name to identify the particular test by.
-     * @param description       A description of what the test does and how it can be used.
-     * @param periodicExecute   A {@link LiveValues} consumer which will be run periodically (generally around once every 20ms)
-     * to control the subsystem and perform the test's operations. The {@code LiveValues} can be used to display telemetry fields
-     * in the console as the test runs.
+     * @param name                  A name to identify the particular test by.
+     * @param description           A description of what the test does and how it can be used.
+     * @param testCommandSupplier   The {@link TestCommandSupplier} which will provide a test command.
      */
-    public SubsystemTest (String name, String description, TestSection... testSections) {
+    public SubsystemTest (String name, String description, TestCommandSupplier testCommandSupplier) {
         this.name = name;
         this.description = description;
-        this.testSections = testSections.clone();
+        this.testCommandSupplier = testCommandSupplier;
     }
     
     /**
@@ -81,11 +80,13 @@ public class SubsystemTest {
             if (!runCommand) return;
         }
         
-        // Run each test section, one by one
+        // Run the test command, one by one
         console.printlnSys("\nRunning test command");
-        for (TestSection section : testSections) {
-            section.run(subsystem, getName(), console);
-        }
+        console.flush();
+        
+        // Retrieve and run the test command
+        Command testCommand = testCommandSupplier.getCommand(subsystem, console);
+        Action.fromCommand(testCommand).run();
         
         // TODO: Implement code to disable all the test sections on robot disable
         
@@ -94,15 +95,22 @@ public class SubsystemTest {
         
     }
     
-    public static interface TestSection {
+    /**
+     * A functional interface supplying a {@link Command} for the {@link SubsystemTest}. See
+     * {@link claw.actions.CommandComposer} for generating more advanced compositions of commands
+     * for subsystem testing.
+     */
+    @FunctionalInterface
+    public static interface TestCommandSupplier {
+        
+        
         
         /**
-         * This should run the entirety of the test section (blocking).
+         * This should return a {@link Command} which can run on the subsystem for the test.
          * @param subsystem The {@link CLAWSubsystem} this test section is linked to.
-         * @param testName  The name of this subsystem test.
          * @param console   The {@link ConsoleManager} this test section will be linked to.
          */
-        public void run (CLAWSubsystem subsystem, String testName, ConsoleManager console);
+        public Command getCommand (CLAWSubsystem subsystem, ConsoleManager console);
         
     }
     
