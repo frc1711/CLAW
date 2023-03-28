@@ -24,7 +24,7 @@ class ActionCompositionContext {
         runningAction.ifPresent(Action::cancel);
     }
     
-    private class ActionCompositionCanceledException extends RuntimeException {
+    public class ActionCompositionCanceledException extends RuntimeException {
         public ActionCompositionCanceledException () {
             super("Action composition has been canceled (normal behavior), exit the composition as soon as possible");
         }

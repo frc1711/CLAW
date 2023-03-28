@@ -4,8 +4,12 @@
 
 package frc.robot;
 
+import claw.actions.CommandComposer;
 import claw.logs.CLAWLogger;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.TestCommand;
 import frc.robot.subsystems.TestSubsystem;
 
@@ -21,6 +25,13 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand () {
-        throw new RuntimeException("This is a sample runtime exception");
+        return CommandComposer.getComposition(ctx -> {
+            ctx.run(new TestCommand(testSubsystem).withTimeout(5));
+            
+            for (int i = 0; i < 3; i ++) {
+                ctx.run(new PrintCommand("Random: " + Math.random()));
+                ctx.delay(0.5);
+            }
+        });
     }
 }
