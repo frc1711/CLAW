@@ -62,6 +62,7 @@ public class RobotErrorLog {
     }
     
     private static void logError (LoggableError error) {
+        // TODO: Based on robot tests, this takes waaay too long. Could indicate settings take too long to read from. More testing required.
         synchronized (ERROR_LOG_LOCK) {
             ERROR_LOG_SETTING.get().add(error);
             ERROR_LOG_SETTING.save();

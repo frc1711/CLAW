@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.function.Consumer;
 
 import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 
 /**
  * A simple wrapper around {@code Socket} specialized for sending and receiving serializable {@link Message} objects.
@@ -48,22 +47,14 @@ public class SocketHandler {
     public void sendMessage (Message sendMessage, int millisTimeout) throws IOException {
         
         // Create a timeout waiter 
-        Waiter<Object> timeoutWaiter = new Waiter<>();
-        
-        // TODO: Remove the output waiter killer
+        Waiter timeoutWaiter = new Waiter();
         
         // In a separate thread, wait for the timeout
         new Thread(() -> {
             try {
                 
                 // Close the socket output after the millisTimeout
-                try {
-                    
-                    // Try to wait for the duration of the given timeout
-                    timeoutWaiter.waitForValue(millisTimeout);
-                    
-                } catch (NoValueReceivedException e) {
-                    
+                if (!timeoutWaiter.pause(millisTimeout)) {
                     // If the message isn't sent by the timeout, shut down the socket output stream
                     socket.getOutputStream().close();
                 }
@@ -76,7 +67,7 @@ public class SocketHandler {
         
         // After the message is sent (if it's sent before the timeout), send a message to the timeout waiter
         // so the socket output stream isn't shut down
-        timeoutWaiter.receive(new Object());
+        timeoutWaiter.resume();
     }
     
     private void beginReceivingMessages () throws IOException {

@@ -3,6 +3,7 @@ package claw;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 
 import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
@@ -24,6 +25,8 @@ public class CLAWRobot {
     private static final CommandLineInterpreter EXTENSIBLE_COMMAND_INTERPRETER = new CommandLineInterpreter();
     
     private static boolean hasStartedCompetition = false;
+    
+    private static final ArrayList<Runnable> executeInMainThread = new ArrayList<>();
     
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
         // Do not call startCompetition more than once
@@ -64,10 +67,12 @@ public class CLAWRobot {
         Thread.setDefaultUncaughtExceptionHandler(CLAWRobot::handleUncaughtException);
         
         // Initialize command watchers
-        CommandScheduler.getInstance().onCommandInitialize(CLAWRobot::onCommandInitialize);
-        CommandScheduler.getInstance().onCommandExecute(CLAWRobot::onCommandExecute);
-        CommandScheduler.getInstance().onCommandFinish(CLAWRobot::onCommandFinish);
-        CommandScheduler.getInstance().onCommandInterrupt(CLAWRobot::onCommandInterrupt);
+        executeInMainRobotThread(() -> {
+            CommandScheduler.getInstance().onCommandInitialize(CLAWRobot::onCommandInitialize);
+            CommandScheduler.getInstance().onCommandExecute(CLAWRobot::onCommandExecute);
+            CommandScheduler.getInstance().onCommandFinish(CLAWRobot::onCommandFinish);
+            CommandScheduler.getInstance().onCommandInterrupt(CLAWRobot::onCommandInterrupt);
+        });
         
         try {
             // Add the periodic method for the CLAWRobot and call start competition within a try-catch
@@ -99,9 +104,35 @@ public class CLAWRobot {
         return EXTENSIBLE_COMMAND_INTERPRETER;
     }
     
+    /**
+     * Add a {@link Runnable} operation to execute exactly once in the main robot thread, whenever available.
+     * This is mostly useful for performing actions which use WPILib resources as they are, for the most part,
+     * not thread safe. This call is not blocking.
+     * @param operation The operation to perform once in the main robot thread, whenever available.
+     */
+    public static void executeInMainRobotThread (Runnable operation) {
+        synchronized (executeInMainThread) {
+            executeInMainThread.add(operation);
+        }
+    }
+    
     private static void robotPeriodic () {
-        if (server != null)
+        // Update the log handler
+        if (server != null) {
             LogHandler.getInstance().sendData(server);
+        }
+        
+        // Get all operations to execute in the main thread and clear the queue
+        Runnable[] operations;
+        synchronized (executeInMainThread) {
+            operations = executeInMainThread.toArray(new Runnable[0]);
+            executeInMainThread.clear();
+        }
+        
+        // Execute each operation
+        for (Runnable operation : operations) {
+            operation.run();
+        }
     }
     
     private static void onCommandInitialize (Command command) {
