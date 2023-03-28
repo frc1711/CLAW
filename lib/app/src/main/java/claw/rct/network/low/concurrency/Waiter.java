@@ -25,6 +25,7 @@ public class Waiter <T> {
         if (!isWaiting) return;
         
         // Set the value field to match the provided value
+        // TODO: Fix this so it works for null, and make another waiter class which can wait without receiving
         valueReceived = Optional.of(value);
         
         // Start up waiting threads
