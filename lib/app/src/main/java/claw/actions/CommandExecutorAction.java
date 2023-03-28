@@ -14,7 +14,7 @@ class CommandExecutorAction extends Action {
      * then a runtime exception will be thrown for the action saying that the command failed
      * to schedule.
      */
-    private static final long MILLIS_TO_SCHEDULE_COMMAND = 1500;
+    private static final long MILLIS_TO_SCHEDULE_COMMAND = 1200;
     
     private final Command command;
     
@@ -28,9 +28,8 @@ class CommandExecutorAction extends Action {
         // Get a new command adapter
         CommandAdapter adapter = new CommandAdapter();
         
-        // TODO: Schedule in a thread-safe way
+        // Schedule the command in a thread-safe way because the CommandScheduler is not thread safe
         CLAWRobot.executeInMainRobotThread(() -> {
-            System.out.println("SCHEDULING COMMAND");
             CommandScheduler.getInstance().schedule(adapter);
         });
         
@@ -55,6 +54,7 @@ class CommandExecutorAction extends Action {
         // whether the command was initialized, finished, etc.
         private boolean hasInitialized = false;
         private final Waiter<Object> initializeWaiter = new Waiter<>();
+        private boolean shouldCancel = false;
         
         private boolean hasEnded = false;
         private final Waiter<Object> endWaiter = new Waiter<>();
@@ -77,12 +77,18 @@ class CommandExecutorAction extends Action {
             super.end(interrupted);
         }
         
+        @Override
+        public boolean isFinished () {
+            return shouldCancel || super.isFinished();
+        }
+        
         public void waitForInitialize () {
             if (!hasInitialized) {
                 try {
                     initializeWaiter.waitForValue(MILLIS_TO_SCHEDULE_COMMAND);
                 } catch (NoValueReceivedException e) {
-                    throw new RuntimeException("The CommandScheduler failed to schedule the command");
+                    shouldCancel = true;
+                    throw new RuntimeException("The CommandScheduler failed to schedule the command before " + MILLIS_TO_SCHEDULE_COMMAND + "millisecond deadline");
                 }
             }
         }
@@ -93,6 +99,8 @@ class CommandExecutorAction extends Action {
                     endWaiter.waitForValue();
                 } catch (NoValueReceivedException e) {
                     throw new RuntimeException("Oh no! You hopefully should never see this (endWaiter was killed)");
+                } finally {
+                    shouldCancel = true;
                 }
             }
         }
