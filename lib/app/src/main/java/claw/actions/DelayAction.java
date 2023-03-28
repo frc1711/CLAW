@@ -1,12 +1,11 @@
 package claw.actions;
 
-import claw.rct.network.low.concurrency.ObjectWaiter;
-import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.Waiter;
 
 public class DelayAction extends Action {
     
     private final double durationSecs;
-    private final ObjectWaiter<Object> cancelObjectWaiter = new ObjectWaiter<>();
+    private final Waiter cancelWaiter = new Waiter();
     
     public DelayAction (double durationSecs) {
         this.durationSecs = durationSecs;
@@ -14,14 +13,12 @@ public class DelayAction extends Action {
     
     @Override
     protected void runAction () {
-        try {
-            cancelObjectWaiter.waitForValue((long)(1000 * durationSecs));
-        } catch (NoValueReceivedException e) { }
+        cancelWaiter.pause((long)(1000 * durationSecs));
     }
     
     @Override
     protected void cancelRunningAction () {
-        cancelObjectWaiter.receive(new Object());
+        cancelWaiter.resume();
     }
     
 }

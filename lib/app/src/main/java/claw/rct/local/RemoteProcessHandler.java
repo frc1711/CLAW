@@ -1,13 +1,13 @@
 package claw.rct.local;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
-import claw.rct.network.low.concurrency.ObjectWaiter;
-import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.SignalWaiter;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
@@ -22,7 +22,7 @@ public class RemoteProcessHandler {
     private final Consumer<InstructionMessage> instructionSender;
     private final int processId;
     
-    private final ObjectWaiter<CommandOutputMessage> commandOutputObjectWaiter = new ObjectWaiter<CommandOutputMessage>();
+    private final SignalWaiter<CommandOutputMessage> commandOutputWaiter = new SignalWaiter<CommandOutputMessage>();
     
     private final KeepaliveWatcher keepaliveWatcher;
     
@@ -47,7 +47,7 @@ public class RemoteProcessHandler {
     }
     
     public void receiveCommandOutputMessage (CommandOutputMessage msg) {
-        commandOutputObjectWaiter.receive(msg);
+        commandOutputWaiter.receiveSignal(msg);
         keepaliveWatcher.continueKeepalive();
     }
     
@@ -66,10 +66,9 @@ public class RemoteProcessHandler {
         instructionSender.accept(new StartCommandMessage(processId, command));
         
         // Start the loop of receiving and responding to messages
-        try {
-            while (!terminated)
-                awaitCommandOutputLoop();
-        } catch (NoValueReceivedException e) { }
+        while (!terminated) {
+            awaitCommandOutputLoop();
+        }
         
         // If at any point the commandOutputObjectWaiter is killed, then the process must have
         // been terminated and we should silently exit the above block
@@ -77,21 +76,32 @@ public class RemoteProcessHandler {
         if (terminateException != null) throw terminateException;
     }
     
-    private void awaitCommandOutputLoop () throws NoValueReceivedException {
+    private void awaitCommandOutputLoop () {
         // Waiting for an output message that matches the process ID
-        CommandOutputMessage outputMessage = null;
-        while (outputMessage == null || outputMessage.commandProcessId != processId)
-            outputMessage = commandOutputObjectWaiter.waitForValue();
+        Optional<CommandOutputMessage> outputMessage = Optional.empty();
+        while (outputMessage.isEmpty() || outputMessage.get().commandProcessId != processId) {
+            
+            outputMessage = commandOutputWaiter.awaitSignal();
+            
+            if (outputMessage.isEmpty()) {
+                // Output waiter was killed
+                terminate();
+                return;
+            }
+            
+        }
+        
+        CommandOutputMessage message = outputMessage.get();
         
         // Once the output message has been received, process the operations
-        for (int i = 0; i < outputMessage.operations.length; i ++)
-            processConsoleManagerOperation(outputMessage.operations[i]);
+        for (int i = 0; i < message.operations.length; i ++)
+            processConsoleManagerOperation(message.operations[i]);
         
         // Send an input message if requested by the output message
-        sendRespondingInputMessage(outputMessage);
+        sendRespondingInputMessage(message);
         
         // Terminate the command if requested by the output message
-        if (outputMessage.terminateCommand) terminate();
+        if (message.terminateCommand) terminate();
     }
     
     private void processConsoleManagerOperation (ConsoleManagerOperation operation) {
@@ -165,7 +175,7 @@ public class RemoteProcessHandler {
         terminateException = exception;
         terminated = true;
         
-        commandOutputObjectWaiter.kill();
+        commandOutputWaiter.kill();
         keepaliveWatcher.stopWatching();
     }
     

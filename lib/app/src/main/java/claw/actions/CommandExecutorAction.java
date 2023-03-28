@@ -1,8 +1,7 @@
 package claw.actions;
 
 import claw.CLAWRobot;
-import claw.rct.network.low.concurrency.ObjectWaiter;
-import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.Waiter;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.WrapperCommand;
@@ -53,11 +52,11 @@ class CommandExecutorAction extends Action {
         // Each command adapter will only be used once, so we can use fields like this to describe
         // whether the command was initialized, finished, etc.
         private boolean hasInitialized = false;
-        private final ObjectWaiter<Object> initializeObjectWaiter = new ObjectWaiter<>();
+        private final Waiter initializeWaiter = new Waiter();
         private boolean shouldCancel = false;
         
         private boolean hasEnded = false;
-        private final ObjectWaiter<Object> endObjectWaiter = new ObjectWaiter<>();
+        private final Waiter endWaiter = new Waiter();
         
         public CommandAdapter () {
             super(command);
@@ -66,14 +65,14 @@ class CommandExecutorAction extends Action {
         @Override
         public void initialize () {
             hasInitialized = true;
-            initializeObjectWaiter.receive(new Object());
+            initializeWaiter.resume();
             super.initialize();
         }
         
         @Override
         public void end (boolean interrupted) {
             hasEnded = true;
-            endObjectWaiter.receive(new Object());
+            endWaiter.resume();
             super.end(interrupted);
         }
         
@@ -84,9 +83,7 @@ class CommandExecutorAction extends Action {
         
         public void waitForInitialize () {
             if (!hasInitialized) {
-                try {
-                    initializeObjectWaiter.waitForValue(MILLIS_TO_SCHEDULE_COMMAND);
-                } catch (NoValueReceivedException e) {
+                if (!initializeWaiter.pause(MILLIS_TO_SCHEDULE_COMMAND)) {
                     shouldCancel = true;
                     throw new RuntimeException("The CommandScheduler failed to schedule the command before " + MILLIS_TO_SCHEDULE_COMMAND + "millisecond deadline");
                 }
@@ -95,13 +92,8 @@ class CommandExecutorAction extends Action {
         
         public void waitForEnd () {
             if (!hasEnded) {
-                try {
-                    endObjectWaiter.waitForValue();
-                } catch (NoValueReceivedException e) {
-                    throw new RuntimeException("Oh no! You hopefully should never see this (endObjectWaiter was killed)");
-                } finally {
-                    shouldCancel = true;
-                }
+                endWaiter.pause();
+                shouldCancel = true;
             }
         }
         
