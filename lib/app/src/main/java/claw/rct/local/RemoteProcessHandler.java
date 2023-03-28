@@ -6,8 +6,8 @@ import java.util.function.Consumer;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.ObjectWaiter;
+import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
@@ -22,7 +22,7 @@ public class RemoteProcessHandler {
     private final Consumer<InstructionMessage> instructionSender;
     private final int processId;
     
-    private final Waiter<CommandOutputMessage> commandOutputWaiter = new Waiter<CommandOutputMessage>();
+    private final ObjectWaiter<CommandOutputMessage> commandOutputObjectWaiter = new ObjectWaiter<CommandOutputMessage>();
     
     private final KeepaliveWatcher keepaliveWatcher;
     
@@ -47,7 +47,7 @@ public class RemoteProcessHandler {
     }
     
     public void receiveCommandOutputMessage (CommandOutputMessage msg) {
-        commandOutputWaiter.receive(msg);
+        commandOutputObjectWaiter.receive(msg);
         keepaliveWatcher.continueKeepalive();
     }
     
@@ -71,7 +71,7 @@ public class RemoteProcessHandler {
                 awaitCommandOutputLoop();
         } catch (NoValueReceivedException e) { }
         
-        // If at any point the commandOutputWaiter is killed, then the process must have
+        // If at any point the commandOutputObjectWaiter is killed, then the process must have
         // been terminated and we should silently exit the above block
         
         if (terminateException != null) throw terminateException;
@@ -81,7 +81,7 @@ public class RemoteProcessHandler {
         // Waiting for an output message that matches the process ID
         CommandOutputMessage outputMessage = null;
         while (outputMessage == null || outputMessage.commandProcessId != processId)
-            outputMessage = commandOutputWaiter.waitForValue();
+            outputMessage = commandOutputObjectWaiter.waitForValue();
         
         // Once the output message has been received, process the operations
         for (int i = 0; i < outputMessage.operations.length; i ++)
@@ -165,7 +165,7 @@ public class RemoteProcessHandler {
         terminateException = exception;
         terminated = true;
         
-        commandOutputWaiter.kill();
+        commandOutputObjectWaiter.kill();
         keepaliveWatcher.stopWatching();
     }
     

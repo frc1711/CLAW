@@ -10,8 +10,8 @@ import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.ObjectWaiter;
+import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
 import claw.rct.network.messages.CommandsListingMessage;
 import claw.rct.network.messages.ConnectionCheckMessage;
 import claw.rct.network.messages.ConnectionResponseMessage;
@@ -55,7 +55,7 @@ public class LocalSystem implements ResponseMessageHandler {
     private final Object remoteHelpMessagesLock = new Object();
     
     // Server connection testing
-    private final Waiter<ConnectionResponseMessage> connectionResponseWaiter = new Waiter<ConnectionResponseMessage>();
+    private final ObjectWaiter<ConnectionResponseMessage> connectionResponseObjectWaiter = new ObjectWaiter<ConnectionResponseMessage>();
     private ConnectionStatus lastConnectionStatus = ConnectionStatus.NO_CONNECTION;
     private IOException lastConnectionException = null;
     
@@ -161,9 +161,9 @@ public class LocalSystem implements ResponseMessageHandler {
             return updateConnectionStatus(ConnectionStatus.NO_CONNECTION);
         }
         
-        // Try to wait for a response back (connectionResponseWaiter will be notified by the receiver thread)
+        // Try to wait for a response back (connectionResponseObjectWaiter will be notified by the receiver thread)
         try {
-            connectionResponseWaiter.waitForValue(RESPONSE_TIMEOUT_MILLIS);
+            connectionResponseObjectWaiter.waitForValue(RESPONSE_TIMEOUT_MILLIS);
             
             // Return an OK connection status because a connection response message was received
             return updateConnectionStatus(ConnectionStatus.OK);
@@ -229,14 +229,14 @@ public class LocalSystem implements ResponseMessageHandler {
     }
     
     /**
-     * Receives a connection response message, notifying the connectionResponseWaiter
+     * Receives a connection response message, notifying the connectionResponseObjectWaiter
      * so that the response can be processed.
      * This method will run on a receiver thread, and is delegated a message from
      * {@link LocalSystem#receiveMessage(ResponseMessage)}.
      */
     @Override
     public void receiveConnectionResponseMessage (ConnectionResponseMessage msg) {
-        connectionResponseWaiter.receive(msg);
+        connectionResponseObjectWaiter.receive(msg);
     }
     
     @Override

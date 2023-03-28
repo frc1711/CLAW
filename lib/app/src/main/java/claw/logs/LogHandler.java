@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.ObjectWaiter;
+import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
 import claw.rct.network.messages.LogDataMessage;
 import claw.rct.network.messages.LogDataMessage.LogData;
 import claw.rct.remote.RCTServer;
@@ -28,7 +28,7 @@ public class LogHandler {
     private final List<LogData> logDataBuffer = new ArrayList<LogData>();
     
     private final Thread dataSenderThread = new Thread(this::dataSenderThreadRunnable);
-    private final Waiter<RCTServer> dataSenderThreadServerWaiter = new Waiter<RCTServer>();
+    private final ObjectWaiter<RCTServer> dataSenderThreadServerObjectWaiter = new ObjectWaiter<RCTServer>();
     
     private final HashSet<String> watchingLogNames = new HashSet<>();
     private boolean isClosed = false;
@@ -58,7 +58,7 @@ public class LogHandler {
      */
     public void sendData (RCTServer server) {
         if (isClosed) return;
-        dataSenderThreadServerWaiter.receive(server);
+        dataSenderThreadServerObjectWaiter.receive(server);
     }
     
     public void watchLogName (String name) {
@@ -104,7 +104,7 @@ public class LogHandler {
             
             // Wait until a server is received to send the data to
             try {
-                server = dataSenderThreadServerWaiter.waitForValue();
+                server = dataSenderThreadServerObjectWaiter.waitForValue();
             } catch (NoValueReceivedException e) {
                 continue;
             }

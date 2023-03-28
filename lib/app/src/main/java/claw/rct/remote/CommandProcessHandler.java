@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
 import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
+import claw.rct.network.low.concurrency.ObjectWaiter;
+import claw.rct.network.low.concurrency.ObjectWaiter.NoValueReceivedException;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
@@ -22,8 +22,8 @@ public class CommandProcessHandler implements ConsoleManager {
     private final Consumer<ResponseMessage> responseSender;
     private final int processId;
     
-    private final Waiter<String> readLineWaiter = new Waiter<String>();
-    private final Waiter<Boolean> hasInputReadyWaiter = new Waiter<Boolean>();
+    private final ObjectWaiter<String> readLineObjectWaiter = new ObjectWaiter<String>();
+    private final ObjectWaiter<Boolean> hasInputReadyObjectWaiter = new ObjectWaiter<Boolean>();
     private final KeepaliveWatcher keepaliveWatcher;
     
     private List<ConsoleManagerOperation> operations = new ArrayList<ConsoleManagerOperation>();
@@ -60,15 +60,15 @@ public class CommandProcessHandler implements ConsoleManager {
         
         keepaliveWatcher.continueKeepalive();
         
-        // Send data to the request waiters depending on the input message
+        // Send data to the request ObjectWaiters depending on the input message
         switch (msg.request) {
             case NO_REQUEST:
                 break;
             case HAS_INPUT_READY:
-                hasInputReadyWaiter.receive(msg.hasInputReady);
+                hasInputReadyObjectWaiter.receive(msg.hasInputReady);
                 break;
             case READ_INPUT_LINE:
-                readLineWaiter.receive(msg.inputLine);
+                readLineObjectWaiter.receive(msg.inputLine);
                 break;
         }
     }
@@ -84,9 +84,9 @@ public class CommandProcessHandler implements ConsoleManager {
             flushOperationsBuffer(ConsoleManagerRequest.NO_REQUEST);
         }
         
-        // Kill all request waiters because the process no longer exists
-        readLineWaiter.kill();
-        hasInputReadyWaiter.kill();
+        // Kill all request ObjectWaiters because the process no longer exists
+        readLineObjectWaiter.kill();
+        hasInputReadyObjectWaiter.kill();
         
         // Stop the keepalive watcher
         keepaliveWatcher.stopWatching();
@@ -206,10 +206,10 @@ public class CommandProcessHandler implements ConsoleManager {
             // Send operations buffer to local along with the hasInputReady request
             flushOperationsBuffer(ConsoleManagerRequest.HAS_INPUT_READY);
             
-            // Return the value received by the hasInputReadyWaiter
-            return hasInputReadyWaiter.waitForValue();
+            // Return the value received by the hasInputReadyObjectWaiter
+            return hasInputReadyObjectWaiter.waitForValue();
         } catch (NoValueReceivedException e) {
-            // If the waiter was killed then the process must have been terminated
+            // If the ObjectWaiter was killed then the process must have been terminated
             throw new TerminatedProcessException();
         }
     }
@@ -223,10 +223,10 @@ public class CommandProcessHandler implements ConsoleManager {
             // Send operations buffer to local along with the readInputLine request
             flushOperationsBuffer(ConsoleManagerRequest.READ_INPUT_LINE);
             
-            // Return the value received by the readLineWaiter
-            return readLineWaiter.waitForValue();
+            // Return the value received by the readLineObjectWaiter
+            return readLineObjectWaiter.waitForValue();
         } catch (NoValueReceivedException e) {
-            // If the waiter was killed then the process must have been terminated
+            // If the ObjectWaiter was killed then the process must have been terminated
             throw new TerminatedProcessException();
         }
     }
