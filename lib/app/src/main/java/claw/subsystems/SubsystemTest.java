@@ -74,6 +74,7 @@ public class SubsystemTest {
         boolean runCommand = getYesNo(console, "Run the command? ");
         if (!runCommand) return;
         
+        // TODO: Checking for robot enable for individual test commands
         while (DriverStation.isDisabled()) {
             console.printlnErr("Enable the robot and try again.");
             runCommand = getYesNo(console, "Run the command? ");
