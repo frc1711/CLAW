@@ -1,5 +1,6 @@
 package claw.actions;
 
+import claw.CLAWRobot;
 import claw.rct.network.low.concurrency.Waiter;
 import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -13,7 +14,7 @@ class CommandExecutorAction extends Action {
      * then a runtime exception will be thrown for the action saying that the command failed
      * to schedule.
      */
-    private static final long MILLIS_TO_SCHEDULE_COMMAND = 50;
+    private static final long MILLIS_TO_SCHEDULE_COMMAND = 1500;
     
     private final Command command;
     
@@ -24,15 +25,14 @@ class CommandExecutorAction extends Action {
     @Override
     protected void runAction () {
         
-        if (CommandScheduler.getInstance().isScheduled(command)) {
-            throw new RuntimeException("Cannot schedule this action's underlying command because it is already scheduled");
-        }
-        
         // Get a new command adapter
         CommandAdapter adapter = new CommandAdapter();
         
         // TODO: Schedule in a thread-safe way
-        CommandScheduler.getInstance().schedule(adapter);
+        CLAWRobot.executeInMainRobotThread(() -> {
+            System.out.println("SCHEDULING COMMAND");
+            CommandScheduler.getInstance().schedule(adapter);
+        });
         
         // Wait for the command to be scheduled
         adapter.waitForInitialize();
@@ -44,7 +44,9 @@ class CommandExecutorAction extends Action {
     
     @Override
     protected void cancelRunningAction () {
-        CommandScheduler.getInstance().cancel(command);
+        CLAWRobot.executeInMainRobotThread(() -> {
+            CommandScheduler.getInstance().cancel(command);
+        });
     }
     
     private class CommandAdapter extends WrapperCommand {
