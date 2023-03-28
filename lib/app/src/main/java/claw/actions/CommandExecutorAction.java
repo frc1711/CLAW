@@ -1,14 +1,12 @@
 package claw.actions;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import claw.rct.network.low.concurrency.Waiter;
 import claw.rct.network.low.concurrency.Waiter.NoValueReceivedException;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.WrapperCommand;
 
-class CommandExecutor {
+class CommandExecutorAction extends Action {
     
     /**
      * If the command scheduler takes longer than this amount of time to schedule a command,
@@ -18,39 +16,35 @@ class CommandExecutor {
     private static final long MILLIS_TO_SCHEDULE_COMMAND = 50;
     
     private final Command command;
-    private final ReentrantLock runningLock = new ReentrantLock();
     
-    public CommandExecutor (Command command) {
+    public CommandExecutorAction (Command command) {
         this.command = command;
     }
     
-    public void execute () {
+    @Override
+    protected void runAction () {
         
-        if (!runningLock.tryLock()) {
-            throw new RuntimeException("Cannot run a command action more than one time at once");
+        if (CommandScheduler.getInstance().isScheduled(command)) {
+            throw new RuntimeException("Cannot schedule this action's underlying command because it is already scheduled");
         }
         
-        try {
-            if (CommandScheduler.getInstance().isScheduled(command)) {
-                throw new RuntimeException("Cannot schedule this action's underlying command because it is already schedule");
-            }
-            
-            // Get a new command adapter
-            CommandAdapter adapter = new CommandAdapter();
-            
-            // TODO: Schedule in a thread-safe way
-            CommandScheduler.getInstance().schedule(adapter);
-            
-            // Wait for the command to be scheduled
-            adapter.waitForInitialize();
-            
-            // Wait for the command to finish
-            adapter.waitForEnd();
-            
-        } finally {
-            runningLock.unlock();
-        }
+        // Get a new command adapter
+        CommandAdapter adapter = new CommandAdapter();
         
+        // TODO: Schedule in a thread-safe way
+        CommandScheduler.getInstance().schedule(adapter);
+        
+        // Wait for the command to be scheduled
+        adapter.waitForInitialize();
+        
+        // Wait for the command to finish
+        adapter.waitForEnd();
+        
+    }
+    
+    @Override
+    protected void cancelRunningAction () {
+        CommandScheduler.getInstance().cancel(command);
     }
     
     private class CommandAdapter extends WrapperCommand {

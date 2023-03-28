@@ -1,14 +1,40 @@
 package claw.actions;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import edu.wpi.first.wpilibj2.command.Command;
 
-@FunctionalInterface
-public interface Action {
+public abstract class Action {
     
     public static Action fromCommand (Command command) {
-        return new CommandExecutor(command)::execute;
+        return new CommandExecutorAction(command);
     }
     
-    public void run ();
+    private final ReentrantLock runningLock = new ReentrantLock();
+    
+    public final void run () {
+        if (!runningLock.tryLock()) {
+            throw new RuntimeException("Action already running");
+        }
+        
+        try {
+            runAction();
+        } finally {
+            runningLock.unlock();
+        }
+    }
+    
+    public final void cancel () {
+        if (isRunning()) {
+            cancelRunningAction();
+        }
+    }
+    
+    public final boolean isRunning () {
+        return runningLock.isLocked();
+    }
+    
+    protected abstract void runAction ();
+    protected abstract void cancelRunningAction ();
     
 }
