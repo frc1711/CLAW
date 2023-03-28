@@ -79,6 +79,7 @@ public class LogHandler {
     }
     
     public void registerLogName (String name) {
+        // TODO: Make this synchronized to prevent concurrent modification exceptions
         registeredLogNames.add(name);
     }
     
