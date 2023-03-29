@@ -1,8 +1,11 @@
 package claw.subsystems;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import claw.actions.Action;
+import claw.actions.compositions.SubsystemTestComposer;
+import claw.actions.compositions.SubsystemTestCompositionContext;
 import claw.rct.network.low.ConsoleManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -103,7 +106,15 @@ public class SubsystemTest {
     @FunctionalInterface
     public static interface TestCommandSupplier {
         
-        
+        /**
+         * Get a {@link TestCommandSupplier} from a given {@link SubsystemTestCompositionContext} consumer, which
+         * uses the context to perform the subsystem test.
+         * @param composition   The {@code Consumer<SubsystemTestCompositionContext>} which runs the test command.
+         * @return              A {@code TestCommandSupplier} for the test command.
+         */
+        public static TestCommandSupplier fromComposition (Consumer<SubsystemTestCompositionContext> composition) {
+            return (subsystem, console) -> SubsystemTestComposer.compose(console, subsystem, composition);
+        }
         
         /**
          * This should return a {@link Command} which can run on the subsystem for the test.

@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import claw.actions.CommandComposer;
+import claw.actions.compositions.CommandComposer;
 import claw.logs.CLAWLogger;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
@@ -24,7 +24,7 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand () {
-        return CommandComposer.getComposition(ctx -> {
+        return CommandComposer.compose(ctx -> {
             ctx.run(new RunCommand(() -> {}, testSubsystem).withName("AutoTestCommand").withTimeout(4));
             
             for (int i = 0; i < 3; i ++) {
