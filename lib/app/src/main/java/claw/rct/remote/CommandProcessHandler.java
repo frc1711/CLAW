@@ -28,7 +28,7 @@ public class CommandProcessHandler implements ConsoleManager {
     
     private final List<ConsoleManagerOperation> operations = new ArrayList<ConsoleManagerOperation>();
     
-    private boolean isTerminated = false;
+    private boolean terminated = false;
     
     public CommandProcessHandler (Consumer<ResponseMessage> responseSender, int processId, long keepaliveDuration, long keepaliveSendInterval) {
         this.responseSender = responseSender;
@@ -39,7 +39,8 @@ public class CommandProcessHandler implements ConsoleManager {
             keepaliveDuration,
             keepaliveSendInterval,
             this::sendKeepaliveMessage,
-            () -> terminate(false));
+            this::terminate
+        );
         
         keepaliveWatcher.start();
     }
@@ -75,14 +76,11 @@ public class CommandProcessHandler implements ConsoleManager {
     
     // Control methods
     
-    public void terminate (boolean flushOutput) {
+    @Override
+    public void terminate () {
         // Do nothing if the process is terminated
-        if (isTerminated) return;
-        isTerminated = true;
-        
-        if (flushOutput) {
-            flushOperationsBuffer(ConsoleManagerRequest.NO_REQUEST);
-        }
+        if (isTerminated()) return;
+        terminated = true;
         
         // Kill all request ObjectWaiters because the process no longer exists
         readLineWaiter.kill();
@@ -90,6 +88,11 @@ public class CommandProcessHandler implements ConsoleManager {
         
         // Stop the keepalive watcher
         keepaliveWatcher.stopWatching();
+    }
+    
+    @Override
+    public boolean isTerminated () {
+        return terminated;
     }
     
     // ConsoleManager methods
@@ -159,8 +162,7 @@ public class CommandProcessHandler implements ConsoleManager {
     
     @Override
     public boolean hasInputReady () {
-        if (isTerminated)
-            throw new TerminatedProcessException();
+        useContext();
         
         // Send operations buffer to local along with the hasInputReady request
         flushOperationsBuffer(ConsoleManagerRequest.HAS_INPUT_READY);
@@ -172,14 +174,14 @@ public class CommandProcessHandler implements ConsoleManager {
         }
         
         // If the waiter was killed then the process must have been terminated
-        throw new TerminatedProcessException();
+        throw getTerminatedException();
+        
     }
     
     @Override
     public String readInputLine () {
         
-        if (isTerminated)
-            throw new TerminatedProcessException();
+        useContext();
         
         // Send operations buffer to local along with the readInputLine request
         flushOperationsBuffer(ConsoleManagerRequest.READ_INPUT_LINE);
@@ -191,7 +193,7 @@ public class CommandProcessHandler implements ConsoleManager {
         }
         
         // If the waiter was killed then the process must have been terminated
-        throw new TerminatedProcessException();
+        throw getTerminatedException();
         
     }
     
@@ -208,27 +210,16 @@ public class CommandProcessHandler implements ConsoleManager {
         // Send a response based on the set request and the list of operations to perform
         // This is done outside the synchronized block so we don't take control of the operations
         // list for longer than necessary
-        responseSender.accept(new CommandOutputMessage(processId, isTerminated, request, operationsArray));
+        responseSender.accept(new CommandOutputMessage(processId, isTerminated(), request, operationsArray));
     }
     
     private void addOperation (ConsoleManagerOperation operation) {
         // Throw an exception if the process is terminated
-        if (isTerminated)
-            throw new TerminatedProcessException();
+        useContext();
         
         // Add the operation to the buffer (synchronized for thread safety)
         synchronized (operations) {
             operations.add(operation);
-        }
-    }
-    
-    /**
-     * A {@code RuntimeException} which can be thrown by a {@link CommandProcessHandler} for certain methods if called
-     * after the process was terminated.
-     */
-    public static class TerminatedProcessException extends RuntimeException {
-        public TerminatedProcessException () {
-            super("Process has been terminated");
         }
     }
     

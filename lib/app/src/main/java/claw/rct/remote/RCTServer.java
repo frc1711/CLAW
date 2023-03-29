@@ -3,6 +3,7 @@ package claw.rct.remote;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import claw.actions.compositions.ActionCompositionContext;
 import claw.logs.CLAWLogger;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
@@ -18,7 +19,6 @@ import claw.rct.network.messages.LogDataMessage;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
 import claw.rct.network.messages.commands.StartCommandMessage;
-import claw.rct.remote.CommandProcessHandler.TerminatedProcessException;
 
 public class RCTServer implements InstructionMessageHandler {
     
@@ -94,7 +94,7 @@ public class RCTServer implements InstructionMessageHandler {
     public void receiveStartCommandMessage (StartCommandMessage msg) {
         // Terminate the previous command process handler if one existed
         if (commandProcessHandler != null)
-            commandProcessHandler.terminate(false);
+            commandProcessHandler.terminate();
         
         // Create a new CommandProcessHandler for the new command
         commandProcessHandler = new CommandProcessHandler(
@@ -105,23 +105,32 @@ public class RCTServer implements InstructionMessageHandler {
         
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
         Thread commandProcessorThread = new Thread(() -> {
-            try {
-                try {
-                    // Attempt to run the process via the command interpreter
-                    interpreter.processLine(commandProcessHandler, msg.command);
-                } catch (CommandNotRecognizedException e) {
-                    extensibleInterpreter.processLine(commandProcessHandler, msg.command);
-                }
-            } catch (CommandLineException e) {
-                e.writeToConsole(commandProcessHandler);
-            } catch (TerminatedProcessException e) { } // If the process was terminated (a runtime exception), exit silently
             
-            // When the command process is finished, terminate the process and flush all output to local
-            commandProcessHandler.terminate(true);
+            // Use ActionCompositionContext.compose to wrap the CommandProcessHandler ActionCompositionContext
+            // into a process which can terminate
+            ActionCompositionContext.compose(
+                () -> commandProcessHandler,
+                handler -> {
+                    try {
+                        try {
+                            // Attempt to run the process via the command interpreter
+                            interpreter.processLine(handler, msg.command);
+                        } catch (CommandNotRecognizedException e) {
+                            extensibleInterpreter.processLine(commandProcessHandler, msg.command);
+                        }
+                    } catch (CommandLineException e) {
+                        e.writeToConsole(commandProcessHandler);
+                    }
+                }
+            ).run();
+            
+            // When the command process is finished, terminate the process
+            commandProcessHandler.flush();
+            commandProcessHandler.terminate();
         });
         
         commandProcessorThread.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
-            commandProcessHandler.terminate(false);
+            commandProcessHandler.terminate();
             Thread.getDefaultUncaughtExceptionHandler().uncaughtException(thread, throwable);
         });
         
@@ -133,7 +142,7 @@ public class RCTServer implements InstructionMessageHandler {
         try {
             serverSocket.sendResponseMessage(msg);
         } catch (IOException e) {
-            commandProcessHandler.terminate(false);
+            commandProcessHandler.terminate();
         }
     }
     

@@ -99,6 +99,14 @@ public class LocalConsoleManager implements ConsoleManager {
         out.print(Ansi.ansi().restoreCursorPosition());
     }
     
+    @Override
+    public void terminate () { }
+    
+    @Override
+    public boolean isTerminated () {
+        return false;
+    }
+    
     // See https://learn.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
     
     public void setTitle (String title) {

@@ -3,10 +3,12 @@ package claw.rct.network.low;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import claw.actions.compositions.ActionCompositionContext;
+
 /**
  * An interface for managing input from and output to the driverstation console.
  */
-public interface ConsoleManager {
+public interface ConsoleManager extends ActionCompositionContext {
     
     public static final int MAX_COLS_PER_LINE = 100;
     

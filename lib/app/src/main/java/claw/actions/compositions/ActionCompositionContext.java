@@ -10,8 +10,12 @@ public interface ActionCompositionContext {
     
     public default void useContext () throws CompositionCanceledException {
         if (isTerminated()) {
-            throw new CompositionCanceledException();
+            throw getTerminatedException();
         }
+    }
+    
+    public default RuntimeException getTerminatedException () {
+        return new CompositionCanceledException();
     }
     
     public boolean isTerminated ();
