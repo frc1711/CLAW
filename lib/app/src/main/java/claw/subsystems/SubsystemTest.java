@@ -3,6 +3,7 @@ package claw.subsystems;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import claw.CLAWRobot;
 import claw.actions.Action;
 import claw.actions.compositions.SubsystemTestComposer;
 import claw.actions.compositions.SubsystemTestCompositionContext;
@@ -76,34 +77,36 @@ public class SubsystemTest {
         boolean runCommand = getYesNo(console, "Run the command? ");
         if (!runCommand) return;
         
-        // TODO: Checking for robot enable for individual test commands
-        while (DriverStation.isDisabled()) {
-            console.printlnErr("Enable the robot and try again.");
-            runCommand = getYesNo(console, "Run the command? ");
-            if (!runCommand) return;
+        // Retrieve the test command
+        Command testCommand = testCommandSupplier.getCommand(subsystem, console);
+        
+        // Wait until the robot enables before running the test command, if required
+        if (!testCommand.runsWhenDisabled()) {
+            while (DriverStation.isDisabled()) {
+                console.printlnErr("Enable the robot and try again.");
+                runCommand = getYesNo(console, "Run the command? ");
+                if (!runCommand) return;
+            }
         }
         
         // Run the test command, one by one
-        console.printlnSys("\nRunning test command");
+        console.printlnSys("\nRunning test command.");
         console.flush();
         
-        // Retrieve and run the test command
-        Command testCommand = testCommandSupplier.getCommand(subsystem, console);
-        Action.fromCommand(testCommand).run();
+        // Run the test command
+        CLAWRobot.executeInMainRobotThread(testCommand::schedule);
         
         // TODO: Implement code to disable all the test sections on robot disable
         
         // Indicate that the test is finished
-        console.printlnSys("\nTest concluded");
+        console.printlnSys("\nTest concluded.");
         
     }
     
     /**
-     * A functional interface supplying a {@link Command} for the {@link SubsystemTest}. See
-     * {@link claw.actions.CommandComposer} for generating more advanced compositions of commands
-     * for subsystem testing.
+     * An interface supplying a {@link Command} for the {@link SubsystemTest}, and other basic information
+     * on the subsystem test.
      */
-    @FunctionalInterface
     public static interface TestCommandSupplier {
         
         /**
