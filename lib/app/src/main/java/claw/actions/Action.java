@@ -10,6 +10,10 @@ public abstract class Action {
         return new CommandExecutorAction(command);
     }
     
+    public final Command toCommand () {
+        return new CommandActionWrapper(this);
+    }
+    
     private final ReentrantLock runningLock = new ReentrantLock();
     
     public final void run () {
