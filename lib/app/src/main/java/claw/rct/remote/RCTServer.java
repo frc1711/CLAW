@@ -113,20 +113,23 @@ public class RCTServer implements InstructionMessageHandler {
                 handler -> {
                     try {
                         try {
+                            
                             // Attempt to run the process via the command interpreter
                             interpreter.processLine(handler, msg.command);
+                            
                         } catch (CommandNotRecognizedException e) {
                             extensibleInterpreter.processLine(commandProcessHandler, msg.command);
                         }
                     } catch (CommandLineException e) {
                         e.writeToConsole(commandProcessHandler);
                     }
+                    
+                    // When the command process is finished, terminate the process
+                    commandProcessHandler.terminate();
+                    
                 }
             ).run();
             
-            // When the command process is finished, terminate the process
-            commandProcessHandler.flush();
-            commandProcessHandler.terminate();
         });
         
         commandProcessorThread.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {

@@ -82,6 +82,9 @@ public class CommandProcessHandler implements ConsoleManager {
         if (isTerminated()) return;
         terminated = true;
         
+        // Flush the operations buffer to let the client side know we've terminated the process
+        flushOperationsBuffer(ConsoleManagerRequest.NO_REQUEST);
+        
         // Kill all request ObjectWaiters because the process no longer exists
         readLineWaiter.kill();
         hasInputReadyWaiter.kill();
