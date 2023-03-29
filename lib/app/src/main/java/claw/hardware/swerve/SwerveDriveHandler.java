@@ -2,6 +2,8 @@ package claw.hardware.swerve;
 
 import java.util.function.Supplier;
 
+import claw.hardware.swerve.tests.TurnSpeedTest;
+import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -207,6 +209,12 @@ public class SwerveDriveHandler {
     public void periodicUpdate () {
         // Update the pose estimator
         poseEstimator.update(getAbsoluteRobotRotation(), getModulePositions());
+    }
+    
+    public SubsystemTest[] generateSubsystemTests () {
+        return new SubsystemTest[] {
+            new TurnSpeedTest()
+        };
     }
     
 }

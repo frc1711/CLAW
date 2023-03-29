@@ -60,6 +60,19 @@ public abstract class SwerveModuleBase {
     public abstract void driveToRawState (SwerveModuleState state);
     
     /**
+     * Set the drive motor's voltage. This is used by automatically generated subsystem tests.
+     * @param voltage   The signed voltage to set the drive motor to.
+     */
+    public abstract void setDriveMotorVoltage (double voltage);
+    
+    
+    /**
+     * Set the turn motor's voltage. This is used by automatically generated subsystem tests.
+     * @param voltage   The signed voltage to set the turn motor to.
+     */
+    public abstract void setTurnMotorVoltage (double voltage);
+    
+    /**
      * Get a {@link SwerveModulePosition} describing the measured position of the swerve module. Note that
      * the rotation of the module's position increases counter-clockwise, with zero being directly
      * forward.

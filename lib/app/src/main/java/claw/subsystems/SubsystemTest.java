@@ -94,7 +94,7 @@ public class SubsystemTest {
         console.flush();
         
         // Run the test command
-        CLAWRobot.executeInMainRobotThread(testCommand::schedule);
+        Action.fromCommand(testCommand).run();
         
         // TODO: Implement code to disable all the test sections on robot disable
         
