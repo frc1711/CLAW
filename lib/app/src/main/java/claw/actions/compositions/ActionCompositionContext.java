@@ -21,7 +21,14 @@ public interface ActionCompositionContext {
     public boolean isTerminated ();
     public void terminate ();
     
-    public static class ActionRunnerContext implements ActionCompositionContext {
+    public static ActionRunnerContext getSimpleRunnerContext () {
+        return new ActionRunnerContext() {
+            @Override
+            public void onTerminate () { }
+        };
+    }
+    
+    public static abstract class ActionRunnerContext implements ActionCompositionContext {
         
         private boolean terminated = false;
         private Optional<Action> lastAction = Optional.empty();
@@ -36,6 +43,7 @@ public interface ActionCompositionContext {
             if (isTerminated()) return;
             terminated = true;
             lastAction.ifPresent(Action::cancel);
+            onTerminate();
         }
         
         public final void runAction (Action action) {
@@ -43,6 +51,8 @@ public interface ActionCompositionContext {
             lastAction = Optional.of(action);
             action.run();
         }
+        
+        public abstract void onTerminate ();
         
     }
     

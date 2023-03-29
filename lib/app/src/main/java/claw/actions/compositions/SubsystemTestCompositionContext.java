@@ -10,4 +10,15 @@ public class SubsystemTestCompositionContext extends CommandCompositionContext {
         this.console = console;
     }
     
+    @Override
+    public void onTerminate () {
+        console.terminate();
+    }
+    
+    @Override
+    public void useContext () {
+        super.useContext();
+        console.useContext();
+    }
+    
 }
