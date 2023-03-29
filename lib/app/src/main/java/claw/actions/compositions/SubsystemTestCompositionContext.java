@@ -1,4 +1,4 @@
-package claw.actions;
+package claw.actions.compositions;
 
 import claw.rct.network.low.ConsoleManager;
 
