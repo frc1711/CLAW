@@ -2,7 +2,7 @@ package claw.hardware.swerve;
 
 import java.util.function.Supplier;
 
-import claw.hardware.swerve.tests.TurnSpeedTest;
+import claw.hardware.swerve.tests.ModuleDriveTest;
 import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -159,6 +159,14 @@ public class SwerveDriveHandler {
     }
     
     /**
+     * Get the array containing the {@link SwerveModuleBase}s used by this swerve drive.
+     * @return  The swerve modules.
+     */
+    public SwerveModuleBase[] getModules () {
+        return swerveModules.clone();
+    }
+    
+    /**
      * Get robot-relative speeds measured from the swerve modules.
      * @return The measured {@link ChassisSpeeds}.
      */
@@ -211,9 +219,13 @@ public class SwerveDriveHandler {
         poseEstimator.update(getAbsoluteRobotRotation(), getModulePositions());
     }
     
+    /**
+     * Generate an array of {@link SubsystemTest}s which can be added to a {@link CLAWSubsystem}
+     * to test and tune the aspects of a {@link SwerveDriveHandler} and its {@link SwerveModuleBase}s.
+     */
     public SubsystemTest[] generateSubsystemTests () {
         return new SubsystemTest[] {
-            new TurnSpeedTest()
+            new ModuleDriveTest(this)
         };
     }
     
