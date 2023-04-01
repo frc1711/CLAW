@@ -1,7 +1,6 @@
 package claw;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -86,57 +85,52 @@ public class LiveValues {
         Set<String> updatedFieldsCopy, newFieldNamesCopy;
         List<String> fieldsCopy, valuesCopy;
         
-        // Copy data synchronously
         synchronized (fieldsLock) {
+            // Do nothing if no fields have been changed
+            if (updatedFields.size() == 0 && newFieldNames.size() == 0) {
+                return;
+            }
+            
+            // Copy data synchronously
             updatedFieldsCopy = Set.copyOf(updatedFields);
             newFieldNamesCopy = Set.copyOf(newFieldNames);
             fieldsCopy = List.copyOf(fields);
             valuesCopy = List.copyOf(values);
             
+            // Clear updated and new fields
             newFieldNames.clear();
             updatedFields.clear();
         }
         
-        // TODO: Update the following code so it uses the copies instead of the field values
-        
-        // Do nothing if no fields have been changed
-        if (updatedFields.size() == 0 && newFieldNames.size() == 0) {
-            return;
-        }
-        
-        // Move up to the top of the preexisting lines
-        int preexistingLines = fields.size() - newFieldNames.size();
+        // Move up to the top of the preexisting lines (lines for fields already printed to the console)
+        int preexistingLines = fieldsCopy.size() - newFieldNamesCopy.size();
         console.moveUp(preexistingLines);
         
         // Iterate through all existing fields
-        for (int i = 0; i < fields.size(); i ++) {
-            String fieldName = fields.get(i);
-            String value = values.get(i);
+        for (int i = 0; i < fieldsCopy.size(); i ++) {
+            String fieldName = fieldsCopy.get(i);
+            String value = valuesCopy.get(i);
             
             // Check for no-change vs. updated vs. new field
-            if (newFieldNames.contains(fieldName)) {
+            if (newFieldNamesCopy.contains(fieldName)) {
                 
-                // New field
+                // Entirely new field, print a new line
                 printField(console, fieldName, value);
                 
-            } else if (updatedFields.contains(fieldName)) {
+            } else if (updatedFieldsCopy.contains(fieldName)) {
                 
-                // Updated field
+                // Updated field, clear the line then replace it
                 console.clearLine();
                 printField(console, fieldName, value);
                 
             } else {
                 
-                // No change to field
+                // No change to field, move on to next field
                 console.moveUp(-1);
                 
             }
             
         }
-        
-        // Clear updated fields and new fields
-        newFieldNames.clear();
-        updatedFields.clear();
         
     }
     
