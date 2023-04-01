@@ -1,7 +1,10 @@
 package claw;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import claw.rct.network.low.ConsoleManager;
 
@@ -80,48 +83,61 @@ public class LiveValues {
      * @param console
      */
     public void update (ConsoleManager console) {
+        Set<String> updatedFieldsCopy, newFieldNamesCopy;
+        List<String> fieldsCopy, valuesCopy;
+        
+        // Copy data synchronously
         synchronized (fieldsLock) {
+            updatedFieldsCopy = Set.copyOf(updatedFields);
+            newFieldNamesCopy = Set.copyOf(newFieldNames);
+            fieldsCopy = List.copyOf(fields);
+            valuesCopy = List.copyOf(values);
             
-            // Do nothing if no fields have been changed
-            if (updatedFields.size() == 0 && newFieldNames.size() == 0) {
-                return;
-            }
-            
-            // Move up to the top of the preexisting lines
-            int preexistingLines = fields.size() - newFieldNames.size();
-            console.moveUp(preexistingLines);
-            
-            // Iterate through all existing fields
-            for (int i = 0; i < fields.size(); i ++) {
-                String fieldName = fields.get(i);
-                String value = values.get(i);
-                
-                // Check for no-change vs. updated vs. new field
-                if (newFieldNames.contains(fieldName)) {
-                    
-                    // New field
-                    printField(console, fieldName, value);
-                    
-                } else if (updatedFields.contains(fieldName)) {
-                    
-                    // Updated field
-                    console.clearLine();
-                    printField(console, fieldName, value);
-                    
-                } else {
-                    
-                    // No change to field
-                    console.moveUp(-1);
-                    
-                }
-                
-            }
-            
-            // Clear updated fields and new fields
             newFieldNames.clear();
             updatedFields.clear();
+        }
+        
+        // TODO: Update the following code so it uses the copies instead of the field values
+        
+        // Do nothing if no fields have been changed
+        if (updatedFields.size() == 0 && newFieldNames.size() == 0) {
+            return;
+        }
+        
+        // Move up to the top of the preexisting lines
+        int preexistingLines = fields.size() - newFieldNames.size();
+        console.moveUp(preexistingLines);
+        
+        // Iterate through all existing fields
+        for (int i = 0; i < fields.size(); i ++) {
+            String fieldName = fields.get(i);
+            String value = values.get(i);
+            
+            // Check for no-change vs. updated vs. new field
+            if (newFieldNames.contains(fieldName)) {
+                
+                // New field
+                printField(console, fieldName, value);
+                
+            } else if (updatedFields.contains(fieldName)) {
+                
+                // Updated field
+                console.clearLine();
+                printField(console, fieldName, value);
+                
+            } else {
+                
+                // No change to field
+                console.moveUp(-1);
+                
+            }
             
         }
+        
+        // Clear updated fields and new fields
+        newFieldNames.clear();
+        updatedFields.clear();
+        
     }
     
     /**
