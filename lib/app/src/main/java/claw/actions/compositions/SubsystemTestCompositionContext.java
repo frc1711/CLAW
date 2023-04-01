@@ -30,7 +30,7 @@ public class SubsystemTestCompositionContext extends CommandCompositionContext {
         console.useContext();
     }
     
-    public void runDebug (Function<LiveValues, Command> commandSupplier) {
+    public void withLiveValues (Function<LiveValues, Command> commandSupplier) {
         LiveValues debugValues = new LiveValues();
         Command command = commandSupplier.apply(debugValues);
         

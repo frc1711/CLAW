@@ -65,7 +65,6 @@ public abstract class SwerveModuleBase {
      */
     public abstract void setDriveMotorVoltage (double voltage);
     
-    
     /**
      * Set the turn motor's voltage. This is used by automatically generated subsystem tests.
      * @param voltage   The signed voltage to set the turn motor to.
@@ -99,5 +98,12 @@ public abstract class SwerveModuleBase {
      * any relevant PID loops or filters.
      */
     public abstract void stop ();
+    
+    /**
+     * Get some identifier which can be used to distinguish this module from the others.
+     * This should only be used to describe this module to the user.
+     * @return  A name which can be used to identify this module to the user.
+     */
+    public abstract String getIdentifier ();
     
 }
