@@ -6,6 +6,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public abstract class Action {
     
+    public static Action parallel (Action... actions) {
+        return new ParallelAction(actions);
+    }
+    
     public static Action fromCommand (Command command) {
         return new CommandExecutorAction(command);
     }

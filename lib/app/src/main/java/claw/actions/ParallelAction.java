@@ -1,10 +1,14 @@
 package claw.actions;
 
-public class ParallelAction extends Action {
+/**
+ * TODO: Untested code
+ */
+class ParallelAction extends Action {
     
     private final Action[] actions;
     
     public ParallelAction (Action... actions) {
+        // TODO: Test this at some point
         this.actions = actions;
     }
     
