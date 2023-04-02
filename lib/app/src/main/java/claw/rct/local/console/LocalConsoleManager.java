@@ -70,7 +70,7 @@ public class LocalConsoleManager implements ConsoleManager {
     }
     
     @Override
-    public void clear () {
+    public void clear () throws TerminatedContextException {
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
         } catch (Exception e) {

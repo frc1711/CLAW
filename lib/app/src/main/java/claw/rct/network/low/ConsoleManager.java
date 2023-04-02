@@ -3,12 +3,12 @@ package claw.rct.network.low;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import claw.actions.compositions.ActionCompositionContext;
+import claw.actions.compositions.Context;
 
 /**
  * An interface for managing input from and output to the driverstation console.
  */
-public interface ConsoleManager extends ActionCompositionContext {
+public interface ConsoleManager extends Context<ConsoleManager> {
     
     public static final int MAX_COLS_PER_LINE = 100;
     
@@ -86,51 +86,51 @@ public interface ConsoleManager extends ActionCompositionContext {
     /**
      * Read a single line of input from the console.
      */
-    String readInputLine ();
+    String readInputLine () throws TerminatedContextException;
     
     /**
      * Returns {@code true} if there is user input waiting to be processed by the console.
      * This can detect whether the user has hit a key, so that a continuously running command
      * can exit some condition.
      */
-    boolean hasInputReady ();
+    boolean hasInputReady () throws TerminatedContextException;
     
     /**
      * Clear any submitted user input that is currently waiting to be processed.
      * This prevents user input typed during some console-blocking operation from
      * appearing again when you wait for their next line of input. 
      */
-    void clearWaitingInputLines ();
+    void clearWaitingInputLines () throws TerminatedContextException;
     
     /**
      * Move up a given number of rows in the console (also moving to the first column).
      */
-    void moveUp (int lines);
+    void moveUp (int lines) throws TerminatedContextException;
     
     /**
      * Clear all text in the current row in the console.
      */
-    void clearLine ();
+    void clearLine () throws TerminatedContextException;
     
     /**
      * Save the cursor position so that it can be restored later with {@link ConsoleManager#restoreCursorPos()}.
      */
-    void saveCursorPos ();
+    void saveCursorPos () throws TerminatedContextException;
     
     /**
      * Restore the cursor position from the last {@link ConsoleManager#saveCursorPos()} call.
      */
-    void restoreCursorPos ();
+    void restoreCursorPos () throws TerminatedContextException;
     
     /**
      * Print white text to the console with no newline.
      */
-    void print (String msg);
+    void print (String msg) throws TerminatedContextException;
     
     /**
      * Print white text to the console with a trailing newline.
      */
-    default void println (String msg) {
+    default void println (String msg) throws TerminatedContextException {
         print(msg + "\n");
     }
     
@@ -138,36 +138,36 @@ public interface ConsoleManager extends ActionCompositionContext {
      * Print red text to the console with no newline. This is not the same
      * as printing to {@code System.err}.
      */
-    void printErr (String msg);
+    void printErr (String msg) throws TerminatedContextException;
     
     /**
      * Print red text to the console with a trailing newline. This is not the same
      * as printing to {@code System.err}.
      */
-    default void printlnErr (String msg) {
+    default void printlnErr (String msg) throws TerminatedContextException {
         printErr(msg + "\n");
     }
     
     /**
      * Print yellow/orange system text to the console with no newline.
      */
-    void printSys (String msg);
+    void printSys (String msg) throws TerminatedContextException;
     
     /**
      * Print yellow/orange system text to the console with a trailing newline.
      */
-    default void printlnSys (String msg) {
+    default void printlnSys (String msg) throws TerminatedContextException {
         printSys(msg + "\n");
     }
     
     /**
      * Flush the console output.
      */
-    void flush ();
+    void flush () throws TerminatedContextException;
     
     /**
      * Clear the console of all output.
      */
-    void clear ();
+    void clear () throws TerminatedContextException;
     
 }

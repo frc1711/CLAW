@@ -2,6 +2,7 @@ package claw.rct.commands;
 
 import java.io.Serializable;
 
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.network.low.ConsoleManager;
 
@@ -34,7 +35,7 @@ public class CommandProcessor {
      */
     @FunctionalInterface
     public static interface CommandFunction {
-        public void process (ConsoleManager console, CommandReader reader) throws BadCallException;
+        public void process (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException;
     }
     
     /**

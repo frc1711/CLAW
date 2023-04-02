@@ -3,6 +3,7 @@ package claw.hardware;
 import java.util.Optional;
 
 import claw.LiveValues;
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
@@ -22,7 +23,7 @@ public class DIOReadCommand {
         DIOReadCommand::dioRawCommandFunction
     );
     
-    private static void dioRawCommandFunction (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private static void dioRawCommandFunction (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNone();
         
         DIOPort[] ports = new DIOPort[DIO_PORTS_TOTAL];

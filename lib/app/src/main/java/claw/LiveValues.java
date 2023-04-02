@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.network.low.ConsoleManager;
 
 /**
@@ -81,7 +82,7 @@ public class LiveValues {
      * Update all the fields in the console to display the latest values.
      * @param console
      */
-    public void update (ConsoleManager console) {
+    public void update (ConsoleManager console) throws TerminatedContextException {
         Set<String> updatedFieldsCopy, newFieldNamesCopy;
         List<String> fieldsCopy, valuesCopy;
         
@@ -137,7 +138,7 @@ public class LiveValues {
     /**
      * Print a single field to the console
      */
-    private static void printField (ConsoleManager console, String fieldName, String value) {
+    private static void printField (ConsoleManager console, String fieldName, String value) throws TerminatedContextException {
         String space = " ".repeat(Math.max(0, 18 - fieldName.length()));
         console.println(fieldName + " : " + space + value);
     }

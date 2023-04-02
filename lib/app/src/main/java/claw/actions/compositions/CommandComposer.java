@@ -1,13 +1,12 @@
 package claw.actions.compositions;
 
-import java.util.function.Consumer;
-
+import claw.actions.compositions.Context.Operation;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class CommandComposer {
     
-    public static Command compose (Consumer<CommandCompositionContext> composition) {
-        return ActionCompositionContext.compose(CommandCompositionContext::new, composition).toCommand();
+    public static Command compose (Operation<CommandCompositionContext<?>> composition) {
+        return CompositionContext.compose(CommandCompositionContext::new, composition).toCommand();
     }
     
     private CommandComposer () { }

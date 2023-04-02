@@ -3,7 +3,8 @@ package claw.rct.remote;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import claw.actions.compositions.ActionCompositionContext;
+import claw.actions.compositions.Context;
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.logs.CLAWLogger;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
@@ -106,29 +107,24 @@ public class RCTServer implements InstructionMessageHandler {
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
         Thread commandProcessorThread = new Thread(() -> {
             
-            // Use ActionCompositionContext.compose to wrap the CommandProcessHandler ActionCompositionContext
-            // into a process which can terminate
-            ActionCompositionContext.compose(
-                () -> commandProcessHandler,
-                handler -> {
+            Context.ignoreTermination(() -> {
+                try {
                     try {
-                        try {
-                            
-                            // Attempt to run the process via the command interpreter
-                            interpreter.processLine(handler, msg.command);
-                            
-                        } catch (CommandNotRecognizedException e) {
-                            extensibleInterpreter.processLine(commandProcessHandler, msg.command);
-                        }
-                    } catch (CommandLineException e) {
-                        e.writeToConsole(commandProcessHandler);
+                        
+                        // Attempt to run the process via the command interpreter
+                        interpreter.processLine(commandProcessHandler, msg.command);
+                        
+                    } catch (CommandNotRecognizedException e) {
+                        extensibleInterpreter.processLine(commandProcessHandler, msg.command);
                     }
-                    
-                    // When the command process is finished, terminate the process
-                    commandProcessHandler.terminate();
-                    
+                } catch (CommandLineException e) {
+                    e.writeToConsole(commandProcessHandler);
                 }
-            ).run();
+            });
+            
+            // When the command process is finished, terminate the process
+            commandProcessHandler.terminate();
+            
             
         });
         

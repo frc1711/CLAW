@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.network.low.ConsoleManager;
@@ -35,9 +36,10 @@ public class CommandLineInterpreter {
      * @throws RCTCommand.ParseException           An exception thrown if the command is malformed.
      * @throws BadCallException            An exception thrown by the command processor if it received bad arguments.
      * @throws CommandNotRecognizedException    An exception thrown if the command is not recognized by this interpreter.
+     * @throws TerminatedContextException       An exception thrown if the {@code ConsoleManager} context was terminated.
      */
     public void processLine (ConsoleManager console, String line)
-            throws RCTCommand.ParseException, CommandNotRecognizedException, BadCallException {
+            throws RCTCommand.ParseException, CommandNotRecognizedException, BadCallException, TerminatedContextException {
         // Attempt to parse the command and get the command name
         RCTCommand commandObj = new RCTCommand(line);
         String commandName = commandObj.getCommand().toUpperCase();
@@ -52,9 +54,12 @@ public class CommandLineInterpreter {
                 processor.function.process(console, new CommandReader(commandObj));
                 
             } catch (BadCallException exception) {
+                
                 // Command threw a BadCallException, so tack on the CommandProcessor and throw it again
                 throw exception.forCommandProcessor(processor);
+                
             }
+            
         } else {
             throw new CommandNotRecognizedException(commandObj.getCommand());
         }
@@ -95,7 +100,7 @@ public class CommandLineInterpreter {
          * Writes the error message of the {@link CommandLineException} to the console.
          * @param console The {@link ConsoleManager} to write the error message to.
          */
-        public void writeToConsole (ConsoleManager console) {
+        public void writeToConsole (ConsoleManager console) throws TerminatedContextException {
             console.printlnErr(errorMessage);
         }
         

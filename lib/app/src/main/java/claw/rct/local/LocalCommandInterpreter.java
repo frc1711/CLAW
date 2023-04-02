@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import claw.rct.commands.RCTCommand;
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
@@ -88,7 +89,7 @@ public class LocalCommandInterpreter {
      * @throws RCTCommand.ParseException
      * @throws BadCallException
      */
-    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException {
+    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException, TerminatedContextException {
         try {
             commandInterpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {
@@ -111,7 +112,7 @@ public class LocalCommandInterpreter {
     
     // Command methods:
     
-    private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNone();
         console.clear();
     }
@@ -121,7 +122,7 @@ public class LocalCommandInterpreter {
         System.exit(0);
     }
     
-    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         int teamNum = reader.readArgInt("team number");
         int port = reader.readArgInt("RCT server port");
         reader.noMoreArgs();
@@ -140,7 +141,7 @@ public class LocalCommandInterpreter {
         
     }
     
-    private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         
@@ -190,7 +191,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void commsCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void commsCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNone();
         
         console.println("");
@@ -243,7 +244,7 @@ public class LocalCommandInterpreter {
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void sshCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         
@@ -274,7 +275,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         // Repeat the logging loop until the user pressed a key
         while (!console.hasInputReady()) {
             
@@ -296,7 +297,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private static void printLogDataEvent (ConsoleManager console, LogData data) {
+    private static void printLogDataEvent (ConsoleManager console, LogData data) throws TerminatedContextException {
         String logNamePrint = "["+data.logName+"] ";
         String messagePrint = data.data;
         

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
@@ -55,7 +56,7 @@ public class RemoteProcessHandler {
         keepaliveWatcher.continueKeepalive();
     }
     
-    public void execute (String command) throws IOException {
+    public void execute (String command) throws IOException, TerminatedContextException {
         // Do nothing if the remote process has already begun executing
         if (startedExecuting) return;
         startedExecuting = true;
@@ -76,7 +77,7 @@ public class RemoteProcessHandler {
         if (terminateException != null) throw terminateException;
     }
     
-    private void awaitCommandOutputLoop () {
+    private void awaitCommandOutputLoop () throws TerminatedContextException {
         // Waiting for an output message that matches the process ID
         Optional<CommandOutputMessage> outputMessage = Optional.empty();
         while (outputMessage.isEmpty() || outputMessage.get().commandProcessId != processId) {
@@ -104,7 +105,7 @@ public class RemoteProcessHandler {
         if (message.terminateCommand) terminate();
     }
     
-    private void processConsoleManagerOperation (ConsoleManagerOperation operation) {
+    private void processConsoleManagerOperation (ConsoleManagerOperation operation) throws TerminatedContextException {
         switch (operation.operationType) {
             case CLEAR:
                 console.clear();
@@ -142,7 +143,7 @@ public class RemoteProcessHandler {
         }
     }
     
-    private void sendRespondingInputMessage (CommandOutputMessage msg) {
+    private void sendRespondingInputMessage (CommandOutputMessage msg) throws TerminatedContextException {
         switch (msg.request) {
             case NO_REQUEST:
                 break;

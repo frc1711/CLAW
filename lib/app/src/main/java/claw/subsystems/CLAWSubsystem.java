@@ -3,6 +3,8 @@ package claw.subsystems;
 import java.util.HashMap;
 import java.util.Set;
 
+import claw.actions.compositions.Context;
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
@@ -32,7 +34,7 @@ public abstract class CLAWSubsystem extends SubsystemBase {
         }
     }
     
-    private static void subsystemCommand (ConsoleManager console, CommandReader reader) throws BadCallException {
+    private static void subsystemCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         String operation = reader.readArgOneOf("operation", "Expected 'list', 'inspect' or 'test'.", "list", "inspect", "test");
@@ -44,7 +46,7 @@ public abstract class CLAWSubsystem extends SubsystemBase {
             reader.noMoreArgs();
             
             synchronized (subsystems) {
-                subsystems.keySet().forEach(console::println);
+                subsystems.keySet().forEach(str -> Context.ignoreTermination(() -> console.println(str)));
                 if (subsystems.size() == 0)
                     console.println("There are no instantiated CLAWSubsystems.");
             }
@@ -74,7 +76,7 @@ public abstract class CLAWSubsystem extends SubsystemBase {
                 } else {
                     console.println(subsystem.getName()+" supports the following tests:");
                     synchronized (subsystem.subsystemTests) {
-                        subsystem.subsystemTests.keySet().forEach(console::println);
+                        subsystem.subsystemTests.keySet().forEach(str -> Context.ignoreTermination(() -> console.println(str)));
                     }
                 }
                 

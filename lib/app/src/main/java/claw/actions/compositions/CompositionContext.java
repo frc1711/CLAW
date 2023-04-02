@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 import claw.actions.Action;
 
-public class CompositionContext <CTX extends CompositionContext<CTX>> implements Context<CTX> {
+public class CompositionContext <CTX extends CompositionContext<?>> implements Context<CTX> {
     
     private boolean terminated = false;
     
@@ -28,11 +28,14 @@ public class CompositionContext <CTX extends CompositionContext<CTX>> implements
         }
         
         useContext();
-        operation.runOnContext(this);
+        
+        // TODO: This may fail sometimes? I'm not sure
+        operation.runOnContext((CTX)this);
+        
         useContext();
     }
     
-    public static <CTX extends CompositionContext<CTX>> Action compose (
+    public static <CTX extends Context<?>> Action compose (
         Supplier<CTX> contextSupplier,
         Operation<CTX> operation
     ) {
@@ -46,10 +49,9 @@ public class CompositionContext <CTX extends CompositionContext<CTX>> implements
                 CTX ctx = contextSupplier.get();
                 context = Optional.of(ctx);
                 
-                // Try to execute the operation
-                try {
-                    operation.runOnContext(ctx);
-                } catch (TerminatedContextException e) { } // Ignore termination exceptions
+                // Try to execute the operation, ignoring termination exceptions
+                Context.ignoreTermination(() -> operation.runOnContext(ctx));
+                
             }
             
             @Override
@@ -71,10 +73,6 @@ public class CompositionContext <CTX extends CompositionContext<CTX>> implements
     @Override
     public boolean isTerminated () {
         return terminated;
-    }
-    
-    public static interface Operation <CTX extends CompositionContext<CTX>> {
-        public void runOnContext (Context<CTX> context) throws TerminatedContextException;
     }
     
 }

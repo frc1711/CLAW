@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import claw.RobotErrorLog;
+import claw.actions.compositions.Context;
 import claw.hardware.DIOReadCommand;
 import claw.hardware.can.CANScanner;
 import claw.logs.LogHandler;
@@ -77,7 +78,9 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
         logNamesList.forEach(logName -> {
             boolean watched = LogHandler.getInstance().isWatchingLog(logName);
             char watchedChar = watched ? '#' : ' ';
-            console.println(watchedChar + " " + logName);
+            
+            // Ignore termination of the console within this forEach consumer
+            Context.ignoreTermination(() -> console.println(watchedChar + " " + logName));
         });
     }
     
