@@ -12,7 +12,7 @@ public class SubsystemTestComposer {
         CLAWSubsystem subsystem,
         Operation<SubsystemTestCompositionContext<?>> composition
     ) {
-        return CompositionContext.compose(
+        return Context.compose(
             () -> new SubsystemTestCompositionContext<>(console, subsystem),
             composition
         ).toCommand();

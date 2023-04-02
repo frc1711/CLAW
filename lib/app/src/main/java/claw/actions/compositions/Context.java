@@ -1,5 +1,10 @@
 package claw.actions.compositions;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import claw.actions.Action;
+
 public interface Context <CTX extends Context<?>> {
     
     public default void useContext () throws TerminatedContextException {
@@ -34,6 +39,33 @@ public interface Context <CTX extends Context<?>> {
             // TODO: Check this out in case the unchecked cast can fail
             exe.run();
         } catch (TerminatedContextException e) { }
+    }
+    
+    public static <CTX extends Context<?>> Action compose (
+        Supplier<CTX> contextSupplier,
+        Operation<CTX> operation
+    ) {
+        return new Action() {
+            
+            private Optional<CTX> context = Optional.empty();
+            
+            @Override
+            public void runAction () {
+                // Fill the context field
+                CTX ctx = contextSupplier.get();
+                context = Optional.of(ctx);
+                
+                // Try to execute the operation, ignoring termination exceptions
+                Context.ignoreTermination(() -> operation.runOnContext(ctx));
+                
+            }
+            
+            @Override
+            public void cancelRunningAction () {
+                context.ifPresent(Context::terminate);
+            }
+            
+        };
     }
     
 }

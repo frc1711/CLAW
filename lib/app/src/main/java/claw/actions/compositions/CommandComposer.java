@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 public class CommandComposer {
     
     public static Command compose (Operation<CommandCompositionContext<?>> composition) {
-        return CompositionContext.compose(CommandCompositionContext::new, composition).toCommand();
+        return Context.compose(CommandCompositionContext::new, composition).toCommand();
     }
     
     private CommandComposer () { }
