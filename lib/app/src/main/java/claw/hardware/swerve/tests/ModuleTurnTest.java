@@ -1,16 +1,11 @@
 package claw.hardware.swerve.tests;
 
-import java.util.Arrays;
-
 import claw.LiveValues;
-import claw.actions.compositions.ActionCompositionContext;
 import claw.hardware.swerve.SwerveDriveHandler;
 import claw.hardware.swerve.SwerveModuleBase;
 import claw.subsystems.CLAWSubsystem;
 import claw.subsystems.SubsystemTest;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
 public class ModuleTurnTest extends SubsystemTest {
     
@@ -29,8 +24,16 @@ public class ModuleTurnTest extends SubsystemTest {
                     // Wait for just 1.5 seconds before continuing
                     ctx.delay(1.5);
                     
+                    
+                    
+                    // TODO: LiveValuesCommandBase?
+                    
+                    
+                    
+                    
+                    
                     // Run the module test command
-                    ctx.runDebug(liveValues -> new MeasureModuleTurningCommand(null, module, liveValues));
+                    ctx.runLiveValues(liveValues -> new MeasureModuleTurningCommand(ctx.subsystem, module, liveValues));
                     
                 }
                 

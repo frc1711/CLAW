@@ -25,15 +25,29 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         console.useContext();
     }
     
-    public Command withLiveValues (Function<LiveValues, Command> commandSupplier) throws TerminatedContextException {
+    public void runLiveValues (Function<LiveValues, Command> commandSupplier) throws TerminatedContextException {
         
         // Get the command from the new LiveValues
         LiveValues debugValues = new LiveValues();
         Command command = commandSupplier.apply(debugValues);
         
-        // Deadline the given command with an UpdateLiveValuesAction (turned into command) to automatically stop
-        // updating live values when the given command finishes
-        return command.deadlineWith(new UpdateLiveValuesAction(debugValues).toCommand());
+        // Get an action to update live values
+        Action updateValuesAction = new UpdateLiveValuesAction(debugValues);
+        
+        // Run the two actions parallel:
+        runAction(Action.parallel(
+            // First, run the initial command, canceling the updater when finished
+            Context.compose(() -> this, ctx -> {
+                ctx.run(command);
+                updateValuesAction.cancel();
+            }),
+            
+            // Second, run the updater concurrently
+            updateValuesAction
+        ));
+        
+        
+        // TODO: ALL WPILIB COMMAND CONSTRUCTORS CAN CALL METHODS ON THE COMMAND SCHEDULER LEADING TO CONCURRENTMODIFICATIONEXCEPTIONS
         
     }
     
