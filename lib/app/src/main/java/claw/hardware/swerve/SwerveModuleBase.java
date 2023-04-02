@@ -35,7 +35,7 @@ public abstract class SwerveModuleBase {
      * @param alwaysTurn    Whether or not to turn the swerve module even if the drive speed is zero.
      */
     public void driveToStateOptimize (SwerveModuleState desiredState, boolean alwaysTurn) {
-        Rotation2d currentAngle = getPosition().angle;
+        Rotation2d currentAngle = getRotation();
         
         // Only drive if the speed is nonzero (or drive if alwaysTurn is true)
         if (alwaysTurn || desiredState.speedMetersPerSecond > 0) {
@@ -86,6 +86,12 @@ public abstract class SwerveModuleBase {
      * @return  The swerve module's current state.
      */
     public abstract SwerveModuleState getState ();
+    
+    /**
+     * Get the {@link Rotation2d} of the swerve module, counter-clockwise-positive.
+     * @return The current rotation of the module.
+     */
+    public abstract Rotation2d getRotation ();
     
     /**
      * Get the maximum attainable drive speed of this swerve module.

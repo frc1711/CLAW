@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import claw.LiveValues;
 import claw.actions.Action;
+import claw.actions.FunctionalCommand;
 import claw.rct.network.low.ConsoleManager;
 import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,14 +26,22 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         console.useContext();
     }
     
+    public <T> T runLiveValuesGet (Function<LiveValues, FunctionalCommand<T>> commandSupplier) throws TerminatedContextException {
+        LiveValues values = new LiveValues();
+        FunctionalCommand<T> command = commandSupplier.apply(values);
+        runLiveValuesCommand(values, command);
+        return command.getValue();
+    }
+    
     public void runLiveValues (Function<LiveValues, Command> commandSupplier) throws TerminatedContextException {
-        
-        // Get the command from the new LiveValues
-        LiveValues debugValues = new LiveValues();
-        Command command = commandSupplier.apply(debugValues);
+        LiveValues values = new LiveValues();
+        runLiveValuesCommand(values, commandSupplier.apply(values));
+    }
+    
+    private void runLiveValuesCommand (LiveValues liveValues, Command command) throws TerminatedContextException {
         
         // Get an action to update live values
-        Action updateValuesAction = new UpdateLiveValuesAction(debugValues);
+        Action updateValuesAction = new UpdateLiveValuesAction(liveValues);
         
         // Run the two actions parallel:
         runAction(Action.parallel(
