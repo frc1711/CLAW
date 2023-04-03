@@ -19,22 +19,25 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
-public class ModuleTurnTest extends SubsystemTest {
+public class ModuleRotationEncoderTest extends SubsystemTest {
     
-    public ModuleTurnTest (SwerveDriveHandler swerveDrive) {
+    public ModuleRotationEncoderTest (SwerveDriveHandler swerveDrive) {
         super(
-            "moduleTurnTest",
-            "A simple module turn test. The robot should be on its side for the duration of this test.",
+            "moduleRotationEncoder",
+            "A test which turns the swerve modules one by one and analyzes their rotational readings " +
+            "when at their maximum safe steering motor voltage. The robot should be on its side or on chucks " +
+            "for the duration of this test, or in some other position where modules can turn freely.",
             TestCommandSupplier.fromComposition(ctx -> {
                 
+                SwerveModuleBase[] modules = swerveDrive.getModules();
+                
                 // Iterate through each swerve module
-                for (SwerveModuleBase module : swerveDrive.getModules()) {
+                for (int i = 0; i < modules.length; i ++) {
+                    
+                    SwerveModuleBase module = modules[i];
                     
                     // Print a message signaling the module we're running the test on
                     ctx.console.printlnSys("Running module turning test for module: " + module.getIdentifier());
-                    
-                    // Wait for just 1.5 seconds before continuing
-                    ctx.delay(1.5);
                     
                     // Run the module test command
                     ModuleAnalysis analysis = ctx.runLiveValuesGet(
@@ -44,8 +47,10 @@ public class ModuleTurnTest extends SubsystemTest {
                     // Read the analysis to the console
                     analysis.printToConsole(ctx.console);
                     
-                    // Make some more room
-                    ctx.console.println("\n\n");
+                    // Make some more room for new modules
+                    if (i < modules.length - 1) {
+                        ctx.console.println("\n\n");
+                    }
                     
                 }
                 
@@ -191,26 +196,21 @@ public class ModuleTurnTest extends SubsystemTest {
             
             double mean = getMean(rotationSpeeds);
             double stddev = getStandardDeviation(rotationSpeeds, mean);
-            double ubound = mean + 2 * stddev;
-            double lbound = mean - 2 * stddev;
             
             boolean readCCWRotation = mean > 0;
             
             TurnVoltageCorrelation correlation;
+            
             if (Math.abs(mean) < 2) {
                 
-                if (stddev < 10) {
-                    // Less than an average of 2 degrees/sec speed, tight center around zero
-                    correlation = TurnVoltageCorrelation.NO_SIGNIFICANT_MEASUREMENT;
-                } else {
-                    // Average speed is very low, but stddev indicates the measurement is erratic
-                    correlation = TurnVoltageCorrelation.ERRATIC_MEASUREMENT;
-                }
+                // Less than an average of 2 degrees/sec speed
+                correlation = TurnVoltageCorrelation.NO_SIGNIFICANT_MEASUREMENT;
                 
-            } else if ((lbound > 0) != (ubound > 0)) {
+            } else if (8*stddev > Math.abs(mean)) {
                 
-                // Upper and lower bounds are not on the same side of zero,
-                // one is negative and one is positive
+                // A reading with a different sign than the mean is within 8 standard deviations of the mean
+                // (i.e. there is a possibility that the encoder will indicate the module is turning in the entirely
+                // wrong direction)
                 correlation = TurnVoltageCorrelation.ERRATIC_MEASUREMENT;
                 
             } else {
@@ -279,11 +279,11 @@ public class ModuleTurnTest extends SubsystemTest {
             
             if (voltageCorrelation == TurnVoltageCorrelation.ERRATIC_MEASUREMENT) {
                 
-                console.printlnErr("Measurement from the swerve module's encoder was erratic.");
+                console.printlnErr("Measurement from the swerve module's encoder was erratic.\n");
                 
             } else if (voltageCorrelation == TurnVoltageCorrelation.NO_SIGNIFICANT_MEASUREMENT) {
                 
-                console.printlnErr("The moduler's encoder measured no significant speed.");
+                console.printlnErr("The moduler's encoder measured no significant speed.\n");
                 
             } else {
                 
@@ -296,15 +296,13 @@ public class ModuleTurnTest extends SubsystemTest {
                     "rotation from the bottom-up point of view, as you probably are seeing it). Ensure this accurately describes " +
                     "the direction the module rotated in before moving on. " +
                     "If it does not, you'll have to negate this module's encoder reading before moving " + 
-                    "on to the rest of the test.\n" + 
-                    "(Press any key to continue)"
+                    "on to the rest of the test."
                 );
-                console.print(msg);
+                console.println(msg);
                 
                 // Wait for the user to press a key
-                while (!console.hasInputReady()) { }
-                console.clearWaitingInputLines();
-                console.println("\n\n");
+                pressKeyToContinue(console);
+                console.println("\n");
                 
                 // Print measurements
                 String voltageCorrelationDesc = voltageCorrelation == TurnVoltageCorrelation.POSITIVE_COUNTERCLOCKWISE
@@ -320,15 +318,19 @@ public class ModuleTurnTest extends SubsystemTest {
             console.printlnSys("Mean measured turn speed");
             console.println("    " + readMeanDegreesPerSec + " deg/sec");
             console.printlnSys("Standard deviation of measured turn speed");
-            console.println("    " + readStddevDegreesPerSec + " deg/sec");
+            console.println("    " + readStddevDegreesPerSec + " deg/sec\n");
             
             // Wait for the user to press a key
-            console.println("\nPress any key to continue");
-            while (!console.hasInputReady()) { }
-            console.clearWaitingInputLines();
+            pressKeyToContinue(console);
             
         }
         
+    }
+    
+    private static void pressKeyToContinue (ConsoleManager console) throws TerminatedContextException {
+        console.println("(Press any key to continue)");
+        while (!console.hasInputReady()) { }
+        console.clearWaitingInputLines();
     }
     
 }

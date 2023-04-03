@@ -67,6 +67,13 @@ public class TestSwerveModule extends SwerveModuleBase {
 
     @Override
     public Rotation2d getRotation() {
+        // // Erratically broken
+        // return Rotation2d.fromDegrees(Math.random() > 0.05 ? currentRotationDeg : 0);
+        
+        // // Broken (no changing measurement)
+        // return new Rotation2d(0.32);
+        
+        // Working properly
         return Rotation2d.fromDegrees(currentRotationDeg);
     }
 
@@ -83,8 +90,8 @@ public class TestSwerveModule extends SwerveModuleBase {
     
     public void periodicUpdate () {
         
-        driveVelocity = MathUtil.applyDeadband(driveMotorVoltage*0.5, 0.05);
-        turnVelocity = MathUtil.applyDeadband(turnMotorVoltage*10, 2);
+        driveVelocity = MathUtil.applyDeadband(driveMotorVoltage*5, 0.05) + Math.random()*0.04;
+        turnVelocity = MathUtil.applyDeadband(turnMotorVoltage*50, 2) + Math.random()*0.3;
         driveMotorVoltage = 0;
         turnMotorVoltage = 0;
         
