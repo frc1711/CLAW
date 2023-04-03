@@ -31,7 +31,7 @@ public class ModuleTurnTest extends SubsystemTest {
                 for (SwerveModuleBase module : swerveDrive.getModules()) {
                     
                     // Print a message signaling the module we're running the test on
-                    ctx.console.println("Running module turning test for module: " + module.getIdentifier());
+                    ctx.console.printlnSys("Running module turning test for module: " + module.getIdentifier());
                     
                     // Wait for just 1.5 seconds before continuing
                     ctx.delay(1.5);
@@ -44,6 +44,9 @@ public class ModuleTurnTest extends SubsystemTest {
                     // Read the analysis to the console
                     analysis.printToConsole(ctx.console);
                     
+                    // Make some more room
+                    ctx.console.println("\n\n");
+                    
                 }
                 
             })
@@ -54,14 +57,14 @@ public class ModuleTurnTest extends SubsystemTest {
         
         private static final double
             // The amount of time allowed for the modules to ramp up to max voltage
-            RAMP_TIME = 4,
+            RAMP_TIME = 1.5,
             
             // Analysis only happens when the modules are at max voltage, padding is the amount of time
             // surrounding max voltage where no analysis is happening (modules stabilizing at the max voltage)
             ANALYSIS_PADDING = 0.2,
             
             // Amount of time allowed to analyze the module's rotation
-            ANALYSIS_DURATION = 10,
+            ANALYSIS_DURATION = 8,
             
             MAX_SPEED_START = RAMP_TIME,
             ANALYSIS_START = MAX_SPEED_START + ANALYSIS_PADDING,
@@ -95,7 +98,6 @@ public class ModuleTurnTest extends SubsystemTest {
         
         @Override
         public void initialize () {
-            System.out.println("\n\nINITIALIZING COMMAND\n\n");
             timer.reset();
             timer.start();
             analyzer.reset();
@@ -111,13 +113,11 @@ public class ModuleTurnTest extends SubsystemTest {
             }
             
             updateVoltage(voltage);
-            System.out.println("\n\nEXECUTING COMMAND\n\n");
         }
         
         @Override
         public void end (boolean interrupted) {
             updateVoltage(0);
-            System.out.println("\n\nENDING COMMAND\n\n");
         }
         
         private void updateVoltage (double voltage) {
@@ -303,18 +303,29 @@ public class ModuleTurnTest extends SubsystemTest {
                 
                 // Wait for the user to press a key
                 while (!console.hasInputReady()) { }
-                console.println("\n");
+                console.clearWaitingInputLines();
+                console.println("\n\n");
                 
                 // Print measurements
                 String voltageCorrelationDesc = voltageCorrelation == TurnVoltageCorrelation.POSITIVE_COUNTERCLOCKWISE
                     ? "A positive voltage applied to the motor leads to a counterclockwise turn, positive increase in module.getRotation()"
                     : "A negative voltage applied to the motor leads to a counterclockwise turn, positive increase in module.getRotation()";
-                console.println("Voltage to turn correlation: " + voltageCorrelationDesc);
+                
+                console.printlnSys("Voltage to turn correlation");
+                console.println(ConsoleManager.formatMessage(voltageCorrelationDesc, 4));
                 
             }
             
-            console.println("Mean measured turn speed: " + readMeanDegreesPerSec + " deg/sec");
-            console.println("Standard deviation of measured turn speed: " + readStddevDegreesPerSec + " deg/sec");
+            // Print basic measurements
+            console.printlnSys("Mean measured turn speed");
+            console.println("    " + readMeanDegreesPerSec + " deg/sec");
+            console.printlnSys("Standard deviation of measured turn speed");
+            console.println("    " + readStddevDegreesPerSec + " deg/sec");
+            
+            // Wait for the user to press a key
+            console.println("\nPress any key to continue");
+            while (!console.hasInputReady()) { }
+            console.clearWaitingInputLines();
             
         }
         
