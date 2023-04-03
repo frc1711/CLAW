@@ -133,6 +133,8 @@ public class LiveValues {
             
         }
         
+        console.flush();
+        
     }
     
     /**

@@ -95,7 +95,9 @@ public class ModuleTurnTest extends SubsystemTest {
         
         @Override
         public void initialize () {
+            System.out.println("\n\nINITIALIZING COMMAND\n\n");
             timer.reset();
+            timer.start();
             analyzer.reset();
             updateVoltage(0);
         }
@@ -109,11 +111,13 @@ public class ModuleTurnTest extends SubsystemTest {
             }
             
             updateVoltage(voltage);
+            System.out.println("\n\nEXECUTING COMMAND\n\n");
         }
         
         @Override
         public void end (boolean interrupted) {
             updateVoltage(0);
+            System.out.println("\n\nENDING COMMAND\n\n");
         }
         
         private void updateVoltage (double voltage) {
@@ -225,6 +229,7 @@ public class ModuleTurnTest extends SubsystemTest {
         
         public void reset () {
             timer.reset();
+            timer.start();
             lastRotation = Optional.empty();
             rotationSpeeds.clear();
         }

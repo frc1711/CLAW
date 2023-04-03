@@ -26,6 +26,18 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         console.useContext();
     }
     
+    @Override
+    public void delay (double durationSecs) throws TerminatedContextException {
+        console.flush();
+        super.delay(durationSecs);
+    }
+    
+    @Override
+    public void runAction (Action action) throws TerminatedContextException {
+        console.flush();
+        super.runAction(action);
+    }
+    
     public <T> T runLiveValuesGet (Function<LiveValues, FunctionalCommand<T>> commandSupplier) throws TerminatedContextException {
         LiveValues values = new LiveValues();
         FunctionalCommand<T> command = commandSupplier.apply(values);

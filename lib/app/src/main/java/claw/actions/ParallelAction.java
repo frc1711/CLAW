@@ -30,6 +30,8 @@ class ParallelAction extends Action {
                     } catch (InterruptedException e) { }
                 }
             }
+        } else if (actions.length == 1) {
+            actions[0].run();
         }
     }
     
