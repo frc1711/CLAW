@@ -11,12 +11,16 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 public abstract class SwerveModuleBase {
     
     private final Translation2d translation;
+    private final String identifier;
     
     /**
      * Create a new {@link SwerveModuleBase} with a given translation from the center of the robot.
-     * @param translation The translation of the swerve module from the center of the robot, in meters.
+     * @param identifier    A simple {@code String} identifier which can be used to describe this swerve module
+     * to the user.
+     * @param translation   The translation of the swerve module from the center of the robot, in meters.
      */
-    public SwerveModuleBase (Translation2d translation) {
+    public SwerveModuleBase (String identifier, Translation2d translation) {
+        this.identifier = identifier;
         this.translation = translation;
     }
     
@@ -26,6 +30,14 @@ public abstract class SwerveModuleBase {
      */
     public Translation2d getTranslation () {
         return translation;
+    }
+    
+    /**
+     * Get some identifier which can be used to distinguish this module from the others.
+     * @return  A name which can be used to identify this module.
+     */
+    public String getIdentifier () {
+        return identifier;
     }
     
     /**
@@ -100,8 +112,8 @@ public abstract class SwerveModuleBase {
     public abstract Rotation2d getRotation ();
     
     /**
-     * Get the maximum attainable drive speed of this swerve module.
-     * @return The max drive speed in meters per second.
+     * Get the maximum attainable drive speed of this swerve module at this point in time.
+     * @return The max attainable drive speed in meters per second.
      */
     public abstract double getMaxDriveSpeedMetersPerSec ();
     
@@ -110,12 +122,5 @@ public abstract class SwerveModuleBase {
      * any relevant PID loops or filters.
      */
     public abstract void stop ();
-    
-    /**
-     * Get some identifier which can be used to distinguish this module from the others.
-     * This should only be used to describe this module to the user.
-     * @return  A name which can be used to identify this module to the user.
-     */
-    public abstract String getIdentifier ();
     
 }

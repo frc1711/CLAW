@@ -11,11 +11,15 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.TestCommand;
 import frc.robot.subsystems.TestSubsystem;
+import frc.robot.subsystems.swerve.SwerveSubsystem;
 
 public class RobotContainer {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("robotcontainer");
+    
     private final TestSubsystem testSubsystem = new TestSubsystem();
+    private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
+    
     private final TestCommand testCommand = new TestCommand(testSubsystem);
     
     public RobotContainer () {

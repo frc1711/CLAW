@@ -27,54 +27,10 @@ public class TestSubsystem extends CLAWSubsystem {
                 }
             })
         ));
-        
-        addTests(
-            new SwerveDriveHandler(
-                new Pose2d(),
-                () -> new Rotation2d(),
-                new SwerveModule(0, 1),
-                new SwerveModule(0, 0)
-            ).generateSubsystemTests()
-        );
     }
     
     @Override
     public void stop () {
-        
-    }
-    
-    private class SwerveModule extends SwerveModuleBase {
-        
-        public SwerveModule (double x, double y) {
-            super(new Translation2d(x, y));
-        }
-        
-        @Override
-        public void driveToRawState(SwerveModuleState state) {}
-
-        @Override
-        public SwerveModulePosition getPosition() {
-            return new SwerveModulePosition();
-        }
-
-        @Override
-        public SwerveModuleState getState() {
-            return new SwerveModuleState();
-        }
-        
-        @Override
-        public void setTurnMotorVoltage (double voltage) { }
-        
-        @Override
-        public void setDriveMotorVoltage (double voltage) { }
-
-        @Override
-        public double getMaxDriveSpeedMetersPerSec() {
-            return 0;
-        }
-
-        @Override
-        public void stop() {}
         
     }
     

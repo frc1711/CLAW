@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-
 import claw.CLAWRobot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,7 +19,6 @@ public class Robot extends TimedRobot {
     
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
-    private final WPI_TalonSRX talon = new WPI_TalonSRX(25);
     
     @Override
     public void startCompetition () {
@@ -76,9 +73,7 @@ public class Robot extends TimedRobot {
     /** This function is called periodically during operator control. */
     @Override
     public void teleopPeriodic() {
-        talon.set(0.4);
-        talon.isFwdLimitSwitchClosed();
-        talon.clearStickyFaults();
+        
     }
 
     @Override
