@@ -2,7 +2,7 @@ package claw.hardware.swerve;
 
 import java.util.function.Supplier;
 
-import claw.hardware.swerve.tests.ModuleDriveTest;
+import claw.hardware.swerve.tests.ModuleTurnTest;
 import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -225,7 +225,7 @@ public class SwerveDriveHandler {
      */
     public SubsystemTest[] generateSubsystemTests () {
         return new SubsystemTest[] {
-            new ModuleDriveTest(this)
+            new ModuleTurnTest(this)
         };
     }
     

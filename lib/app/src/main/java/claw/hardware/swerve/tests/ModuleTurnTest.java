@@ -81,8 +81,7 @@ public class ModuleTurnTest extends SubsystemTest {
             this.module = module;
             addRequirements(subsystem);
             
-            // TODO: Some more test stuff on the modules
-            double maxModuleVoltage = Math.abs(5); // module.getMaxTurnVoltage();
+            double maxModuleVoltage = Math.abs(module.getMaxTurnMotorVoltage());
             
             timeToVoltage = new LinearInterpolator(
                 0,                  0,

@@ -66,6 +66,12 @@ public abstract class SwerveModuleBase {
     public abstract void setDriveMotorVoltage (double voltage);
     
     /**
+     * Get the maximum allowable voltage (positive) to use with {@link #setTurnMotorVoltage(double)}.
+     * @return  The maximum allowable turn motor voltage.
+     */
+    public abstract double getMaxTurnMotorVoltage ();
+    
+    /**
      * Set the turn motor's voltage. This is used by automatically generated subsystem tests.
      * @param voltage   The signed voltage to set the turn motor to.
      */
