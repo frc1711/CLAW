@@ -13,6 +13,9 @@ import claw.rct.console.ConsoleManager;
 import claw.rct.console.ConsoleUtils;
 import claw.subsystems.CLAWSubsystem;
 import claw.subsystems.SubsystemTest;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -54,16 +57,184 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
         ctx.console.println("When you continue, the modules will rotate to all face in one direction.");
         if (!ConsoleUtils.getYesNo(ctx.console, "Continue? ")) return;
         
+        // Run the TurnModulesForward command with a deadline (cannot use WPILib .withTimeout() because this leads to)
+        ctx.runAction(Action.fromCommand(new TurnModulesForward(swerveDrive, ctx.subsystem)).withTimeout(2));
         
+        double durationSecs = ConsoleUtils.getDoubleValue(
+            ctx.console,
+            "How long should swerve drive run for? (secs) ",
+            2, 10
+        );
         
-        ctx.console.println("How far ");
+        ctx.console.println(ConsoleManager.formatMessage(
+            "Note that the following speed is simply what is passed to the swerve modules, " +
+            "by the nature of this test these speeds may be wildly inaccurate (because you " +
+            "are testing to determine the actual encoder speeds):"
+        ));
+        
+        double approxForwardSpeed = ConsoleUtils.getDoubleValue(
+            ctx.console,
+            "At what speed should the robot drive forward? (m/s) ",
+            0.01,
+            30
+        );
+        
+        ctx.console.println("Preparing to drive forwards.");
+        if (!ConsoleUtils.getYesNo(ctx.console, "Continue? ")) return;
+        
+        double[] distanceDiffs = ctx.runLiveValuesGet(
+            liveValues -> new DriveSwerveForward(swerveDrive, ctx.subsystem, liveValues, approxForwardSpeed, durationSecs)
+        );
+        
+        double realDistanceDiffInches = ConsoleUtils.getDoubleValue(
+            ctx.console,
+            "What was the real distance traveled by the robot, in inches? ",
+            1,
+            12*50
+        );
+        
+        double realDistanceDiffMeters = Units.inchesToMeters(realDistanceDiffInches);
+        
+        SwerveModuleBase[] modules = swerveDrive.getModules();
+        for (int i = 0; i < modules.length; i ++) {
+            ctx.console.printlnSys("Module: " + modules[i].getIdentifier());
+            ctx.console.println("  Encoder measured distance traveled (meters): " + distanceDiffs[i]);
+            
+            if (distanceDiffs[i] != 0) {
+                
+                double factor = realDistanceDiffMeters / distanceDiffs[i];
+                ctx.console.println("  Multiply measurement by " + factor + " to get real distance");
+                
+            } else {
+                
+                ctx.console.printlnErr("The encoder measured distance difference was zero. Something is wrong.");
+                
+            }
+            
+            ctx.console.println("");
+            
+        }
+        
+    }
+    
+    private static class DriveSwerveForward extends CommandBase implements FunctionalCommand<double[]> {
+        
+        private static final double RAMP_TIME = 1.5;
+        
+        private final Timer timer = new Timer();
+        private final SwerveDriveHandler swerveDrive;
+        private final LiveValues liveValues;
+        private final Transform timeToSpeed;
+        private final double totalDurationSecs;
+        private double[] initialDistances;
+        
+        public DriveSwerveForward (SwerveDriveHandler swerveDrive, CLAWSubsystem subsystem, LiveValues liveValues, double driveSpeedMetersPerSec, double durationSecs) {
+            this.swerveDrive = swerveDrive;
+            this.liveValues = liveValues;
+            addRequirements(subsystem);
+            
+            driveSpeedMetersPerSec = Math.abs(driveSpeedMetersPerSec);
+            
+            totalDurationSecs = RAMP_TIME*2 + durationSecs;
+            timeToSpeed = new LinearInterpolator(
+                0,                      0,
+                RAMP_TIME,              driveSpeedMetersPerSec,
+                RAMP_TIME+durationSecs, driveSpeedMetersPerSec,
+                totalDurationSecs,      0
+            ).then(Transform.clamp(0, driveSpeedMetersPerSec));
+        }
+        
+        @Override
+        public void initialize () {
+            initialDistances = getModuleDistances();
+            swerveDrive.stop();
+            timer.reset();
+            timer.start();
+            updateLiveValues();
+        }
+        
+        @Override
+        public void execute () {
+            swerveDrive.drive(new ChassisSpeeds(getDriveSpeed(), 0, 0));
+            updateLiveValues();
+        }
+        
+        @Override
+        public void end (boolean interrupted) {
+            swerveDrive.stop();
+            updateLiveValues();
+        }
+        
+        private double getDriveSpeed () {
+            return timeToSpeed.apply(timer.get());
+        }
+        
+        private void updateLiveValues () {
+            liveValues.setField("Target Drive Speed", getDriveSpeed());
+            
+            SwerveModuleBase[] modules = swerveDrive.getModules();
+            double[] distanceDiffs = getModuleDistanceDifferences();
+            for (int i = 0; i < modules.length; i ++) {
+                liveValues.setField("Module \""+modules[i].getIdentifier()+"\" Distance Traveled (meters)", distanceDiffs[i]);
+            }
+        }
+        
+        @Override
+        public boolean isFinished () {
+            return timer.hasElapsed(totalDurationSecs);
+        }
+        
+        @Override
+        public double[] getValue () {
+            return getModuleDistanceDifferences();
+        }
+        
+        private double[] getModuleDistanceDifferences () {
+            double[] currentDistances = getModuleDistances();
+            double[] diffs = new double[currentDistances.length];
+            for (int i = 0; i < diffs.length; i ++) {
+                diffs[i] = currentDistances[i] - initialDistances[i];
+            }
+            
+            return diffs;
+        }
+        
+        private double[] getModuleDistances () {
+            SwerveModuleBase[] modules = swerveDrive.getModules();
+            double[] distances = new double[modules.length];
+            for (int i = 0; i < distances.length; i ++) {
+                distances[i] = modules[i].getPosition().distanceMeters;
+            }
+            
+            return distances;
+        }
         
     }
     
     private static class TurnModulesForward extends CommandBase {
         
-        public TurnModulesForward () {
-            
+        private final SwerveDriveHandler swerveDrive;
+        
+        public TurnModulesForward (SwerveDriveHandler swerveDrive, CLAWSubsystem subsystem) {
+            this.swerveDrive = swerveDrive;
+            addRequirements(subsystem);
+        }
+        
+        @Override
+        public void initialize () {
+            swerveDrive.stop();
+        }
+        
+        @Override
+        public void execute () {
+            for (SwerveModuleBase module : swerveDrive.getModules()) {
+                module.driveToStateOptimize(new SwerveModuleState(0, new Rotation2d()), true);
+            }
+        }
+        
+        @Override
+        public void end (boolean interrupted) {
+            swerveDrive.stop();
         }
         
     }
