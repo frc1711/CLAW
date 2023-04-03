@@ -2,13 +2,13 @@ package claw.rct.local;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.network.low.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
-import claw.rct.network.low.concurrency.SignalWaiter;
 import claw.rct.network.messages.commands.CommandInputMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage;
 import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
@@ -23,7 +23,7 @@ public class RemoteProcessHandler {
     private final Consumer<InstructionMessage> instructionSender;
     private final int processId;
     
-    private final SignalWaiter<CommandOutputMessage> commandOutputWaiter = new SignalWaiter<CommandOutputMessage>();
+    private final ConcurrentLinkedQueue<CommandOutputMessage> commandOutputQueue = new ConcurrentLinkedQueue<>();
     
     private final KeepaliveWatcher keepaliveWatcher;
     
@@ -48,7 +48,7 @@ public class RemoteProcessHandler {
     }
     
     public void receiveCommandOutputMessage (CommandOutputMessage msg) {
-        commandOutputWaiter.receiveSignal(msg);
+        commandOutputQueue.add(msg);
         keepaliveWatcher.continueKeepalive();
     }
     
@@ -81,15 +81,11 @@ public class RemoteProcessHandler {
         // Waiting for an output message that matches the process ID
         Optional<CommandOutputMessage> outputMessage = Optional.empty();
         while (outputMessage.isEmpty() || outputMessage.get().commandProcessId != processId) {
-            
-            outputMessage = commandOutputWaiter.awaitSignal();
-            
-            if (outputMessage.isEmpty()) {
-                // Output waiter was killed
-                terminate();
-                return;
+            while (commandOutputQueue.isEmpty()) {
+                Thread.onSpinWait();
             }
             
+            outputMessage = Optional.of(commandOutputQueue.poll());
         }
         
         CommandOutputMessage message = outputMessage.get();
@@ -176,7 +172,6 @@ public class RemoteProcessHandler {
         terminateException = exception;
         terminated = true;
         
-        commandOutputWaiter.kill();
         keepaliveWatcher.stopWatching();
     }
     

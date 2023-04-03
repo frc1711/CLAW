@@ -101,61 +101,61 @@ public class CommandProcessHandler implements ConsoleManager {
     // ConsoleManager methods
     
     @Override
-    public void print (String msg) throws TerminatedContextException {
+    public synchronized void print (String msg) throws TerminatedContextException {
         // Add the print operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT, 0, msg));
     }
     
     @Override
-    public void printErr (String msg) throws TerminatedContextException {
+    public synchronized void printErr (String msg) throws TerminatedContextException {
         // Add the printErr operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_ERR, 0, msg));
     }
     
     @Override
-    public void printSys (String msg) throws TerminatedContextException {
+    public synchronized void printSys (String msg) throws TerminatedContextException {
         // Add the printSys operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_SYS, 0, msg));
     }
     
     @Override
-    public void clear () throws TerminatedContextException {
+    public synchronized void clear () throws TerminatedContextException {
         // Add the clear operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR, 0, null));
     }
     
     @Override
-    public void moveUp (int lines) throws TerminatedContextException {
+    public synchronized void moveUp (int lines) throws TerminatedContextException {
         // Add the moveUp operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.MOVE_UP, lines, null));
     }
     
     @Override
-    public void clearLine () throws TerminatedContextException {
+    public synchronized void clearLine () throws TerminatedContextException {
         // Add the clearLine operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_LINE, 0, null));
     }
     
     @Override
-    public void saveCursorPos () throws TerminatedContextException {
+    public synchronized void saveCursorPos () throws TerminatedContextException {
         // Add the saveCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.SAVE_CURSOR_POS, 0, null));
     }
     
     @Override
-    public void restoreCursorPos () throws TerminatedContextException {
+    public synchronized void restoreCursorPos () throws TerminatedContextException {
         // Add the restoreCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.RESTORE_CURSOR_POS, 0, null));
     }
     
     @Override
-    public void clearWaitingInputLines () throws TerminatedContextException {
+    public synchronized void clearWaitingInputLines () throws TerminatedContextException {
         // Add the restoreCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_WAITING_INPUT_LINES, 0, null));
     }
     
     @Override
-    public void flush () throws TerminatedContextException {
+    public synchronized void flush () throws TerminatedContextException {
         // Add the flush operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.FLUSH, 0, null));
         
@@ -164,7 +164,7 @@ public class CommandProcessHandler implements ConsoleManager {
     }
     
     @Override
-    public boolean hasInputReady () throws TerminatedContextException {
+    public synchronized boolean hasInputReady () throws TerminatedContextException {
         useContext();
         
         // Send operations buffer to local along with the hasInputReady request
@@ -182,7 +182,7 @@ public class CommandProcessHandler implements ConsoleManager {
     }
     
     @Override
-    public String readInputLine () throws TerminatedContextException {
+    public synchronized String readInputLine () throws TerminatedContextException {
         
         useContext();
         
