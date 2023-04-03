@@ -3,7 +3,6 @@ package claw.actions.compositions;
 import java.util.Optional;
 
 import claw.actions.Action;
-import claw.actions.DelayAction;
 import claw.actions.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -20,7 +19,7 @@ public class CommandCompositionContext <CTX extends CommandCompositionContext<?>
     }
     
     public void delay (double durationSecs) throws TerminatedContextException {
-        runAction(new DelayAction(durationSecs));
+        runAction(Action.delay(durationSecs));
     }
     
     public void run (Command command) throws TerminatedContextException {

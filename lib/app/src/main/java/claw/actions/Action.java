@@ -6,6 +6,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public abstract class Action {
     
+    public static Action delay (double durationSecs) {
+        return new DelayAction(durationSecs);
+    }
+    
     public static Action parallel (Action... actions) {
         return new ParallelAction(actions);
     }
@@ -14,8 +18,16 @@ public abstract class Action {
         return new CommandExecutorAction(command);
     }
     
-    public final Command toCommand () {
+    public Command toCommand () {
         return new CommandActionWrapper(this);
+    }
+    
+    public Action deadlineWith (Action... actions) {
+        return DeadlineActionBuilder.getAction(this, actions);
+    }
+    
+    public Action withTimeout (double timeoutSecs) {
+        return DeadlineActionBuilder.getAction(Action.delay(timeoutSecs), this);
     }
     
     private final ReentrantLock runningLock = new ReentrantLock();

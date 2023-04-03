@@ -2,7 +2,7 @@ package claw.actions;
 
 import claw.rct.network.low.concurrency.Waiter;
 
-public class DelayAction extends Action {
+class DelayAction extends Action {
     
     private final double durationSecs;
     private final Waiter cancelWaiter = new Waiter();
