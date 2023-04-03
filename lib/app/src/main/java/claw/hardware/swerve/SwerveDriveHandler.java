@@ -26,8 +26,7 @@ public class SwerveDriveHandler {
     private final SwerveDrivePoseEstimator poseEstimator;
     
     /**
-     * Create a new {@link SwerveDriveHandler}. Note that {@link #periodicUpdate()} must be called periodically
-     * in order to get accurate pose estimates.
+     * Create a new {@link SwerveDriveHandler}. Note that {@link #periodicUpdate()} must be called periodically.
      * @param initialRobotPose          The robot's initial {@link Pose2d}.
      * @param absoluteRotationSupplier  A {@link Supplier} providing {@link Rotation2d} describing the robot's rotation.
      * <b>This should never reset, and its basis should never change.</b> Counter-clockwise must be positive.
