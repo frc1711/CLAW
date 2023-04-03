@@ -1,7 +1,7 @@
 package claw.actions.compositions;
 
 import claw.actions.compositions.Context.Operation;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 

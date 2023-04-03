@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import claw.actions.compositions.Context;
 import claw.actions.compositions.Context.TerminatedContextException;
 import claw.logs.CLAWLogger;
+import claw.rct.console.ConsoleManager;
 import claw.rct.commands.CommandLineInterpreter;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;

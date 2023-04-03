@@ -2,7 +2,7 @@ package claw.rct.network.messages.commands;
 
 import java.io.Serializable;
 
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.low.ResponseMessage;
 
 /**

@@ -11,7 +11,7 @@ import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 public class RobotErrorLog {
     

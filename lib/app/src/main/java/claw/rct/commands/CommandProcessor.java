@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandLineInterpreter.CommandLineException;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 public class CommandProcessor {
     

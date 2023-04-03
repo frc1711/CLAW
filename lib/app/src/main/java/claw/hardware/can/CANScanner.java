@@ -14,7 +14,7 @@ import claw.hardware.can.CANMessageID.ManufacturerCode;
 import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import edu.wpi.first.hal.can.CANJNI;
 import edu.wpi.first.hal.can.CANMessageNotFoundException;
 import edu.wpi.first.hal.can.CANStatus;

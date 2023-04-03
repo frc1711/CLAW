@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
 import claw.rct.network.messages.commands.CommandInputMessage;

@@ -10,7 +10,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import claw.rct.local.LocalSystem.ConnectionStatus;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 public class LocalConsoleManager implements ConsoleManager {
     

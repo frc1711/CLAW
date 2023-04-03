@@ -7,7 +7,7 @@ import java.util.List;
 import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 /**
  * Represents a system for interpreting {@link RCTCommand}s. Recognized commands can be added via

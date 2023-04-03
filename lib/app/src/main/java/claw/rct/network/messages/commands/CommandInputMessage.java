@@ -1,6 +1,6 @@
 package claw.rct.network.messages.commands;
 
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.messages.commands.CommandOutputMessage.ConsoleManagerRequest;
 

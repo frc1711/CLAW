@@ -7,7 +7,7 @@ import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.local.LocalSystem.ConnectionStatus;
 import claw.rct.local.console.LocalConsoleManager;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server

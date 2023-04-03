@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 
 /**
  * A class allowing for the live updating of fields to be displayed in the console.

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.low.concurrency.KeepaliveWatcher;
 import claw.rct.network.low.concurrency.SignalWaiter;
 import claw.rct.network.low.ResponseMessage;

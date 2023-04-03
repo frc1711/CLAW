@@ -7,7 +7,7 @@ import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.commands.RCTCommand;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.low.DriverStationSocketHandler;
 import claw.rct.network.low.InstructionMessage;
 import claw.rct.network.low.ResponseMessage;

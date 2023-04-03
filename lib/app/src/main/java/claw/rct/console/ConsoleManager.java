@@ -1,4 +1,4 @@
-package claw.rct.network.low;
+package claw.rct.console;
 
 import java.util.ArrayList;
 import java.util.Arrays;

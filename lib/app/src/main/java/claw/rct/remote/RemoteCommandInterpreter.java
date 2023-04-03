@@ -13,7 +13,7 @@ import claw.rct.commands.CommandProcessor;
 import claw.rct.commands.CommandReader;
 import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.subsystems.CLAWSubsystem;
 
 /**
@@ -30,7 +30,8 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             "watch [ --all | --none | log name...]",
             "Use -a or --all to watch all logs. Use -n or --none to watch no logs. " +
             "Use 'watch [name]...' to watch only a set of specific logs.",
-            this::watchCommand);
+            this::watchCommand
+        );
         addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
         addCommandProcessor(DIOReadCommand.DIO_RAW_COMMAND_PROCESSOR);
         addCommandProcessor(CANScanner.CAN_SCAN_COMMAND_PROCESSOR);

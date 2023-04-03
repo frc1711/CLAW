@@ -17,7 +17,7 @@ import claw.rct.commands.CommandProcessor.BadCallException;
 import claw.rct.commands.CommandProcessor.CommandFunction;
 import claw.rct.commands.CommandProcessor.HelpMessage;
 import claw.rct.local.LocalSystem.ConnectionStatus;
-import claw.rct.network.low.ConsoleManager;
+import claw.rct.console.ConsoleManager;
 import claw.rct.network.messages.LogDataMessage.LogData;
 
 /**
