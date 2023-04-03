@@ -12,12 +12,14 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Timer;
 
 /**
  * A class which handles swerve drive kinematics and odometry for easy swerve control and implementation.
  */
-public class SwerveDriveHandler {
+public class SwerveDriveHandler implements Sendable {
     
     private final SwerveDriveKinematics kinematics;
     private final Supplier<Rotation2d> absoluteRotationSupplier;
@@ -226,6 +228,11 @@ public class SwerveDriveHandler {
         return new SubsystemTest[] {
             new ModuleRotationEncoderTest(this)
         };
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("Absolute Robot Rotation (deg)", () -> getAbsoluteRobotRotation().getDegrees(), null);
     }
     
 }

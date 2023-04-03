@@ -4,11 +4,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 
 /**
  * A swerve module which can drive and turn to a given angle.
  */
-public abstract class SwerveModuleBase {
+public abstract class SwerveModuleBase implements Sendable {
     
     private final Translation2d translation;
     private final String identifier;
@@ -122,5 +124,13 @@ public abstract class SwerveModuleBase {
      * any relevant PID loops or filters.
      */
     public abstract void stop ();
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addStringProperty("Identifier", this::getIdentifier, null);
+        builder.addDoubleProperty("Measured Rotation (deg)", () -> getRotation().getDegrees(), null);
+        builder.addDoubleProperty("Measured Displacement (m)", () -> getPosition().distanceMeters, null);
+        builder.addDoubleProperty("Measured Velocity (m/s)", () -> getState().speedMetersPerSecond, null);
+    }
     
 }
