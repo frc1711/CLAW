@@ -66,6 +66,11 @@ public class AdvancedSwerveModule extends SwerveModuleBase {
     }
     
     @Override
+    public double getMaxDriveMotorVoltage () {
+        return RobotController.getBatteryVoltage() * 0.8;
+    }
+    
+    @Override
     public void driveToRawState (SwerveModuleState state) {
         commandDriveMotorToVelocity(state.speedMetersPerSecond);
         commandTurnMotorToSetpoint(state.angle);

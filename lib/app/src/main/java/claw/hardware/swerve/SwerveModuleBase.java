@@ -74,6 +74,12 @@ public abstract class SwerveModuleBase implements Sendable {
     public abstract void driveToRawState (SwerveModuleState state);
     
     /**
+     * Get the maximum allowable voltage (positive) to use with {@link #setDriveMotorVoltage(double)}.
+     * @return  The maximum allowable drive motor voltage.
+     */
+    public abstract double getMaxDriveMotorVoltage ();
+    
+    /**
      * Set the drive motor's voltage. This is used by automatically generated subsystem tests.
      * @param voltage   The signed voltage to set the drive motor to.
      */

@@ -1,8 +1,26 @@
 package claw.rct.console;
 
+import java.util.Optional;
+
 import claw.actions.compositions.Context.TerminatedContextException;
 
 public class ConsoleUtils {
+    
+    public static double getDoubleValue (ConsoleManager console, String prompt, double minValue, double maxValue) throws TerminatedContextException {
+        Optional<Double> answerValue = Optional.empty();
+        console.println("");
+        while (answerValue.isEmpty()) {
+            String answer = getPromptAnswer(console, prompt, true);
+            try {
+                double val = Double.parseDouble(answer);
+                if (val >= minValue && val <= maxValue) {
+                    answerValue = Optional.of(val);
+                }
+            } catch (NumberFormatException e) { }
+        }
+        
+        return answerValue.get();
+    }
     
     public static void pressKeyToContinue (ConsoleManager console, String prompt) throws TerminatedContextException {
         console.print("\n"+prompt);
@@ -24,13 +42,24 @@ public class ConsoleUtils {
         int match = -1;
         console.println("");
         while (match == -1) {
-            console.moveUp(1);
-            console.clearLine();
-            console.print(prompt);
-            match = getStringMatch(console.readInputLine(), caseSensitive, possibleAnswers);
+            match = getStringMatch(
+                getPromptAnswer(console, prompt, true),
+                caseSensitive,
+                possibleAnswers
+            );
         }
         
         return match;
+    }
+    
+    private static String getPromptAnswer (ConsoleManager console, String prompt, boolean clearAboveLine) throws TerminatedContextException {
+        if (clearAboveLine) {
+            console.moveUp(1);
+            console.clearLine();
+        }
+        
+        console.print(prompt);
+        return console.readInputLine();
     }
     
     private static int getStringMatch (String input, boolean caseSensitive, String... possibleAnswers) {
