@@ -1,9 +1,10 @@
 package claw.hardware.swerve.tests;
 
-import java.io.Console;
-
 import claw.LiveValues;
+import claw.actions.Action;
 import claw.actions.FunctionalCommand;
+import claw.actions.compositions.SubsystemTestCompositionContext;
+import claw.actions.compositions.Context.TerminatedContextException;
 import claw.hardware.swerve.SwerveDriveHandler;
 import claw.hardware.swerve.SwerveModuleBase;
 import claw.math.LinearInterpolator;
@@ -26,73 +27,123 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
             "(whether they use a drive motor feedforward and PID loop) basic module functionality.",
             TestCommandSupplier.fromComposition(ctx -> {
                 
-                for (SwerveModuleBase module : swerveDrive.getModules()) {
-                    
-                    double speedProp = ConsoleUtils.getDoubleValue(
-                        ctx.console,
-                        "What proportion of max speed should the module drive at? [0.01, 1] ",
-                        0.01,
-                        1
-                    );
-                    
-                    double duration = ConsoleUtils.getDoubleValue(
-                        ctx.console,
-                        "How long should the test run for, in seconds? [5, 120] ",
-                        5,
-                        120
-                    );
-                    
-                    double diameterInches = ConsoleUtils.getDoubleValue(
-                        ctx.console,
-                        "What is the diameter of the module wheel, in inches? ",
-                        1, 40
-                    );
-                    
-                    double circumferenceMeters = Units.inchesToMeters(diameterInches) * Math.PI;
-                    ctx.console.println("The wheel has a circumference of " + circumferenceMeters + " meters.");
-                    
-                    ctx.console.println("Prepare to count rotations on module: " + module.getIdentifier());
-                    ConsoleUtils.pressKeyToContinue(ctx.console);
-                    
-                    double measuredMetersTraveled = ctx.runLiveValuesGet(
-                        liveValues -> new CountModuleRotations(module, ctx.subsystem, liveValues, duration, speedProp)
-                    );
-                    
-                    double rotationsCounter = ConsoleUtils.getDoubleValue(
-                        ctx.console,
-                        "How many rotations of the module did you count? ",
-                        0.1,
-                        10000
-                    );
-                    
-                    double actualMetersTraveled = rotationsCounter * circumferenceMeters;
-                    ctx.console.println("Actual travel distance (meters):   " + actualMetersTraveled);
-                    ctx.console.println("Measured travel distance (meters): " + measuredMetersTraveled);
-                    
-                    if (measuredMetersTraveled != 0) {
-                        
-                        // actual = C * measured
-                        // C = actual / measured
-                        double proportionScale = actualMetersTraveled / measuredMetersTraveled;
-                        ctx.console.println(ConsoleManager.formatMessage(
-                            "By this estimate, to improve the accuracy of the measured distance, you must multiply " +
-                            "the measurement by: "
-                        ));
-                        
-                        ctx.console.println(""+proportionScale);
-                        ctx.console.println(ConsoleManager.formatMessage(
-                            "Note that this measurement is an approximation, and to get a better measurement, you will have " +
-                            "to test swerve drive on the ground."
-                        ));
-                        
-                    } else {
-                        ctx.console.printlnErr("There must be something wrong, because getPosition() didn't measure any travel distance.");
-                    }
-                    
+                int operationChoice = ConsoleUtils.getStringAnswer(
+                    ctx.console,
+                    "Run the drive test (drive) or count test (count)? ",
+                    false,
+                    "drive",
+                    "count"
+                );
+                
+                if (operationChoice == 0) {
+                    runDriveTest(ctx, swerveDrive);
+                } else {
+                    runCountTest(ctx, swerveDrive);
                 }
                 
             })
         );
+    }
+    
+    private static void runDriveTest (
+        SubsystemTestCompositionContext<?> ctx,
+        SwerveDriveHandler swerveDrive
+    ) throws TerminatedContextException {
+        
+        ctx.console.println("Set the robot on the ground so the swerve drive can drive as it would in a match.");
+        ctx.console.println("When you continue, the modules will rotate to all face in one direction.");
+        if (!ConsoleUtils.getYesNo(ctx.console, "Continue? ")) return;
+        
+        
+        
+        ctx.console.println("How far ");
+        
+    }
+    
+    private static class TurnModulesForward extends CommandBase {
+        
+        public TurnModulesForward () {
+            
+        }
+        
+    }
+    
+    private static void runCountTest (
+        SubsystemTestCompositionContext<?> ctx,
+        SwerveDriveHandler swerveDrive
+    ) throws TerminatedContextException {
+        
+        ctx.console.println("Prop up the robot so that the modules can drive freely, without resistance.");
+        ConsoleUtils.pressKeyToContinue(ctx.console);
+        
+        for (SwerveModuleBase module : swerveDrive.getModules()) {
+            
+            double speedProp = ConsoleUtils.getDoubleValue(
+                ctx.console,
+                "What proportion of max speed should the module drive at? [0.01, 1] ",
+                0.01,
+                1
+            );
+            
+            double duration = ConsoleUtils.getDoubleValue(
+                ctx.console,
+                "How long should the test run for, in seconds? [5, 120] ",
+                5,
+                120
+            );
+            
+            double diameterInches = ConsoleUtils.getDoubleValue(
+                ctx.console,
+                "What is the diameter of the module wheel, in inches? ",
+                1, 40
+            );
+            
+            double circumferenceMeters = Units.inchesToMeters(diameterInches) * Math.PI;
+            ctx.console.println("The wheel has a circumference of " + circumferenceMeters + " meters.");
+            
+            ctx.console.println("Prepare to count rotations on module: " + module.getIdentifier());
+            if (!ConsoleUtils.getYesNo(ctx.console, "Continue? ")) return;
+            
+            ConsoleUtils.pressKeyToContinue(ctx.console);
+            
+            double measuredMetersTraveled = ctx.runLiveValuesGet(
+                liveValues -> new CountModuleRotations(module, ctx.subsystem, liveValues, duration, speedProp)
+            );
+            
+            double rotationsCounter = ConsoleUtils.getDoubleValue(
+                ctx.console,
+                "How many rotations of the module did you count? ",
+                0.1,
+                10000
+            );
+            
+            double actualMetersTraveled = rotationsCounter * circumferenceMeters;
+            ctx.console.println("Actual travel distance (meters):   " + actualMetersTraveled);
+            ctx.console.println("Measured travel distance (meters): " + measuredMetersTraveled);
+            
+            if (measuredMetersTraveled != 0) {
+                
+                // actual = C * measured
+                // C = actual / measured
+                double proportionScale = actualMetersTraveled / measuredMetersTraveled;
+                ctx.console.println(ConsoleManager.formatMessage(
+                    "By this estimate, to improve the accuracy of the measured distance, you must multiply " +
+                    "the measurement by: "
+                ));
+                
+                ctx.console.println(""+proportionScale);
+                ctx.console.println(ConsoleManager.formatMessage(
+                    "Note that this measurement is an approximation, and to get a better measurement, you will have " +
+                    "to test swerve drive on the ground."
+                ));
+                
+            } else {
+                ctx.console.printlnErr("There must be something wrong, because getPosition() didn't measure any travel distance.");
+            }
+            
+            ctx.console.println("\n");
+            
+        }
     }
     
     private static class CountModuleRotations extends CommandBase implements FunctionalCommand<Double> {
