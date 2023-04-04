@@ -62,7 +62,7 @@ public class VectorVelocityLimiter <N extends Num> {
         double deltaTime = newTimestamp - lastTimestamp;
         
         // Get the desired vector delta and the velocity corresponding to that delta
-        Vector<N> desiredVectorDelta = vectorValue.subtract(inputVector);
+        Vector<N> desiredVectorDelta = inputVector.subtract(vectorValue);
         double desiredVelocity = desiredVectorDelta.getMagnitude() / deltaTime;
         
         // If the desired velocity is higher than the max velocity, scale the desired vector delta

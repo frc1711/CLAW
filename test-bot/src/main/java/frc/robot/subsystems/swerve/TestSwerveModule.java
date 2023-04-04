@@ -53,6 +53,11 @@ public class TestSwerveModule extends SwerveModuleBase {
     public void setTurnMotorVoltage(double voltage) {
         turnMotorVoltage = voltage;
     }
+    
+    @Override
+    public double getMaxDriveMotorVoltage () {
+        return 8;
+    }
 
     @Override
     public SwerveModulePosition getPosition() {

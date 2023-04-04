@@ -1,20 +1,18 @@
 package frc.robot.subsystems;
 
-import java.nio.channels.AsynchronousServerSocketChannel;
-
-import claw.hardware.swerve.SwerveDriveHandler;
-import claw.hardware.swerve.SwerveModuleBase;
+import claw.math.Vector;
+import claw.math.VectorVelocityLimiter;
+import claw.math.input.RaptorsXboxController;
 import claw.subsystems.CLAWSubsystem;
 import claw.subsystems.SubsystemTest;
 import claw.subsystems.SubsystemTest.TestCommandSupplier;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 
 public class TestSubsystem extends CLAWSubsystem {
+    
+    private final RaptorsXboxController controller = new RaptorsXboxController(0);
+    private final VectorVelocityLimiter<N2> filter = new VectorVelocityLimiter<>(Vector.from(0, 0), 1);
     
     public TestSubsystem () {
         addTests(new SubsystemTest(
@@ -32,6 +30,18 @@ public class TestSubsystem extends CLAWSubsystem {
     @Override
     public void stop () {
         
+    }
+    
+    int i = 0;
+    
+    @Override
+    public void periodic () {
+        Vector<N2> filteredVector = filter.calculate(controller.getLeftStickAsVector());
+        if (i % 5 == 0) {
+            // System.out.println(filteredVector);
+        }
+        
+        i ++;
     }
     
 }
