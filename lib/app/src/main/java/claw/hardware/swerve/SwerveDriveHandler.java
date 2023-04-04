@@ -29,6 +29,8 @@ public class SwerveDriveHandler implements Sendable {
     private final Translation2d[] moduleTranslations;
     private final SwerveDrivePoseEstimator poseEstimator;
     
+    private Rotation2d fieldRelRotationOffset = new Rotation2d();
+    
     /**
      * Create a new {@link SwerveDriveHandler}. Note that {@link #periodicUpdate()} must be called periodically.
      * @param initialRobotPose          The robot's initial {@link Pose2d}.
@@ -58,18 +60,10 @@ public class SwerveDriveHandler implements Sendable {
         // Get the pose estimator
         poseEstimator = new SwerveDrivePoseEstimator(
             kinematics,
-            getAbsoluteRobotRotation(),
+            getRobotRotation(),
             getModulePositions(),
             initialRobotPose
         );
-    }
-    
-    /**
-     * Gets the robot's yaw rotation (counter-clockwise positive).
-     * @return  The robot's rotation.
-     */
-    public Rotation2d getAbsoluteRobotRotation () {
-        return absoluteRotationSupplier.get();
     }
     
     /**
@@ -178,12 +172,47 @@ public class SwerveDriveHandler implements Sendable {
     }
     
     /**
-     * Reset the estimated robot pose. To correct with vision-estimated pose, use
-     * {@link #addVisionPoseEstimate(Pose2d)} instead.
+     * Gets the robot's rotation on the field (CCW+). This may only be reset with {@link #resetPose(Pose2d)}.
+     * This rotation will necessarily match the robot's estimated pose, and is the ultimate source of truth
+     * as to the direction the robot is facing on the field.
+     * @return The robot's field rotation.
+     */
+    public Rotation2d getRobotRotation () {
+        return absoluteRotationSupplier.get().plus(fieldRelRotationOffset);
+    }
+    
+    /**
+     * Reset the estimated robot pose, along with {@link #getRobotRotation()}. To correct with vision-estimated
+     * pose, use {@link #addVisionPoseEstimate(Pose2d)} instead. Use this method with caution, as systems relying
+     * on the robot's rotation will have to adjust.
      * @param newPose           The new robot {@link Pose2d}.
      */
-    public void resetPoseEstimation (Pose2d newPose) {
-        poseEstimator.resetPosition(getAbsoluteRobotRotation(), getModulePositions(), newPose);
+    public void resetPose (Pose2d newPose) {
+        // Reset the fieldRelRotationOffset so getRobotRotation() will read the new pose's offset
+        fieldRelRotationOffset = newPose.getRotation().minus(absoluteRotationSupplier.get());
+        
+        // Reset the pose estimator according to the new robot rotation and pose
+        poseEstimator.resetPosition(getRobotRotation(), getModulePositions(), newPose);
+    }
+    
+    /**
+     * Convert field-relative {@link ChassisSpeeds} to robot-relative speeds, according to the current
+     * robot rotation as measured by {@link #getRobotRotation()}.
+     * @param fieldRelSpeeds    Field-relative speeds.
+     * @return                  Robot-relative speeds.
+     */
+    public ChassisSpeeds toRobotRelativeSpeeds (ChassisSpeeds fieldRelSpeeds) {
+        return ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelSpeeds, getRobotRotation());
+    }
+    
+    /**
+     * Convert robot-relative {@link ChassisSpeeds} to field-relative speeds, according to the current
+     * robot rotation as measured by {@link #getRobotRotation()}.
+     * @param robotRelSpeeds    Robot-relative speeds.
+     * @return                  Field-relative speeds.
+     */
+    public ChassisSpeeds toFieldRelativeSpeeds (ChassisSpeeds robotRelSpeeds) {
+        return ChassisSpeeds.fromFieldRelativeSpeeds(robotRelSpeeds, getRobotRotation().unaryMinus());
     }
     
     /**
@@ -219,7 +248,7 @@ public class SwerveDriveHandler implements Sendable {
      */
     public void periodicUpdate () {
         // Update the pose estimator
-        poseEstimator.update(getAbsoluteRobotRotation(), getModulePositions());
+        poseEstimator.update(getRobotRotation(), getModulePositions());
     }
     
     /**
@@ -236,7 +265,7 @@ public class SwerveDriveHandler implements Sendable {
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        builder.addDoubleProperty("Absolute Robot Rotation (deg)", () -> getAbsoluteRobotRotation().getDegrees(), null);
+        builder.addDoubleProperty("Field Robot Rotation (deg)", () -> getRobotRotation().getDegrees(), null);
     }
     
 }

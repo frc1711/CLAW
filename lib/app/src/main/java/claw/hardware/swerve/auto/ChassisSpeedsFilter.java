@@ -25,6 +25,8 @@ public class ChassisSpeedsFilter {
      */
     private final VectorVelocityLimiter<N2> driveAccelerationLimiter;
     
+    private ChassisSpeeds lastCommandedSpeeds;
+    
     /**
      * Create a new {@link ChassisSpeedsFilter} for a particular swerve drive with a set of motion constraints.
      * @param swerveDrive   The {@link SwerveDriveHandler} on which the chassis speeds are filtered.
@@ -64,11 +66,13 @@ public class ChassisSpeedsFilter {
         driveAccelerationLimiter.reset(
             getFieldRelVelocityFromRobotRelSpeeds(robotRelSpeeds)
         );
+        
+        lastCommandedSpeeds = robotRelSpeeds;
     }
     
     /**
      * Calculate output {@link ChassisSpeeds} from the desired speeds, according to the
-     * {@link SwerveMotionConstraints} (limiting velocity, acceleration, etc.).
+     * {@link SwerveMotionConstraints} (limiting velocity, acceleration, etc.). <b>This input must be robot-relative</b>.
      * @param desiredRobotRelSpeeds The desired robot-relative speeds.
      * @return                      The given speeds, adjusted to fit the motion constraints.
      */
@@ -83,11 +87,20 @@ public class ChassisSpeedsFilter {
         );
         
         // Convert rotation speed and field relative velocity into robot relative speeds
-        return getRobotRelSpeedsFromFieldRelVelocity(
+        lastCommandedSpeeds = getRobotRelSpeedsFromFieldRelVelocity(
             outputFieldRelVelocity,
             outputRotationSpeed
         );
         
+        return lastCommandedSpeeds;
+    }
+    
+    /**
+     * Get the last {@link ChassisSpeeds} outputted by the filter, or whatever the filter was reset to.
+     * @return  The last speeds outputted by the filter.
+     */
+    public ChassisSpeeds getLastSpeeds () {
+        return lastCommandedSpeeds;
     }
     
     /**
@@ -123,7 +136,7 @@ public class ChassisSpeedsFilter {
                 robotRelSpeeds.vxMetersPerSecond,
                 robotRelSpeeds.vyMetersPerSecond
             ),
-            swerveDrive.getAbsoluteRobotRotation()
+            swerveDrive.getRobotRotation()
         );
     }
     
@@ -134,7 +147,7 @@ public class ChassisSpeedsFilter {
     private ChassisSpeeds getRobotRelSpeedsFromFieldRelVelocity (Vector<N2> fieldRelVelocity, double rotationSpeed) {
         Vector<N2> robotRelVelocity = Vector.rotateBy(
             fieldRelVelocity,
-            swerveDrive.getAbsoluteRobotRotation().unaryMinus()
+            swerveDrive.getRobotRotation().unaryMinus()
         );
         
         return new ChassisSpeeds(

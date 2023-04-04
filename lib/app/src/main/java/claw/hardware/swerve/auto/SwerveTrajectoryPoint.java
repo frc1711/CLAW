@@ -2,7 +2,10 @@ package claw.hardware.swerve.auto;
 
 import claw.math.Vector;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 
 public class SwerveTrajectoryPoint implements Interpolatable<SwerveTrajectoryPoint> {
@@ -20,6 +23,22 @@ public class SwerveTrajectoryPoint implements Interpolatable<SwerveTrajectoryPoi
         this.angleRadians = angleRadians;
         this.velocityMetersPerSec = velocityMetersPerSec;
         this.angularVelocityRadiansPerSec = angularVelocityRadiansPerSec;
+    }
+    
+    public ChassisSpeeds getDesiredFieldRelativeSpeeds () {
+        return new ChassisSpeeds(
+            velocityMetersPerSec.getX(),
+            velocityMetersPerSec.getY(),
+            angularVelocityRadiansPerSec
+        );
+    }
+    
+    public Pose2d getDesiredPose () {
+        return new Pose2d(
+            positionMeters.getX(),
+            positionMeters.getY(),
+            new Rotation2d(angleRadians)
+        );
     }
     
     @Override

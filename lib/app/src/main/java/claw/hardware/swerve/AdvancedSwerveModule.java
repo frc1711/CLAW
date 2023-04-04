@@ -62,12 +62,12 @@ public class AdvancedSwerveModule extends SwerveModuleBase {
     
     @Override
     public double getMaxTurnMotorVoltage () {
-        return RobotController.getBatteryVoltage() * 0.8;
+        return RobotController.getBatteryVoltage();
     }
     
     @Override
     public double getMaxDriveMotorVoltage () {
-        return RobotController.getBatteryVoltage() * 0.8;
+        return RobotController.getBatteryVoltage();
     }
     
     @Override

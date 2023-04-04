@@ -14,6 +14,11 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
  */
 public class SimpleLinearTrajectory implements SwerveTrajectory {
     
+    /**
+     * driveProfile describes position and velocity along the diagonal from the initial translation to the final translation,
+     * as described by driveInitialOffset and driveDirection. rotationProfile describes angle and angular velocity relative
+     * to the rotationInitialOffset
+     */
     private final MotionProfileWrapper driveProfile, rotationProfile;
     
     private final Vector<N2> driveInitialOffset;
@@ -30,17 +35,55 @@ public class SimpleLinearTrajectory implements SwerveTrajectory {
      * @param constraints   The {@link SwerveMotionConstraints} to impose on the trajectory.
      */
     public SimpleLinearTrajectory (Pose2d initialPose, Pose2d finalPose, SwerveMotionConstraints constraints) {
+        this(initialPose, finalPose, 0, 0, 0, 0, constraints);
+    }
+    
+    /**
+     * Creates a new {@link SimpleLinearTrajectory} with non-zero initial and final velocities. This is not recommended,
+     * as it assumes the initial and final linear velocities are both pointed along the line formed from the initial
+     * and final poses.
+     * @param initialPose                           The initial {@link Pose2d} of the robot.
+     * @param finalPose                             The final robot pose.
+     * @param initialLinearVelocityMetersPerSec     The initial velocity of the robot, assumed to be pointing
+     * in the direction of the final pose, in meters per second.
+     * @param initialAngularVelocityRadiansPerSec   The initial CCW+ angular velocity of the robot, measured in
+     * radians per second.
+     * @param finalLinearVelocityMetersPerSec       The final velocity of the robot, assumed to be pointing
+     * in the same direction as the initial linear velocity.
+     * @param finalAngularVelocityRadiansPerSec     The final CCW+ angular velocity of the robot, measured in
+     * radians per second.
+     * @param constraints                           The {@link SwerveMotionConstraints} to apply to the trajectory.
+     */
+    public SimpleLinearTrajectory (
+        Pose2d initialPose,
+        Pose2d finalPose,
+        double initialLinearVelocityMetersPerSec,
+        double initialAngularVelocityRadiansPerSec,
+        double finalLinearVelocityMetersPerSec,
+        double finalAngularVelocityRadiansPerSec,
+        SwerveMotionConstraints constraints
+    ) {
         
         // Get the total translation driven between the initial and final poses
         Translation2d totalDriveTranslation = finalPose.getTranslation().minus(initialPose.getTranslation());
         
         // A translational TrapezoidProfile along the diagonal from initialPose to finalPose
         var driveProfileUnadjusted = new TrapezoidProfile(
-            new TrapezoidProfile.Constraints(constraints.maxDriveSpeed, constraints.maxDriveAcceleration),
-            
             // State describes the distance along the diagonal translation so we can apply maxDriveSpeed
             // and maxDriveAcceleration to the actual euclidean distances driven
-            new TrapezoidProfile.State(totalDriveTranslation.getNorm(), 0)
+            new TrapezoidProfile.Constraints(constraints.maxDriveSpeed, constraints.maxDriveAcceleration),
+            
+            // Goal state:
+            new TrapezoidProfile.State(
+                totalDriveTranslation.getNorm(),    // Final distance traveled, described by translation
+                finalLinearVelocityMetersPerSec     // Final linear velocity
+            ),
+            
+            // Initial state:
+            new TrapezoidProfile.State(
+                0,                                  // Initial distance is zero
+                initialLinearVelocityMetersPerSec   // Initial linear velocity
+            )
         );
         
         // Set the drive offset and direction
@@ -56,15 +99,31 @@ public class SimpleLinearTrajectory implements SwerveTrajectory {
         // A rotational TrapezoidProfile from the initialPose's rotation to finalPose
         var rotationProfileUnadjusted = new TrapezoidProfile(
             new TrapezoidProfile.Constraints(constraints.maxRotationSpeed, constraints.maxRotationAcceleration),
-            new TrapezoidProfile.State(radiansToTravel, 0)
+            
+            // Goal state:
+            new TrapezoidProfile.State(
+                radiansToTravel,                    // Final anglular displacement
+                finalAngularVelocityRadiansPerSec   // Final angular velocity
+            ),
+            
+            // Initial state:
+            new TrapezoidProfile.State(
+                0,                                  // Initial angular displacement is zero
+                initialAngularVelocityRadiansPerSec // Initial angular velocity
+            )
         );
         
         // Set the rotation offset
         rotationInitialOffset = initialPose.getRotation().getRadians();
         
         // Set the drive and rotation profile, adjusting so they take the same amount of time
-        driveProfile = scaleToLongerProfile(driveProfileUnadjusted, rotationProfileUnadjusted);
-        rotationProfile = scaleToLongerProfile(rotationProfileUnadjusted, driveProfileUnadjusted);
+        
+        // TODO: Uncomment below if scaling the shorter profile to the longer one is really necessary
+        driveProfile = MotionProfileWrapper.fromTrapezoidProfile(driveProfileUnadjusted);
+        // driveProfile = scaleToLongerProfile(driveProfileUnadjusted, rotationProfileUnadjusted);
+        rotationProfile = MotionProfileWrapper.fromTrapezoidProfile(rotationProfileUnadjusted);
+        // rotationProfile = scaleToLongerProfile(rotationProfileUnadjusted, driveProfileUnadjusted);
+        
         totalDuration = Math.max(driveProfileUnadjusted.totalTime(), rotationProfileUnadjusted.totalTime());
         
     }
@@ -75,7 +134,7 @@ public class SimpleLinearTrajectory implements SwerveTrajectory {
      * 
      * This is useful for scaling two concurrent trapezoid profiles so they end up taking the same amount of time.
      * 
-     * Note: This can only scale properly if the initial and final velocities of the profile are zero
+     * NOTE: This can only scale properly if the initial and final velocities of the profile are zero
      */
     private static MotionProfileWrapper scaleToLongerProfile (TrapezoidProfile profileToScale, TrapezoidProfile other) {
         

@@ -93,7 +93,7 @@ public class SwerveTeleopController {
      */
     public Rotation2d getTeleopRotation () {
         // Rt = Ra - Rz
-        return swerveDrive.getAbsoluteRobotRotation().minus(teleopZeroRotationOffset);
+        return swerveDrive.getRobotRotation().minus(teleopZeroRotationOffset);
     }
     
     /**
@@ -105,7 +105,7 @@ public class SwerveTeleopController {
      */
     public void setCurrentTeleopRotation (Rotation2d teleopRotation) {
         // Rz = Ra - Rt
-        teleopZeroRotationOffset = swerveDrive.getAbsoluteRobotRotation().minus(teleopRotation);
+        teleopZeroRotationOffset = swerveDrive.getRobotRotation().minus(teleopRotation);
     }
     
 }
