@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 public class ModuleUniformCommandTest extends SubsystemTest {
     
@@ -44,10 +45,17 @@ public class ModuleUniformCommandTest extends SubsystemTest {
                     ctx.run(new RunTestRotationCommand(swerveDrive, ctx.subsystem, test));
                 }
                 
+                ctx.run(new StopSwerveDriveCommand(swerveDrive, ctx.subsystem));
+                
             })
         );
     }
     
+    private static class StopSwerveDriveCommand extends InstantCommand {
+        public StopSwerveDriveCommand (SwerveDriveHandler swerveDrive, CLAWSubsystem subsystem) {
+            super(swerveDrive::stop, subsystem);
+        }
+    }
     private static class RunTestRotationCommand extends CommandBase {
         
         private static final double DURATION = 5;
@@ -64,7 +72,6 @@ public class ModuleUniformCommandTest extends SubsystemTest {
         
         @Override
         public void initialize () {
-            swerveDrive.stop();
             timer.reset();
             timer.start();
         }
@@ -78,11 +85,6 @@ public class ModuleUniformCommandTest extends SubsystemTest {
             for (SwerveModuleBase module : swerveDrive.getModules()) {
                 module.driveToStateOptimize(desiredState, true);
             }
-        }
-        
-        @Override
-        public void end (boolean interrupted) {
-            swerveDrive.stop();
         }
         
         @Override
