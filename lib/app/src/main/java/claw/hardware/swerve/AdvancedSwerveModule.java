@@ -106,7 +106,7 @@ public class AdvancedSwerveModule extends SwerveModuleBase {
     }
     
     private void commandTurnMotorToSetpoint (Rotation2d desiredRotation) {
-        double desiredOffsetRadians = MathUtil.interpolate(-180, 180,
+        double desiredOffsetRadians = MathUtil.interpolate(-Math.PI, Math.PI,
             desiredRotation.minus(getRotation()).getRadians()
         );
         
