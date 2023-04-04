@@ -59,7 +59,7 @@ public class ConsoleUtils {
         }
         
         console.print(prompt);
-        return console.readInputLine();
+        return console.readInputLine().strip();
     }
     
     private static int getStringMatch (String input, boolean caseSensitive, String... possibleAnswers) {
