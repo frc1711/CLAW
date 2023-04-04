@@ -1,7 +1,6 @@
 package claw.hardware.swerve.tests;
 
 import claw.LiveValues;
-import claw.actions.Action;
 import claw.actions.FunctionalCommand;
 import claw.actions.compositions.SubsystemTestCompositionContext;
 import claw.actions.compositions.Context.TerminatedContextException;
@@ -58,12 +57,12 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
         if (!ConsoleUtils.getYesNo(ctx.console, "Continue? ")) return;
         
         // Run the TurnModulesForward command with a deadline (cannot use WPILib .withTimeout() because this leads to)
-        ctx.runAction(Action.fromCommand(new TurnModulesForward(swerveDrive, ctx.subsystem)).withTimeout(2));
+        ctx.run(new TurnModulesForward(swerveDrive, ctx.subsystem));
         
         double durationSecs = ConsoleUtils.getDoubleValue(
             ctx.console,
             "How long should swerve drive run for? (secs) ",
-            2, 10
+            1, 10
         );
         
         ctx.console.println(ConsoleManager.formatMessage(
@@ -119,7 +118,7 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
     
     private static class DriveSwerveForward extends CommandBase implements FunctionalCommand<double[]> {
         
-        private static final double RAMP_TIME = 1.5;
+        private static final double RAMP_TIME = 0.5;
         
         private final Timer timer = new Timer();
         private final SwerveDriveHandler swerveDrive;
@@ -193,7 +192,7 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
             double[] currentDistances = getModuleDistances();
             double[] diffs = new double[currentDistances.length];
             for (int i = 0; i < diffs.length; i ++) {
-                diffs[i] = currentDistances[i] - initialDistances[i];
+                diffs[i] = Math.abs(currentDistances[i] - initialDistances[i]);
             }
             
             return diffs;
@@ -214,6 +213,7 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
     private static class TurnModulesForward extends CommandBase {
         
         private final SwerveDriveHandler swerveDrive;
+        private final Timer timer = new Timer();
         
         public TurnModulesForward (SwerveDriveHandler swerveDrive, CLAWSubsystem subsystem) {
             this.swerveDrive = swerveDrive;
@@ -223,6 +223,8 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
         @Override
         public void initialize () {
             swerveDrive.stop();
+            timer.reset();
+            timer.start();
         }
         
         @Override
@@ -235,6 +237,11 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
         @Override
         public void end (boolean interrupted) {
             swerveDrive.stop();
+        }
+        
+        @Override
+        public boolean isFinished () {
+            return timer.hasElapsed(5);
         }
         
     }
