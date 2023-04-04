@@ -2,7 +2,9 @@ package claw.hardware.swerve;
 
 import java.util.function.Supplier;
 
+import claw.hardware.swerve.tests.ModuleDriveEncoderTest;
 import claw.hardware.swerve.tests.ModuleRotationEncoderTest;
+import claw.hardware.swerve.tests.ModuleUniformCommandTest;
 import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -226,7 +228,9 @@ public class SwerveDriveHandler implements Sendable {
      */
     public SubsystemTest[] generateSubsystemTests () {
         return new SubsystemTest[] {
-            new ModuleRotationEncoderTest(this)
+            new ModuleRotationEncoderTest(this),
+            new ModuleDriveEncoderTest(this),
+            new ModuleUniformCommandTest(this)
         };
     }
     
