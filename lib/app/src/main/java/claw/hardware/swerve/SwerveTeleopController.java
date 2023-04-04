@@ -36,6 +36,22 @@ public class SwerveTeleopController {
     }
     
     /**
+     * Perform robot-relative driving, with an offset rotation. This is useful for allowing the robot to drive
+     * relative to a camera on the robot which isn't pointed forwards.
+     * @param desiredSpeeds     The robot-relative {@link ChassisSpeeds} which swerve will attempt
+     * to drive to, after applying motion constraints.
+     * @param rotationOffset    The offset robot-relative rotation which controls the relative direction of
+     * the inputted speeds. For example, if {@code rotationOffset} is equivalent to pi/2 radians, the chassis
+     * speeds will be relative to the left side of the robot.
+     */
+    public void driveRobotRelative (ChassisSpeeds desiredSpeeds, Rotation2d rotationOffset) {
+        driveRobotRelative(ChassisSpeeds.fromFieldRelativeSpeeds(
+            desiredSpeeds,
+            rotationOffset.unaryMinus()
+        ));
+    }
+    
+    /**
      * Perform field-relative driving.
      * @param desiredSpeeds The field-relative {@link ChassisSpeeds} which swerve will attempt
      * to drive to, after applying motion constraints.
