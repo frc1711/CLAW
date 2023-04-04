@@ -1,7 +1,7 @@
 package claw.hardware.swerve;
 
 import claw.hardware.swerve.auto.SwerveMotionConstraints;
-import claw.hardware.swerve.auto.SwerveMotionConstraints.ChassisSpeedsFilter;
+import claw.hardware.swerve.auto.ChassisSpeedsFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
@@ -23,7 +23,7 @@ public class SwerveTeleopController {
      */
     public SwerveTeleopController (SwerveDriveHandler swerveDrive, SwerveMotionConstraints motionConstraints) {
         this.swerveDrive = swerveDrive;
-        speedsFilter = motionConstraints.getSpeedsFilter();
+        speedsFilter = new ChassisSpeedsFilter(swerveDrive, motionConstraints, new ChassisSpeeds());
     }
     
     /**
