@@ -89,16 +89,16 @@ public class ModuleRotationEncoderTest extends SubsystemTest {
             this.module = module;
             addRequirements(subsystem);
             
-            double maxModuleVoltage = Math.abs(module.getMaxTurnMotorVoltage());
+            double moduleVoltage = Math.abs(module.getMaxTurnMotorVoltage()) * 0.2;
             
             timeToVoltage = new LinearInterpolator(
                 0,                  0,
-                MAX_SPEED_START,    maxModuleVoltage,
-                MAX_SPEED_END,      maxModuleVoltage,
+                MAX_SPEED_START,    moduleVoltage,
+                MAX_SPEED_END,      moduleVoltage,
                 TOTAL_DURATION,     0
-            ).then(Transform.clamp(0, maxModuleVoltage));
+            ).then(Transform.clamp(0, moduleVoltage));
             
-            analyzer = new ModuleAnalyzer(module, maxModuleVoltage);
+            analyzer = new ModuleAnalyzer(module, moduleVoltage);
         }
         
         @Override
@@ -206,9 +206,9 @@ public class ModuleRotationEncoderTest extends SubsystemTest {
                 // Less than an average of 2 degrees/sec speed
                 correlation = TurnVoltageCorrelation.NO_SIGNIFICANT_MEASUREMENT;
                 
-            } else if (8*stddev > Math.abs(mean)) {
+            } else if (3*stddev > Math.abs(mean)) {
                 
-                // A reading with a different sign than the mean is within 8 standard deviations of the mean
+                // A reading with a different sign than the mean is within 3 standard deviations of the mean
                 // (i.e. there is a possibility that the encoder will indicate the module is turning in the entirely
                 // wrong direction)
                 correlation = TurnVoltageCorrelation.ERRATIC_MEASUREMENT;
