@@ -43,6 +43,8 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
                     runCountTest(ctx, swerveDrive);
                 }
                 
+                // TODO: Include running a test to ensure the derivative of the drive position roughly matches the drive velocity
+                
             })
         );
     }
@@ -192,6 +194,7 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
             double[] currentDistances = getModuleDistances();
             double[] diffs = new double[currentDistances.length];
             for (int i = 0; i < diffs.length; i ++) {
+                // TODO: Use signed displacement
                 diffs[i] = Math.abs(currentDistances[i] - initialDistances[i]);
             }
             
@@ -206,42 +209,6 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
             }
             
             return distances;
-        }
-        
-    }
-    
-    private static class TurnModulesForward extends CommandBase {
-        
-        private final SwerveDriveHandler swerveDrive;
-        private final Timer timer = new Timer();
-        
-        public TurnModulesForward (SwerveDriveHandler swerveDrive, CLAWSubsystem subsystem) {
-            this.swerveDrive = swerveDrive;
-            addRequirements(subsystem);
-        }
-        
-        @Override
-        public void initialize () {
-            swerveDrive.stop();
-            timer.reset();
-            timer.start();
-        }
-        
-        @Override
-        public void execute () {
-            for (SwerveModuleBase module : swerveDrive.getModules()) {
-                module.driveToStateOptimize(new SwerveModuleState(0, new Rotation2d()), true);
-            }
-        }
-        
-        @Override
-        public void end (boolean interrupted) {
-            swerveDrive.stop();
-        }
-        
-        @Override
-        public boolean isFinished () {
-            return timer.hasElapsed(5);
         }
         
     }
