@@ -3,25 +3,23 @@ package claw.hardware.swerve.auto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class SwerveTrajectoryController {
     
-    private final PIDController xController, yController, thetaController;
+    private final PIDController distanceController, thetaController;
     
     public SwerveTrajectoryController (
-        PIDController xController,
-        PIDController yController,
+        PIDController distanceController,
         PIDController thetaController
     ) {
-        this.xController = xController;
-        this.yController = yController;
+        this.distanceController = distanceController;
         this.thetaController = thetaController;
     }
     
     public void reset () {
-        xController.reset();
-        yController.reset();
+        distanceController.reset();
         thetaController.reset();
     }
     
@@ -41,13 +39,24 @@ public class SwerveTrajectoryController {
     
     private ChassisSpeeds getOffsetCorrection (Pose2d currentPose, Pose2d trajectoryPose) {
         
-        double xCorrection = xController.calculate(currentPose.getX(), trajectoryPose.getX());
-        double yCorrection = yController.calculate(currentPose.getY(), trajectoryPose.getY());
+        // Get a translational offset from the current pose to the trajectory
+        Translation2d translationOffset = trajectoryPose.getTranslation().minus(currentPose.getTranslation());
         
+        // Apply the distance controller to the magnitude of this offset translation
+        double distCorrectionMag = distanceController.calculate(0, translationOffset.getNorm());
+        
+        // Separate x and y correction according to the angle of the translation
+        double xCorrection = translationOffset.getAngle().getCos() * distCorrectionMag;
+        double yCorrection = translationOffset.getAngle().getSin() * distCorrectionMag;
+        
+        // Get the rotational offset from the desired pose
         double offsetTheta = trajectoryPose.getRotation().getRadians() - currentPose.getRotation().getRadians();
         offsetTheta = MathUtil.inputModulus(offsetTheta, -Math.PI, Math.PI);
+        
+        // Apply the theta controller to this rotational offset
         double thetaCorrection = thetaController.calculate(0, offsetTheta);
         
+        // Return the correctional speeds
         return new ChassisSpeeds(xCorrection, yCorrection, thetaCorrection);
         
     }
