@@ -25,7 +25,10 @@ public class SwerveTrajectoryPoint implements Interpolatable<SwerveTrajectoryPoi
         this.angularVelocityRadiansPerSec = angularVelocityRadiansPerSec;
     }
     
-    public ChassisSpeeds getDesiredFieldRelativeSpeeds () {
+    /**
+     * Field-relative speeds
+     */
+    public ChassisSpeeds getDesiredSpeeds () {
         return new ChassisSpeeds(
             velocityMetersPerSec.getX(),
             velocityMetersPerSec.getY(),

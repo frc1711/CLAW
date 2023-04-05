@@ -97,7 +97,7 @@ public class SwerveLinearController {
         // Get the trajectory-calculated position and speeds
         SwerveTrajectoryPoint trajectoryPoint = linearTrajectory.getPoint(trajectoryTimer.get());
         Pose2d trajPose = trajectoryPoint.getDesiredPose();
-        ChassisSpeeds trajFieldRelSpeeds = trajectoryPoint.getDesiredFieldRelativeSpeeds();
+        ChassisSpeeds trajFieldRelSpeeds = trajectoryPoint.getDesiredSpeeds();
         
         // Get offsets from the trajectory-calculated positions and pass through PIDs
         ChassisSpeeds offsetCorrectionSpeeds = getOffsetCorrectionSpeeds(swerveDrive.getRobotPoseEstimate(), trajPose);
