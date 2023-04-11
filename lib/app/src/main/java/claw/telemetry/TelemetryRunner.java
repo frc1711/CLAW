@@ -1,6 +1,8 @@
 package claw.telemetry;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -10,21 +12,33 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 
 public class TelemetryRunner {
     
+    /**
+     * Add all fields and methods marked with the {@link Telemetry} annotation to a {@link SendableBuilder} to
+     * more easily add properties to a SendableBuilder.
+     * @param builder
+     * @param telemetryObject
+     */
     public static void addTelemetryFields(SendableBuilder builder, Object telemetryObject) {
+        // Get the class of the telemetryObject which we will be using to add telemetry fields to
         Class<?> objClass = telemetryObject.getClass();
         
-        // for (Method method : objClass.getMethods()) {
-        //     // Grab the annotation for the method if it exists
-        //     Telemetry annotation = method.getAnnotation(Telemetry.class);
-        //     if (annotation == null) continue;
+        // Use getDeclaredMethods to access private methods
+        for (Method method : objClass.getDeclaredMethods()) {
+            // Grab the annotation for the method if it exists
+            Telemetry annotation = method.getAnnotation(Telemetry.class);
+            if (annotation == null) continue;
             
-        //     addMethodProperty(builder, method, annotation, telemetryObject);
-        // }
+            // Add the method as a property on the sendable builder
+            addMethodProperty(builder, annotation.name(), method, telemetryObject);
+        }
         
-        for (Field field : objClass.getFields()) {
+        // Use getDeclaredFields to access private fields
+        for (Field field : objClass.getDeclaredFields()) {
+            // Grab the annotation for the field if it exists
             Telemetry annotation = field.getAnnotation(Telemetry.class);
             if (annotation == null) continue;
             
+            // Add the field as a property on the sendable builder
             addFieldProperty(builder, annotation.name(), field, telemetryObject);
         }
         
@@ -49,6 +63,31 @@ public class TelemetryRunner {
                 } catch (Exception e) { }
             }),
             field.getType(),
+            propertyName
+        );
+        
+    }
+    
+    private static void addMethodProperty (SendableBuilder builder, String propertyName, Method method, Object telemetryObject) {
+        
+        if (Modifier.isStatic(method.getModifiers()) || method.getParameterCount() != 0 || method.getReturnType() == null) return;
+        method.setAccessible(true);
+        
+        addProperty(
+            builder,
+            () -> {
+                try {
+                    return method.invoke(telemetryObject);
+                } catch (IllegalAccessException e) {
+                    return null;
+                } catch (IllegalArgumentException e) {
+                    return null;
+                } catch (InvocationTargetException e) {
+                    return null;
+                }
+            },
+            Optional.empty(),
+            method.getReturnType(),
             propertyName
         );
         
