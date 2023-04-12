@@ -3,12 +3,11 @@ package claw.subsystems;
 import java.util.HashMap;
 import java.util.Set;
 
-import claw.actions.compositions.Context;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandProcessor;
 import claw.rct.base.commands.CommandReader;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class CLAWSubsystem extends SubsystemBase {
@@ -34,7 +33,7 @@ public abstract class CLAWSubsystem extends SubsystemBase {
         }
     }
     
-    private static void subsystemCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private static void subsystemCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         String operation = reader.readArgOneOf("operation", "Expected 'list', 'inspect' or 'test'.", "list", "inspect", "test");
@@ -46,7 +45,11 @@ public abstract class CLAWSubsystem extends SubsystemBase {
             reader.noMoreArgs();
             
             synchronized (subsystems) {
-                subsystems.keySet().forEach(str -> Context.ignoreTermination(() -> console.println(str)));
+                subsystems.keySet().forEach(str -> {
+                    try {
+                        console.println(str);
+                    } catch (TerminalKilledException e) { }
+                });
                 if (subsystems.size() == 0)
                     console.println("There are no instantiated CLAWSubsystems.");
             }
@@ -76,7 +79,11 @@ public abstract class CLAWSubsystem extends SubsystemBase {
                 } else {
                     console.println(subsystem.getName()+" supports the following tests:");
                     synchronized (subsystem.subsystemTests) {
-                        subsystem.subsystemTests.keySet().forEach(str -> Context.ignoreTermination(() -> console.println(str)));
+                        subsystem.subsystemTests.keySet().forEach(str -> {
+                            try {
+                                console.println(str);
+                            } catch (TerminalKilledException e) { }
+                        });
                     }
                 }
                 

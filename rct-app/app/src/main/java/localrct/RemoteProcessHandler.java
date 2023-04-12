@@ -5,8 +5,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.rct.base.network.low.InstructionMessage;
 import claw.rct.base.network.low.concurrency.KeepaliveWatcher;
 import claw.rct.base.network.messages.commands.CommandInputMessage;
@@ -56,7 +56,7 @@ public class RemoteProcessHandler {
         keepaliveWatcher.continueKeepalive();
     }
     
-    public void execute (String command) throws IOException, TerminatedContextException {
+    public void execute (String command) throws IOException, TerminalKilledException {
         // Do nothing if the remote process has already begun executing
         if (startedExecuting) return;
         startedExecuting = true;
@@ -77,7 +77,7 @@ public class RemoteProcessHandler {
         if (terminateException != null) throw terminateException;
     }
     
-    private void awaitCommandOutputLoop () throws TerminatedContextException {
+    private void awaitCommandOutputLoop () throws TerminalKilledException {
         // Waiting for an output message that matches the process ID
         Optional<CommandOutputMessage> outputMessage = Optional.empty();
         while (outputMessage.isEmpty() || outputMessage.get().commandProcessId != processId) {
@@ -101,7 +101,7 @@ public class RemoteProcessHandler {
         if (message.terminateCommand) terminate();
     }
     
-    private void processConsoleManagerOperation (ConsoleManagerOperation operation) throws TerminatedContextException {
+    private void processConsoleManagerOperation (ConsoleManagerOperation operation) throws TerminalKilledException {
         switch (operation.operationType) {
             case CLEAR:
                 console.clear();
@@ -139,7 +139,7 @@ public class RemoteProcessHandler {
         }
     }
     
-    private void sendRespondingInputMessage (CommandOutputMessage msg) throws TerminatedContextException {
+    private void sendRespondingInputMessage (CommandOutputMessage msg) throws TerminalKilledException {
         switch (msg.request) {
             case NO_REQUEST:
                 break;

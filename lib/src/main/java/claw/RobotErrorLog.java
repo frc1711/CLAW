@@ -7,11 +7,11 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandProcessor;
 import claw.rct.base.commands.CommandReader;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 
 public class RobotErrorLog {
     
@@ -27,7 +27,7 @@ public class RobotErrorLog {
     private static final Setting<ArrayList<LoggableError>> ERROR_LOG_SETTING = new Setting<>("CLAW.ERROR_LOG", () -> new ArrayList<>());
     private static final Object ERROR_LOG_LOCK = new Object();
     
-    private static void errorLogCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private static void errorLogCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         // Copy an array of errors from the error log setting
         LoggableError[] errors;
         synchronized (ERROR_LOG_LOCK) {

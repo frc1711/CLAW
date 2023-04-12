@@ -6,8 +6,8 @@ import claw.actions.Action;
 import claw.actions.compositions.SubsystemTestComposer;
 import claw.actions.compositions.SubsystemTestCompositionContext;
 import claw.actions.compositions.Context.Operation;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -41,7 +41,7 @@ public class SubsystemTest {
         return name;
     }
     
-    private static boolean getYesNo (ConsoleManager console, String prompt) throws TerminatedContextException {
+    private static boolean getYesNo (ConsoleManager console, String prompt) throws TerminalKilledException {
         Optional<Boolean> answer = Optional.empty();
         
         console.println("");
@@ -65,7 +65,7 @@ public class SubsystemTest {
      * Run the subsystem command through a given console.
      * @param console
      */
-    void run (ConsoleManager console, CLAWSubsystem subsystem) throws TerminatedContextException {
+    void run (ConsoleManager console, CLAWSubsystem subsystem) throws TerminalKilledException {
         
         // Display description and an important safety warning
         console.println("Double-tap enter to disable the robot and stop the test command at any time.");

@@ -3,12 +3,10 @@ package claw.rct.base.console;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import claw.actions.compositions.Context;
-
 /**
  * An interface for managing input from and output to the driverstation console.
  */
-public interface ConsoleManager extends Context<ConsoleManager> {
+public interface ConsoleManager {
     
     public static final int MAX_COLS_PER_LINE = 100;
     
@@ -86,51 +84,51 @@ public interface ConsoleManager extends Context<ConsoleManager> {
     /**
      * Read a single line of input from the console.
      */
-    String readInputLine () throws TerminatedContextException;
+    String readInputLine () throws TerminalKilledException;
     
     /**
      * Returns {@code true} if there is user input waiting to be processed by the console.
      * This can detect whether the user has hit a key, so that a continuously running command
      * can exit some condition.
      */
-    boolean hasInputReady () throws TerminatedContextException;
+    boolean hasInputReady () throws TerminalKilledException;
     
     /**
      * Clear any submitted user input that is currently waiting to be processed.
      * This prevents user input typed during some console-blocking operation from
      * appearing again when you wait for their next line of input. 
      */
-    void clearWaitingInputLines () throws TerminatedContextException;
+    void clearWaitingInputLines () throws TerminalKilledException;
     
     /**
      * Move up a given number of rows in the console (also moving to the first column).
      */
-    void moveUp (int lines) throws TerminatedContextException;
+    void moveUp (int lines) throws TerminalKilledException;
     
     /**
      * Clear all text in the current row in the console.
      */
-    void clearLine () throws TerminatedContextException;
+    void clearLine () throws TerminalKilledException;
     
     /**
      * Save the cursor position so that it can be restored later with {@link ConsoleManager#restoreCursorPos()}.
      */
-    void saveCursorPos () throws TerminatedContextException;
+    void saveCursorPos () throws TerminalKilledException;
     
     /**
      * Restore the cursor position from the last {@link ConsoleManager#saveCursorPos()} call.
      */
-    void restoreCursorPos () throws TerminatedContextException;
+    void restoreCursorPos () throws TerminalKilledException;
     
     /**
      * Print white text to the console with no newline.
      */
-    void print (String msg) throws TerminatedContextException;
+    void print (String msg) throws TerminalKilledException;
     
     /**
      * Print white text to the console with a trailing newline.
      */
-    default void println (String msg) throws TerminatedContextException {
+    default void println (String msg) throws TerminalKilledException {
         print(msg + "\n");
     }
     
@@ -138,36 +136,49 @@ public interface ConsoleManager extends Context<ConsoleManager> {
      * Print red text to the console with no newline. This is not the same
      * as printing to {@code System.err}.
      */
-    void printErr (String msg) throws TerminatedContextException;
+    void printErr (String msg) throws TerminalKilledException;
     
     /**
      * Print red text to the console with a trailing newline. This is not the same
      * as printing to {@code System.err}.
      */
-    default void printlnErr (String msg) throws TerminatedContextException {
+    default void printlnErr (String msg) throws TerminalKilledException {
         printErr(msg + "\n");
     }
     
     /**
      * Print yellow/orange system text to the console with no newline.
      */
-    void printSys (String msg) throws TerminatedContextException;
+    void printSys (String msg) throws TerminalKilledException;
     
     /**
      * Print yellow/orange system text to the console with a trailing newline.
      */
-    default void printlnSys (String msg) throws TerminatedContextException {
+    default void printlnSys (String msg) throws TerminalKilledException {
         printSys(msg + "\n");
     }
     
     /**
      * Flush the console output.
      */
-    void flush () throws TerminatedContextException;
+    void flush () throws TerminalKilledException;
     
     /**
      * Clear the console of all output.
      */
-    void clear () throws TerminatedContextException;
+    void clear () throws TerminalKilledException;
+    
+    void terminate ();
+    boolean isTerminated ();
+    
+    default void useContext () throws TerminalKilledException {
+        if (isTerminated()) throw new TerminalKilledException();
+    }
+    
+    public static class TerminalKilledException extends Exception {
+        public TerminalKilledException () {
+            super("The terminal was killed.");
+        }
+    }
     
 }

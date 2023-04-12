@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import localrct.LocalSystem.ConnectionStatus;
 import claw.rct.base.commands.RCTCommand;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandLineInterpreter;
 import claw.rct.base.commands.CommandProcessor;
 import claw.rct.base.commands.CommandReader;
@@ -18,6 +17,7 @@ import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.commands.CommandProcessor.CommandFunction;
 import claw.rct.base.commands.CommandProcessor.HelpMessage;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.rct.base.network.messages.LogDataMessage.LogData;
 
 /**
@@ -89,7 +89,7 @@ public class LocalCommandInterpreter {
      * @throws RCTCommand.ParseException
      * @throws BadCallException
      */
-    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException, TerminatedContextException {
+    public boolean processLine (ConsoleManager console, String line) throws RCTCommand.ParseException, BadCallException, TerminalKilledException {
         try {
             commandInterpreter.processLine(console, line);
         } catch (CommandNotRecognizedException e) {
@@ -112,7 +112,7 @@ public class LocalCommandInterpreter {
     
     // Command methods:
     
-    private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void clearCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNone();
         console.clear();
     }
@@ -122,7 +122,7 @@ public class LocalCommandInterpreter {
         System.exit(0);
     }
     
-    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void configCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         int teamNum = reader.readArgInt("team number");
         int port = reader.readArgInt("RCT server port");
         reader.noMoreArgs();
@@ -141,7 +141,7 @@ public class LocalCommandInterpreter {
         
     }
     
-    private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void helpCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         
@@ -191,7 +191,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void commsCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void commsCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNone();
         
         console.println("");
@@ -244,7 +244,7 @@ public class LocalCommandInterpreter {
         console.clearWaitingInputLines();
     }
     
-    private void sshCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void sshCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNoOptions();
         reader.allowNoFlags();
         
@@ -275,7 +275,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private void logCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         // Repeat the logging loop until the user pressed a key
         while (!console.hasInputReady()) {
             
@@ -297,7 +297,7 @@ public class LocalCommandInterpreter {
         }
     }
     
-    private static void printLogDataEvent (ConsoleManager console, LogData data) throws TerminatedContextException {
+    private static void printLogDataEvent (ConsoleManager console, LogData data) throws TerminalKilledException {
         String logNamePrint = "["+data.logName+"] ";
         String messagePrint = data.data;
         

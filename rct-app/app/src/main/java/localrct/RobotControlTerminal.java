@@ -3,11 +3,11 @@ package localrct;
 import java.io.IOException;
 
 import claw.rct.base.commands.RCTCommand.ParseException;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import localrct.LocalSystem.ConnectionStatus;
 import localrct.console.LocalConsoleManager;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server
@@ -31,7 +31,7 @@ public class RobotControlTerminal {
     /**
      * Starts the robot control terminal.
      */
-    public void start () throws TerminatedContextException {
+    public void start () throws TerminalKilledException {
         
         // LocalSystem setup
         console.printlnSys("Attempting to connect to roboRIO server...");
@@ -75,7 +75,7 @@ public class RobotControlTerminal {
         
     }
     
-    private void processCommand (LocalSystem system, String line) throws TerminatedContextException {
+    private void processCommand (LocalSystem system, String line) throws TerminalKilledException {
         try {
             system.processCommand(line);
         } catch (ParseException e) {

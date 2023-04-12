@@ -3,14 +3,12 @@ package claw.rct.remote;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import claw.actions.compositions.Context;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.logs.CLAWLogger;
-import claw.rct.base.console.ConsoleManager;
 import claw.rct.base.commands.CommandLineInterpreter;
 import claw.rct.base.commands.CommandLineInterpreter.CommandLineException;
 import claw.rct.base.commands.CommandLineInterpreter.CommandNotRecognizedException;
 import claw.rct.base.commands.CommandProcessor.HelpMessage;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.rct.base.network.low.ResponseMessage;
 import claw.rct.base.network.low.RobotSocketHandler;
 import claw.rct.base.network.messages.CommandsListingMessage;
@@ -108,7 +106,7 @@ public class RCTServer implements InstructionMessageHandler {
         // Run the command process in a new thread (so that the socket receiver thread we're currently on doesn't block)
         Thread commandProcessorThread = new Thread(() -> {
             
-            Context.ignoreTermination(() -> {
+            try {
                 try {
                     try {
                         
@@ -121,7 +119,7 @@ public class RCTServer implements InstructionMessageHandler {
                 } catch (CommandLineException e) {
                     e.writeToConsole(commandProcessHandler);
                 }
-            });
+            } catch (TerminalKilledException e) { }
             
             // When the command process is finished, terminate the process
             commandProcessHandler.terminate();

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.commands.CommandProcessor.HelpMessage;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 
 /**
  * Represents a system for interpreting {@link RCTCommand}s. Recognized commands can be added via
@@ -36,10 +36,10 @@ public class CommandLineInterpreter {
      * @throws RCTCommand.ParseException           An exception thrown if the command is malformed.
      * @throws BadCallException            An exception thrown by the command processor if it received bad arguments.
      * @throws CommandNotRecognizedException    An exception thrown if the command is not recognized by this interpreter.
-     * @throws TerminatedContextException       An exception thrown if the {@code ConsoleManager} context was terminated.
+     * @throws TerminalKilledException       An exception thrown if the {@code ConsoleManager} context was terminated.
      */
     public void processLine (ConsoleManager console, String line)
-            throws RCTCommand.ParseException, CommandNotRecognizedException, BadCallException, TerminatedContextException {
+            throws RCTCommand.ParseException, CommandNotRecognizedException, BadCallException, TerminalKilledException {
         // Attempt to parse the command and get the command name
         RCTCommand commandObj = new RCTCommand(line);
         String commandName = commandObj.getCommand().toUpperCase();
@@ -100,7 +100,7 @@ public class CommandLineInterpreter {
          * Writes the error message of the {@link CommandLineException} to the console.
          * @param console The {@link ConsoleManager} to write the error message to.
          */
-        public void writeToConsole (ConsoleManager console) throws TerminatedContextException {
+        public void writeToConsole (ConsoleManager console) throws TerminalKilledException {
             console.printlnErr(errorMessage);
         }
         

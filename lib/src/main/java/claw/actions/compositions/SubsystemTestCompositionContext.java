@@ -6,6 +6,7 @@ import claw.LiveValues;
 import claw.actions.Action;
 import claw.actions.FunctionalCommand;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -23,18 +24,36 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
     @Override
     public void useContext () throws TerminatedContextException {
         super.useContext();
-        console.useContext();
+        
+        try {
+            console.useContext();
+        } catch (TerminalKilledException e) {
+            terminate();
+            throw getTerminatedException();
+        }
     }
     
     @Override
     public void delay (double durationSecs) throws TerminatedContextException {
-        console.flush();
+        try {
+            console.flush();
+        } catch (TerminalKilledException e) {
+            terminate();
+            throw getTerminatedException();
+        }
+        
         super.delay(durationSecs);
     }
     
     @Override
     public void runAction (Action action) throws TerminatedContextException {
-        console.flush();
+        try {
+            console.flush();
+        } catch (TerminalKilledException e) {
+            terminate();
+            throw getTerminatedException();
+        }
+        
         super.runAction(action);
     }
     
@@ -79,7 +98,7 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
                     values.update(console);
                 }
                 
-            } catch (TerminatedContextException e) {
+            } catch (TerminalKilledException e) {
                 
                 // If the console was terminated, then terminate the composition context
                 terminate();

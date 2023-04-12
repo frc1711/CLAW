@@ -101,61 +101,61 @@ public class CommandProcessHandler implements ConsoleManager {
     // ConsoleManager methods
     
     @Override
-    public synchronized void print (String msg) throws TerminatedContextException {
+    public synchronized void print (String msg) throws TerminalKilledException {
         // Add the print operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT, 0, msg));
     }
     
     @Override
-    public synchronized void printErr (String msg) throws TerminatedContextException {
+    public synchronized void printErr (String msg) throws TerminalKilledException {
         // Add the printErr operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_ERR, 0, msg));
     }
     
     @Override
-    public synchronized void printSys (String msg) throws TerminatedContextException {
+    public synchronized void printSys (String msg) throws TerminalKilledException {
         // Add the printSys operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.PRINT_SYS, 0, msg));
     }
     
     @Override
-    public synchronized void clear () throws TerminatedContextException {
+    public synchronized void clear () throws TerminalKilledException {
         // Add the clear operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR, 0, null));
     }
     
     @Override
-    public synchronized void moveUp (int lines) throws TerminatedContextException {
+    public synchronized void moveUp (int lines) throws TerminalKilledException {
         // Add the moveUp operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.MOVE_UP, lines, null));
     }
     
     @Override
-    public synchronized void clearLine () throws TerminatedContextException {
+    public synchronized void clearLine () throws TerminalKilledException {
         // Add the clearLine operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_LINE, 0, null));
     }
     
     @Override
-    public synchronized void saveCursorPos () throws TerminatedContextException {
+    public synchronized void saveCursorPos () throws TerminalKilledException {
         // Add the saveCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.SAVE_CURSOR_POS, 0, null));
     }
     
     @Override
-    public synchronized void restoreCursorPos () throws TerminatedContextException {
+    public synchronized void restoreCursorPos () throws TerminalKilledException {
         // Add the restoreCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.RESTORE_CURSOR_POS, 0, null));
     }
     
     @Override
-    public synchronized void clearWaitingInputLines () throws TerminatedContextException {
+    public synchronized void clearWaitingInputLines () throws TerminalKilledException {
         // Add the restoreCursorPos operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.CLEAR_WAITING_INPUT_LINES, 0, null));
     }
     
     @Override
-    public synchronized void flush () throws TerminatedContextException {
+    public synchronized void flush () throws TerminalKilledException {
         // Add the flush operation
         addOperation(new ConsoleManagerOperation(ConsoleManagerOperationType.FLUSH, 0, null));
         
@@ -164,7 +164,7 @@ public class CommandProcessHandler implements ConsoleManager {
     }
     
     @Override
-    public synchronized boolean hasInputReady () throws TerminatedContextException {
+    public synchronized boolean hasInputReady () throws TerminalKilledException {
         useContext();
         
         // Send operations buffer to local along with the hasInputReady request
@@ -177,12 +177,12 @@ public class CommandProcessHandler implements ConsoleManager {
         }
         
         // If the waiter was killed then the process must have been terminated
-        throw getTerminatedException();
+        throw new TerminalKilledException();
         
     }
     
     @Override
-    public synchronized String readInputLine () throws TerminatedContextException {
+    public synchronized String readInputLine () throws TerminalKilledException {
         
         useContext();
         
@@ -196,7 +196,7 @@ public class CommandProcessHandler implements ConsoleManager {
         }
         
         // If the waiter was killed then the process must have been terminated
-        throw getTerminatedException();
+        throw new TerminalKilledException();
         
     }
     
@@ -216,7 +216,7 @@ public class CommandProcessHandler implements ConsoleManager {
         responseSender.accept(new CommandOutputMessage(processId, isTerminated(), request, operationsArray));
     }
     
-    private void addOperation (ConsoleManagerOperation operation) throws TerminatedContextException {
+    private void addOperation (ConsoleManagerOperation operation) throws TerminalKilledException {
         // Throw an exception if the process is terminated
         useContext();
         

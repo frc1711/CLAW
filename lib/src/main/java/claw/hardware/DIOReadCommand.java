@@ -3,11 +3,11 @@ package claw.hardware;
 import java.util.Optional;
 
 import claw.LiveValues;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.CommandProcessor;
 import claw.rct.base.commands.CommandReader;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import edu.wpi.first.hal.util.AllocationException;
 import edu.wpi.first.wpilibj.DigitalInput;
 
@@ -23,7 +23,7 @@ public class DIOReadCommand {
         DIOReadCommand::dioRawCommandFunction
     );
     
-    private static void dioRawCommandFunction (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private static void dioRawCommandFunction (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         reader.allowNone();
         
         DIOPort[] ports = new DIOPort[DIO_PORTS_TOTAL];

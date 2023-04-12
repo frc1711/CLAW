@@ -8,13 +8,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import claw.LiveValues;
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.hardware.can.CANMessageID.DeviceType;
 import claw.hardware.can.CANMessageID.ManufacturerCode;
 import claw.rct.base.commands.CommandProcessor;
 import claw.rct.base.commands.CommandReader;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import edu.wpi.first.hal.can.CANJNI;
 import edu.wpi.first.hal.can.CANMessageNotFoundException;
 import edu.wpi.first.hal.can.CANStatus;
@@ -62,7 +62,7 @@ public class CANScanner {
         return " ".repeat(leftPadding) + str + " ".repeat(rightPadding);
     }
     
-    private static void canScanCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminatedContextException {
+    private static void canScanCommand (ConsoleManager console, CommandReader reader) throws BadCallException, TerminalKilledException {
         String scanType = reader.readArgOneOf("scan type", "Expected a scan type of 'status' or 'devices'.", "status", "devices");
         reader.noMoreArgs();
         reader.allowNoOptions();

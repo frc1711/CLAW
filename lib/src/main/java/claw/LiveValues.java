@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 
 /**
  * A class allowing for the live updating of fields to be displayed in the console.
@@ -82,7 +82,7 @@ public class LiveValues {
      * Update all the fields in the console to display the latest values.
      * @param console
      */
-    public void update (ConsoleManager console) throws TerminatedContextException {
+    public void update (ConsoleManager console) throws TerminalKilledException {
         Set<String> updatedFieldsCopy, newFieldNamesCopy;
         List<String> fieldsCopy, valuesCopy;
         
@@ -140,7 +140,7 @@ public class LiveValues {
     /**
      * Print a single field to the console
      */
-    private static void printField (ConsoleManager console, String fieldName, String value) throws TerminatedContextException {
+    private static void printField (ConsoleManager console, String fieldName, String value) throws TerminalKilledException {
         String space = " ".repeat(Math.max(0, 18 - fieldName.length()));
         console.println(fieldName + " : " + space + value);
     }

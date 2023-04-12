@@ -3,11 +3,11 @@ package localrct;
 import java.io.IOException;
 import java.util.Optional;
 
-import claw.actions.compositions.Context.TerminatedContextException;
 import claw.rct.base.commands.RCTCommand;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.commands.CommandProcessor.HelpMessage;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.rct.base.network.low.DriverStationSocketHandler;
 import claw.rct.base.network.low.InstructionMessage;
 import claw.rct.base.network.low.ResponseMessage;
@@ -210,7 +210,7 @@ public class LocalSystem implements ResponseMessageHandler {
      * @throws NoResponseException      If no response was received from a command sent to remote
      * @throws IOException              If the command failed to send to remote
      */
-    public void processCommand (String line) throws RCTCommand.ParseException, IOException, BadCallException, TerminatedContextException {
+    public void processCommand (String line) throws RCTCommand.ParseException, IOException, BadCallException, TerminalKilledException {
         // Attempt to process the command locally. If the command should be sent to remote,
         // then interpreter.processLine will return true
         if (!interpreter.processLine(console, line)) return;

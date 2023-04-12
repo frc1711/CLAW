@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import claw.RobotErrorLog;
-import claw.actions.compositions.Context;
 import claw.hardware.DIOReadCommand;
 import claw.hardware.can.CANScanner;
 import claw.logs.LogHandler;
@@ -14,6 +13,7 @@ import claw.rct.base.commands.CommandReader;
 import claw.rct.base.commands.CommandProcessor.BadCallException;
 import claw.rct.base.commands.CommandProcessor.CommandFunction;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
 
 /**
@@ -82,7 +82,9 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             char watchedChar = watched ? '#' : ' ';
             
             // Ignore termination of the console within this forEach consumer
-            Context.ignoreTermination(() -> console.println(watchedChar + " " + logName));
+            try {
+                console.println(watchedChar + " " + logName);
+            } catch (TerminalKilledException e) { }
         });
     }
     

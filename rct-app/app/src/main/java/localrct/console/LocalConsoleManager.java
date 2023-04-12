@@ -68,7 +68,7 @@ public class LocalConsoleManager implements ConsoleManager {
     }
     
     @Override
-    public void clear () throws TerminatedContextException {
+    public void clear () throws TerminalKilledException {
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
         } catch (Exception e) {
