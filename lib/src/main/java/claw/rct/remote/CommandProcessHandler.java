@@ -5,17 +5,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import claw.rct.console.ConsoleManager;
-import claw.rct.network.low.concurrency.KeepaliveWatcher;
-import claw.rct.network.low.concurrency.SignalWaiter;
-import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.messages.commands.CommandInputMessage;
-import claw.rct.network.messages.commands.CommandOutputMessage;
-import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
-import claw.rct.network.messages.commands.ProcessKeepaliveRemote;
-import claw.rct.network.messages.commands.CommandOutputMessage.ConsoleManagerOperation;
-import claw.rct.network.messages.commands.CommandOutputMessage.ConsoleManagerOperationType;
-import claw.rct.network.messages.commands.CommandOutputMessage.ConsoleManagerRequest;
+import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.network.low.concurrency.KeepaliveWatcher;
+import claw.rct.base.network.low.concurrency.SignalWaiter;
+import claw.rct.base.network.low.ResponseMessage;
+import claw.rct.base.network.messages.commands.CommandInputMessage;
+import claw.rct.base.network.messages.commands.CommandOutputMessage;
+import claw.rct.base.network.messages.commands.ProcessKeepaliveLocal;
+import claw.rct.base.network.messages.commands.ProcessKeepaliveRemote;
+import claw.rct.base.network.messages.commands.CommandOutputMessage.ConsoleManagerOperation;
+import claw.rct.base.network.messages.commands.CommandOutputMessage.ConsoleManagerOperationType;
+import claw.rct.base.network.messages.commands.CommandOutputMessage.ConsoleManagerRequest;
 
 public class CommandProcessHandler implements ConsoleManager {
     

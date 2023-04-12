@@ -8,17 +8,17 @@ import java.util.List;
 import java.util.Optional;
 
 import localrct.LocalSystem.ConnectionStatus;
-import claw.rct.commands.RCTCommand;
+import claw.rct.base.commands.RCTCommand;
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.commands.CommandLineInterpreter;
-import claw.rct.commands.CommandProcessor;
-import claw.rct.commands.CommandReader;
-import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
-import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.commands.CommandProcessor.CommandFunction;
-import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.console.ConsoleManager;
-import claw.rct.network.messages.LogDataMessage.LogData;
+import claw.rct.base.commands.CommandLineInterpreter;
+import claw.rct.base.commands.CommandProcessor;
+import claw.rct.base.commands.CommandReader;
+import claw.rct.base.commands.CommandLineInterpreter.CommandNotRecognizedException;
+import claw.rct.base.commands.CommandProcessor.BadCallException;
+import claw.rct.base.commands.CommandProcessor.CommandFunction;
+import claw.rct.base.commands.CommandProcessor.HelpMessage;
+import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.network.messages.LogDataMessage.LogData;
 
 /**
  * A wrapper around the {@link CommandLineInterpreter}, prepared to process local (driverstation) commands. When a command

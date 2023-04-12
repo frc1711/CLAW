@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import claw.rct.network.low.concurrency.SignalWaiter;
-import claw.rct.network.messages.LogDataMessage;
-import claw.rct.network.messages.LogDataMessage.LogData;
+import claw.rct.base.network.low.concurrency.SignalWaiter;
+import claw.rct.base.network.messages.LogDataMessage;
+import claw.rct.base.network.messages.LogDataMessage.LogData;
 import claw.rct.remote.RCTServer;
 
 public class LogHandler {

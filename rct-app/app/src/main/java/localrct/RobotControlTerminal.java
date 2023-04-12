@@ -2,12 +2,12 @@ package localrct;
 
 import java.io.IOException;
 
-import claw.rct.commands.RCTCommand.ParseException;
+import claw.rct.base.commands.RCTCommand.ParseException;
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.commands.CommandProcessor.BadCallException;
+import claw.rct.base.commands.CommandProcessor.BadCallException;
 import localrct.LocalSystem.ConnectionStatus;
 import localrct.console.LocalConsoleManager;
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager;
 
 /**
  * Represents the main robot control terminal program which starts the driverstation side of the server

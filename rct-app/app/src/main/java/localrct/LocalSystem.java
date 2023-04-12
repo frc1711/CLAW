@@ -4,22 +4,22 @@ import java.io.IOException;
 import java.util.Optional;
 
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.commands.RCTCommand;
-import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.console.ConsoleManager;
-import claw.rct.network.low.DriverStationSocketHandler;
-import claw.rct.network.low.InstructionMessage;
-import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.low.concurrency.Waiter;
-import claw.rct.network.messages.CommandsListingMessage;
-import claw.rct.network.messages.ConnectionCheckMessage;
-import claw.rct.network.messages.ConnectionResponseMessage;
-import claw.rct.network.messages.LogDataMessage;
-import claw.rct.network.messages.ResponseMessageHandler;
-import claw.rct.network.messages.LogDataMessage.LogData;
-import claw.rct.network.messages.commands.CommandOutputMessage;
-import claw.rct.network.messages.commands.ProcessKeepaliveRemote;
+import claw.rct.base.commands.RCTCommand;
+import claw.rct.base.commands.CommandProcessor.BadCallException;
+import claw.rct.base.commands.CommandProcessor.HelpMessage;
+import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.network.low.DriverStationSocketHandler;
+import claw.rct.base.network.low.InstructionMessage;
+import claw.rct.base.network.low.ResponseMessage;
+import claw.rct.base.network.low.concurrency.Waiter;
+import claw.rct.base.network.messages.CommandsListingMessage;
+import claw.rct.base.network.messages.ConnectionCheckMessage;
+import claw.rct.base.network.messages.ConnectionResponseMessage;
+import claw.rct.base.network.messages.LogDataMessage;
+import claw.rct.base.network.messages.ResponseMessageHandler;
+import claw.rct.base.network.messages.LogDataMessage.LogData;
+import claw.rct.base.network.messages.commands.CommandOutputMessage;
+import claw.rct.base.network.messages.commands.ProcessKeepaliveRemote;
 
 /**
  * A interface between the robot control terminal and the socket connection to the robot.

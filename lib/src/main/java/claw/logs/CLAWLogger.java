@@ -1,6 +1,6 @@
 package claw.logs;
 
-import claw.rct.network.messages.LogDataMessage.LogData;
+import claw.rct.base.network.messages.LogDataMessage.LogData;
 
 public class CLAWLogger {
     

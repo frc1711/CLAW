@@ -7,7 +7,7 @@ import claw.actions.compositions.SubsystemTestComposer;
 import claw.actions.compositions.SubsystemTestCompositionContext;
 import claw.actions.compositions.Context.Operation;
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 

@@ -6,21 +6,21 @@ import java.util.ArrayList;
 import claw.actions.compositions.Context;
 import claw.actions.compositions.Context.TerminatedContextException;
 import claw.logs.CLAWLogger;
-import claw.rct.console.ConsoleManager;
-import claw.rct.commands.CommandLineInterpreter;
-import claw.rct.commands.CommandLineInterpreter.CommandLineException;
-import claw.rct.commands.CommandLineInterpreter.CommandNotRecognizedException;
-import claw.rct.commands.CommandProcessor.HelpMessage;
-import claw.rct.network.low.ResponseMessage;
-import claw.rct.network.low.RobotSocketHandler;
-import claw.rct.network.messages.CommandsListingMessage;
-import claw.rct.network.messages.ConnectionCheckMessage;
-import claw.rct.network.messages.ConnectionResponseMessage;
-import claw.rct.network.messages.InstructionMessageHandler;
-import claw.rct.network.messages.LogDataMessage;
-import claw.rct.network.messages.commands.CommandInputMessage;
-import claw.rct.network.messages.commands.ProcessKeepaliveLocal;
-import claw.rct.network.messages.commands.StartCommandMessage;
+import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.commands.CommandLineInterpreter;
+import claw.rct.base.commands.CommandLineInterpreter.CommandLineException;
+import claw.rct.base.commands.CommandLineInterpreter.CommandNotRecognizedException;
+import claw.rct.base.commands.CommandProcessor.HelpMessage;
+import claw.rct.base.network.low.ResponseMessage;
+import claw.rct.base.network.low.RobotSocketHandler;
+import claw.rct.base.network.messages.CommandsListingMessage;
+import claw.rct.base.network.messages.ConnectionCheckMessage;
+import claw.rct.base.network.messages.ConnectionResponseMessage;
+import claw.rct.base.network.messages.InstructionMessageHandler;
+import claw.rct.base.network.messages.LogDataMessage;
+import claw.rct.base.network.messages.commands.CommandInputMessage;
+import claw.rct.base.network.messages.commands.ProcessKeepaliveLocal;
+import claw.rct.base.network.messages.commands.StartCommandMessage;
 
 public class RCTServer implements InstructionMessageHandler {
     

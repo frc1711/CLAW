@@ -1,7 +1,7 @@
 package claw.actions;
 
 import claw.CLAWRobot;
-import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.base.network.low.concurrency.Waiter;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.WrapperCommand;

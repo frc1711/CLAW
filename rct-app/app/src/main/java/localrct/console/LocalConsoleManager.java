@@ -8,7 +8,7 @@ import org.fusesource.jansi.Ansi.Color;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager;
 
 public class LocalConsoleManager implements ConsoleManager {
     

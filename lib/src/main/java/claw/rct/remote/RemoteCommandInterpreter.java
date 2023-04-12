@@ -8,12 +8,12 @@ import claw.actions.compositions.Context;
 import claw.hardware.DIOReadCommand;
 import claw.hardware.can.CANScanner;
 import claw.logs.LogHandler;
-import claw.rct.commands.CommandLineInterpreter;
-import claw.rct.commands.CommandProcessor;
-import claw.rct.commands.CommandReader;
-import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.commands.CommandProcessor.CommandFunction;
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.commands.CommandLineInterpreter;
+import claw.rct.base.commands.CommandProcessor;
+import claw.rct.base.commands.CommandReader;
+import claw.rct.base.commands.CommandProcessor.BadCallException;
+import claw.rct.base.commands.CommandProcessor.CommandFunction;
+import claw.rct.base.console.ConsoleManager;
 import claw.subsystems.CLAWSubsystem;
 
 /**
@@ -32,6 +32,7 @@ public class RemoteCommandInterpreter extends CommandLineInterpreter {
             "Use 'watch [name]...' to watch only a set of specific logs.",
             this::watchCommand
         );
+        
         addCommandProcessor(CLAWSubsystem.COMMAND_PROCESSOR);
         addCommandProcessor(DIOReadCommand.DIO_RAW_COMMAND_PROCESSOR);
         addCommandProcessor(CANScanner.CAN_SCAN_COMMAND_PROCESSOR);

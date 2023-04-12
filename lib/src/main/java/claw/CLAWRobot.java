@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
-import claw.rct.commands.CommandLineInterpreter;
+import claw.rct.base.commands.CommandLineInterpreter;
 import claw.rct.remote.RCTServer;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.TimedRobot;

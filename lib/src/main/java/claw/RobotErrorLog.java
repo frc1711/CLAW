@@ -8,10 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import claw.actions.compositions.Context.TerminatedContextException;
-import claw.rct.commands.CommandProcessor;
-import claw.rct.commands.CommandReader;
-import claw.rct.commands.CommandProcessor.BadCallException;
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.commands.CommandProcessor;
+import claw.rct.base.commands.CommandReader;
+import claw.rct.base.commands.CommandProcessor.BadCallException;
+import claw.rct.base.console.ConsoleManager;
 
 public class RobotErrorLog {
     

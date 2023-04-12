@@ -5,7 +5,7 @@ import java.util.function.Function;
 import claw.LiveValues;
 import claw.actions.Action;
 import claw.actions.FunctionalCommand;
-import claw.rct.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager;
 import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 

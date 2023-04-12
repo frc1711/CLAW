@@ -1,6 +1,6 @@
 package claw.actions;
 
-import claw.rct.network.low.concurrency.Waiter;
+import claw.rct.base.network.low.concurrency.Waiter;
 
 class DelayAction extends Action {
     
