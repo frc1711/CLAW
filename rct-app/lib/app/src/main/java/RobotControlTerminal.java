@@ -1,5 +1,3 @@
-package claw.rct.local;
-
 import java.io.IOException;
 
 import claw.rct.commands.RCTCommand.ParseException;

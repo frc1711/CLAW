@@ -1,4 +1,4 @@
-package claw.rct.local.console;
+package console;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Erase;

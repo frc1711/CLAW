@@ -1,5 +1,3 @@
-package claw.rct.local;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

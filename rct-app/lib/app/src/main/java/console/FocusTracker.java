@@ -1,4 +1,4 @@
-package claw.rct.local.console;
+package console;
 
 import java.util.function.Consumer;
 

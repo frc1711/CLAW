@@ -1,5 +1,3 @@
-package claw.rct.local;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
