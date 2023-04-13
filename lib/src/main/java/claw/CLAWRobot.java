@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import claw.logs.CLAWLogger;
 import claw.logs.LogHandler;
@@ -27,6 +28,7 @@ public class CLAWRobot {
     private static boolean hasStartedCompetition = false;
     
     private static final ArrayList<Runnable> executeInMainThread = new ArrayList<>();
+    private static final HashSet<Runnable> periodicObservers = new HashSet<>();
     
     public static void startCompetition (TimedRobot robot, Runnable robotStartCompetition) {
         // Do not call startCompetition more than once
@@ -116,6 +118,18 @@ public class CLAWRobot {
         }
     }
     
+    public static void addPeriodicOperation (Runnable observer) {
+        synchronized (periodicObservers) {
+            periodicObservers.add(observer);
+        }
+    }
+    
+    public static void removePeriodicOperation (Runnable observer) {
+        synchronized (periodicObservers) {
+            periodicObservers.remove(observer);
+        }
+    }
+    
     private static void robotPeriodic () {
         // Update the log handler
         if (server != null) {
@@ -133,6 +147,18 @@ public class CLAWRobot {
         for (Runnable operation : operations) {
             operation.run();
         }
+        
+        // Get all periodic observers
+        Runnable[] observers;
+        synchronized (periodicObservers) {
+            observers = periodicObservers.toArray(new Runnable[0]);
+        }
+        
+        // Execute each observer
+        for (Runnable observer : observers) {
+            observer.run();
+        }
+        
     }
     
     private static void onCommandInitialize (Command command) {
