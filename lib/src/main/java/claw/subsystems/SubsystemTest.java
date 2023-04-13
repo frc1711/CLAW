@@ -3,9 +3,8 @@ package claw.subsystems;
 import java.util.Optional;
 
 import claw.actions.Action;
-import claw.actions.compositions.SubsystemTestComposer;
-import claw.actions.compositions.SubsystemTestCompositionContext;
-import claw.actions.compositions.Context.Operation;
+import claw.actions.SubsystemTestCompositionContext;
+import claw.actions.SubsystemTestCompositionContext.SubsystemTestOperation;
 import claw.rct.base.console.ConsoleManager;
 import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -115,8 +114,8 @@ public class SubsystemTest {
          * @param composition   The {@code Consumer<SubsystemTestCompositionContext>} which runs the test command.
          * @return              A {@code TestCommandSupplier} for the test command.
          */
-        public static TestCommandSupplier fromComposition (Operation<SubsystemTestCompositionContext<?>> composition) {
-            return (subsystem, console) -> SubsystemTestComposer.compose(console, subsystem, composition);
+        public static TestCommandSupplier fromComposition (SubsystemTestOperation composition) {
+            return (subsystem, console) -> SubsystemTestCompositionContext.compose(console, subsystem, composition).toCommand();
         }
         
         /**

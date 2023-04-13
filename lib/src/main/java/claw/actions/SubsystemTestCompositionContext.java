@@ -149,13 +149,13 @@ public class SubsystemTestCompositionContext {
     }
     
     public static interface SubsystemTestOperation {
-        public void runOnContext (SubsystemTestCompositionContext context) throws TerminatedContextException;
+        public void runOnContext (SubsystemTestCompositionContext context) throws TerminatedContextException, TerminalKilledException;
     }
     
     public static Action compose (
         ConsoleManager console,
         CLAWSubsystem subsystem,
-        Operation operation
+        SubsystemTestOperation operation
     ) {
         return new Action() {
             
@@ -170,7 +170,8 @@ public class SubsystemTestCompositionContext {
                 // Try to execute the operation, ignoring termination exceptions
                 try {
                     operation.runOnContext(ctx);
-                } catch (TerminatedContextException e) { }
+                } catch (TerminatedContextException e) {
+                } catch (TerminalKilledException e) { }
                 
             }
             

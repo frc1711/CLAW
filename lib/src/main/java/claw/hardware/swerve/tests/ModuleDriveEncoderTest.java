@@ -2,14 +2,15 @@ package claw.hardware.swerve.tests;
 
 import claw.LiveValues;
 import claw.actions.FunctionalCommand;
-import claw.actions.compositions.SubsystemTestCompositionContext;
-import claw.actions.compositions.Context.TerminatedContextException;
+import claw.actions.SubsystemTestCompositionContext;
+import claw.actions.SubsystemTestCompositionContext.TerminatedContextException;
 import claw.hardware.swerve.SwerveDriveHandler;
 import claw.hardware.swerve.SwerveModuleBase;
 import claw.math.LinearInterpolator;
 import claw.math.Transform;
 import claw.rct.base.console.ConsoleManager;
 import claw.rct.base.console.ConsoleUtils;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
 import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -48,9 +49,9 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
     }
     
     private static void runDriveTest (
-        SubsystemTestCompositionContext<?> ctx,
+        SubsystemTestCompositionContext ctx,
         SwerveDriveHandler swerveDrive
-    ) throws TerminatedContextException {
+    ) throws TerminatedContextException, TerminalKilledException {
         
         ctx.console.println("Set the robot on the ground so the swerve drive can drive as it would in a match.");
         ctx.console.println("When you continue, the modules will rotate to all face in one direction.");
@@ -212,9 +213,9 @@ public class ModuleDriveEncoderTest extends SubsystemTest {
     }
     
     private static void runCountTest (
-        SubsystemTestCompositionContext<?> ctx,
+        SubsystemTestCompositionContext ctx,
         SwerveDriveHandler swerveDrive
-    ) throws TerminatedContextException {
+    ) throws TerminatedContextException, TerminalKilledException {
         
         ctx.console.println("Prop up the robot so that the modules can drive freely, without resistance.");
         ConsoleUtils.pressKeyToContinue(ctx.console);

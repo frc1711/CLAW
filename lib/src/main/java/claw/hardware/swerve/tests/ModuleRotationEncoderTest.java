@@ -6,12 +6,13 @@ import java.util.Optional;
 
 import claw.LiveValues;
 import claw.actions.FunctionalCommand;
-import claw.actions.compositions.Context.TerminatedContextException;
+import claw.actions.SubsystemTestCompositionContext.TerminatedContextException;
 import claw.hardware.swerve.SwerveDriveHandler;
 import claw.hardware.swerve.SwerveModuleBase;
 import claw.math.LinearInterpolator;
 import claw.math.Transform;
 import claw.rct.base.console.ConsoleManager;
+import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
 import claw.subsystems.SubsystemTest;
 import edu.wpi.first.math.MathUtil;
@@ -275,7 +276,7 @@ public class ModuleRotationEncoderTest extends SubsystemTest {
         TurnVoltageCorrelation voltageCorrelation
     ) {
         
-        public void printToConsole (ConsoleManager console) throws TerminatedContextException {
+        public void printToConsole (ConsoleManager console) throws TerminatedContextException, TerminalKilledException {
             
             if (voltageCorrelation == TurnVoltageCorrelation.ERRATIC_MEASUREMENT) {
                 
@@ -327,7 +328,7 @@ public class ModuleRotationEncoderTest extends SubsystemTest {
         
     }
     
-    private static void pressKeyToContinue (ConsoleManager console) throws TerminatedContextException {
+    private static void pressKeyToContinue (ConsoleManager console) throws TerminatedContextException, TerminalKilledException {
         console.println("(Press any key to continue)");
         while (!console.hasInputReady()) { }
         console.clearWaitingInputLines();
