@@ -1,12 +1,9 @@
-package claw.actions.compositions;
+package claw.actions;
 
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import claw.LiveValues;
-import claw.actions.Action;
-import claw.actions.FunctionalCommand;
 import claw.rct.base.console.ConsoleManager;
 import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
@@ -42,7 +39,7 @@ public class SubsystemTestCompositionContext {
         runAction(Action.fromCommand(command));
     }
     
-    public void runAction (Action action) throws TerminatedContextException {
+    private void runAction (Action action) throws TerminatedContextException {
         try {
             console.flush();
         } catch (TerminalKilledException e) {
@@ -151,16 +148,13 @@ public class SubsystemTestCompositionContext {
         }
     }
     
-    public static interface Operation {
+    public static interface SubsystemTestOperation {
         public void runOnContext (SubsystemTestCompositionContext context) throws TerminatedContextException;
     }
     
-    public static interface TerminableExecution {
-        public void run () throws TerminatedContextException;
-    }
-    
     public static Action compose (
-        Supplier<SubsystemTestCompositionContext> contextSupplier,
+        ConsoleManager console,
+        CLAWSubsystem subsystem,
         Operation operation
     ) {
         return new Action() {
@@ -170,7 +164,7 @@ public class SubsystemTestCompositionContext {
             @Override
             public void runAction () {
                 // Fill the context field
-                SubsystemTestCompositionContext ctx = contextSupplier.get();
+                SubsystemTestCompositionContext ctx = new SubsystemTestCompositionContext(console, subsystem);
                 context = Optional.of(ctx);
                 
                 // Try to execute the operation, ignoring termination exceptions
