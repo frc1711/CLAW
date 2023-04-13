@@ -2,6 +2,7 @@ package claw.actions.compositions;
 
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import claw.LiveValues;
 import claw.actions.Action;
@@ -11,8 +12,7 @@ import claw.rct.base.console.ConsoleManager.TerminalKilledException;
 import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 
-public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositionContext<CTX>>
-    implements Context<CTX> {
+public class SubsystemTestCompositionContext {
     
     public final ConsoleManager console;
     public final CLAWSubsystem subsystem;
@@ -32,7 +32,7 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
             console.flush();
         } catch (TerminalKilledException e) {
             terminate();
-            throw getTerminatedException();
+            throw new TerminatedContextException();
         }
         
         runAction(Action.delay(durationSecs));
@@ -47,7 +47,7 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
             console.flush();
         } catch (TerminalKilledException e) {
             terminate();
-            throw getTerminatedException();
+            throw new TerminatedContextException();
         }
         
         synchronized (lastActionLock) {
@@ -59,7 +59,6 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         useContext();
     }
     
-    @Override
     public void terminate () {
         terminated = true;
         synchronized (lastActionLock) {
@@ -67,7 +66,6 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         }
     }
     
-    @Override
     public boolean isTerminated () {
         return terminated;
     }
@@ -77,15 +75,16 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
         this.subsystem = subsystem;
     }
     
-    @Override
     public void useContext () throws TerminatedContextException {
-        Context.super.useContext();
+        if (isTerminated()) {
+            throw new TerminatedContextException();
+        }
         
         try {
             console.useContext();
         } catch (TerminalKilledException e) {
             terminate();
-            throw getTerminatedException();
+            throw new TerminatedContextException();
         }
     }
     
@@ -144,6 +143,49 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
             running = false;
         }
         
+    }
+    
+    public static class TerminatedContextException extends Exception {
+        public TerminatedContextException () {
+            super("The context in which this operation has been performed was terminated.");
+        }
+    }
+    
+    public static interface Operation {
+        public void runOnContext (SubsystemTestCompositionContext context) throws TerminatedContextException;
+    }
+    
+    public static interface TerminableExecution {
+        public void run () throws TerminatedContextException;
+    }
+    
+    public static Action compose (
+        Supplier<SubsystemTestCompositionContext> contextSupplier,
+        Operation operation
+    ) {
+        return new Action() {
+            
+            private Optional<SubsystemTestCompositionContext> context = Optional.empty();
+            
+            @Override
+            public void runAction () {
+                // Fill the context field
+                SubsystemTestCompositionContext ctx = contextSupplier.get();
+                context = Optional.of(ctx);
+                
+                // Try to execute the operation, ignoring termination exceptions
+                try {
+                    operation.runOnContext(ctx);
+                } catch (TerminatedContextException e) { }
+                
+            }
+            
+            @Override
+            public void cancelRunningAction () {
+                context.ifPresent(SubsystemTestCompositionContext::terminate);
+            }
+            
+        };
     }
     
 }
