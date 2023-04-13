@@ -1,5 +1,6 @@
 package claw.actions.compositions;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import claw.LiveValues;
@@ -11,29 +12,21 @@ import claw.subsystems.CLAWSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositionContext<CTX>>
-    extends CommandCompositionContext<CTX> {
+    implements Context<CTX> {
     
     public final ConsoleManager console;
     public final CLAWSubsystem subsystem;
+    private boolean terminated = false;
     
-    public SubsystemTestCompositionContext (ConsoleManager console, CLAWSubsystem subsystem) {
-        this.console = console;
-        this.subsystem = subsystem;
+    private Optional<Action> lastAction = Optional.empty();
+    
+    private final Object lastActionLock = new Object();
+    
+    public <T> T runGet (FunctionalCommand<T> command) throws TerminatedContextException {
+        run(command);
+        return command.getValue();
     }
     
-    @Override
-    public void useContext () throws TerminatedContextException {
-        super.useContext();
-        
-        try {
-            console.useContext();
-        } catch (TerminalKilledException e) {
-            terminate();
-            throw getTerminatedException();
-        }
-    }
-    
-    @Override
     public void delay (double durationSecs) throws TerminatedContextException {
         try {
             console.flush();
@@ -42,10 +35,13 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
             throw getTerminatedException();
         }
         
-        super.delay(durationSecs);
+        runAction(Action.delay(durationSecs));
     }
     
-    @Override
+    public void run (Command command) throws TerminatedContextException {
+        runAction(Action.fromCommand(command));
+    }
+    
     public void runAction (Action action) throws TerminatedContextException {
         try {
             console.flush();
@@ -54,7 +50,43 @@ public class SubsystemTestCompositionContext<CTX extends SubsystemTestCompositio
             throw getTerminatedException();
         }
         
-        super.runAction(action);
+        synchronized (lastActionLock) {
+            lastAction = Optional.of(action);
+        }
+        
+        useContext();
+        action.run();
+        useContext();
+    }
+    
+    @Override
+    public void terminate () {
+        terminated = true;
+        synchronized (lastActionLock) {
+            lastAction.ifPresent(Action::cancel);
+        }
+    }
+    
+    @Override
+    public boolean isTerminated () {
+        return terminated;
+    }
+    
+    public SubsystemTestCompositionContext (ConsoleManager console, CLAWSubsystem subsystem) {
+        this.console = console;
+        this.subsystem = subsystem;
+    }
+    
+    @Override
+    public void useContext () throws TerminatedContextException {
+        Context.super.useContext();
+        
+        try {
+            console.useContext();
+        } catch (TerminalKilledException e) {
+            terminate();
+            throw getTerminatedException();
+        }
     }
     
     public <T> T runLiveValuesGet (Function<LiveValues, FunctionalCommand<T>> commandSupplier) throws TerminatedContextException {
