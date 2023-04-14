@@ -1,18 +1,33 @@
 @echo off
 
 echo Building CLAW
-
+@REM Building the CLAW lib project
 cd lib
-@REM Build the distribution zip (used for the driverstation client)
-call gradlew.bat distZip
-@REM Build the maven repo (used for the test-bot and for any vendor dependencies)
-rmdir /Q /S app\build\maven-repo\org\frc\raptors1711\raptors-claw
-call gradlew.bat publish
+call gradlew.bat build
+if not %errorlevel%==0 goto :error
+
 cd ..
 
-echo Extracting CLAW distribution for driverstation RCT client
+@REM Update the claw.rct.base package used by the rct-app project
+echo Copying claw.rct.base package from lib into rct-app
+if exist rct-app\app\src\main\java\claw\rct\base rmdir rct-app\app\src\main\java\claw\rct\base /S /Q
+xcopy lib\src\main\java\claw\rct\base rct-app\app\src\main\java\claw\rct\base /I /E
 
-@REM Extract the distribution zip to the driverstation-app-extract directory so it can be easily run
-rmdir /S /Q driverstation-app-extract\app
-powershell Expand-Archive lib\app\build\distributions\driverstation-rct-client.zip -DestinationPath driverstation-app-extract
-rename driverstation-app-extract\driverstation-rct-client app
+@REM Update the claw package used by the test-bot project
+echo Copying claw package from lib into test-bot
+if exist test-bot\src\main\java\claw rmdir test-bot\src\main\java\claw /S /Q
+xcopy lib\src\main\java\claw test-bot\src\main\java\claw /I /E
+
+echo.
+echo.
+echo Successfuly built CLAW.
+
+goto :end
+
+:error
+cd ..
+echo.
+echo.
+echo There was an error building CLAW.
+
+:end
