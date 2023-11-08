@@ -4,6 +4,7 @@ package main.java.claw.framework.commands;
 //This code is written to be used in tandem with everything in the SwerveFramework folder.
 //This code assumes that Revlib has been imported.
 //Imports must be done manually.
+//In-file imports must be done after code has been pasted.
 public class DriveCommand {
     
     Swerve swerveSubsystem;
